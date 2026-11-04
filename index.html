@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="sw">
+<html lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
@@ -23,7 +23,7 @@ label{font-size:13px;font-weight:650;color:#475569}.grid{display:grid;grid-templ
 .actions{display:flex;gap:8px;flex-wrap:wrap}.hidden{display:none!important}
 @media(max-width:650px){.grid{grid-template-columns:1fr}header{align-items:flex-start}.card{padding:14px}}
 @media print{header,.tabs,.no-print,button{display:none!important}body{background:#fff}.card{box-shadow:none;border:0}}
-</style>
+html[dir="rtl"] body{text-align:right}html[dir="rtl"] th,html[dir="rtl"] td{text-align:right}html[dir="rtl"] header{direction:rtl}html[dir="rtl"] .tabs{direction:rtl}\n</style>
 </head>
 <body>
 <header>
@@ -379,35 +379,45 @@ const LANG_TEXT = {
     "Toka":"Cerrar sesión","Sajili Shule":"Registrar escuela","Ingia":"Iniciar sesión","Sajili shule":"Registrar escuela","Jina la shule":"Nombre de la escuela","Jina kamili la msimamizi":"Nombre completo del administrador","Email ya msimamizi":"Correo del administrador","Namba ya simu (si lazima)":"Teléfono (opcional)","Nenosiri (angalau herufi 6)":"Contraseña (mínimo 6 caracteres)","Nchi":"País","Lugha ya mwanzo":"Idioma inicial","Ingia kwenye akaunti":"Iniciar sesión","Wanafunzi":"Estudiantes","Alama":"Calificaciones","Mahudhurio":"Asistencia","Ratiba":"Horario","Ada & TxID":"Tarifas y TxID","Ripoti":"Informes","Backup & Lugha":"Copia de seguridad e idioma","Jina la mwanafunzi":"Nombre del estudiante","Darasa":"Clase","Hifadhi mwanafunzi":"Guardar estudiante","Mwanafunzi":"Estudiante","Somo":"Asignatura","Hifadhi alama":"Guardar calificaciones","Hifadhi mahudhurio ya leo":"Guardar asistencia de hoy","Historia ya mahudhurio":"Historial de asistencia","Tarehe":"Fecha","Hali":"Estado","Chagua siku":"Elegir día","Jumatatu":"Lunes","Jumanne":"Martes","Jumatano":"Miércoles","Alhamisi":"Jueves","Ijumaa":"Viernes","Jumamosi":"Sábado","Ongeza kipindi":"Añadir clase","Mpango":"Plan","Kiasi":"Importe","Njia ya malipo":"Método de pago","Tuma taarifa ya malipo":"Enviar datos de pago","Subscription ya shule":"Suscripción escolar","Historia ya malipo":"Historial de pagos","Chapisha / Hifadhi PDF":"Imprimir / Guardar PDF","Lugha":"Idioma","Thibitisha":"Aprobar","Kataa":"Rechazar"
   }
 };
+
+// Extended language coverage. English is the default interface language.
+Object.assign(LANG_TEXT.en,{"Karibu":"Welcome","Shule":"School","Jina la Shule":"School name","Jina kamili":"Full name","Nenosiri":"Password","Sajili Shule":"Register School","Sajili shule":"Register a school","Ingia":"Log in","Ingia kwenye akaunti":"Sign in to your account","Jina la shule":"School name","Jina kamili la msimamizi":"Administrator full name","Email ya msimamizi":"Administrator email","Namba ya simu (si lazima)":"Phone number (optional)","Nenosiri (angalau herufi 6)":"Password (at least 6 characters)","Nchi":"Country","Lugha ya mwanzo":"Default language","Wanafunzi":"Students","Mahudhurio":"Attendance","Ratiba":"Timetable","Ripoti":"Reports","Backup & Lugha":"Backup & Language","Chagua kifurushi cha ShulePro":"Choose a ShulePro package","Chagua kifurushi unachopanga kutumia. Utapata siku 14 za majaribio bila malipo kabla ya kuhitaji kufanya malipo. Hakuna fedha zitakazokatwa kwa kuchagua kifurushi.":"Choose the package you plan to use. You will get a 14-day free trial before payment is required. Selecting a package will not charge you.","Siku 14 za majaribio bila malipo":"14-day free trial","Chagua kifurushi hiki":"Choose this package","Tunawasha siku 14 za majaribio...":"Starting your 14-day trial...","Jaza jina la shule, jina kamili, email na nenosiri lenye angalau herufi 6.":"Enter the school name, full name, email, and a password of at least 6 characters.","Inatengeneza akaunti...":"Creating account...","Akaunti imetengenezwa. Fungua email yako uthibitishe akaunti, kisha rudi hapa na uingie. Usajili wa shule utakamilika baada ya kuingia.":"Your account has been created. Open your email to verify it, then return here and sign in. School registration will be completed after sign-in.","Usajili umeshindikana:":"Registration failed:","Imeshindikana kufikia seva ya Supabase. Hakikisha intaneti ipo, kisha fungua upya ukurasa.":"Could not reach the Supabase server. Check your internet connection and refresh the page.","Weka email na nenosiri.":"Enter your email and password.","Inakagua akaunti...":"Checking account...","Imeshindikana kuingia:":"Sign-in failed:","Umeingia, lakini usajili wa shule haujakamilika:":"You are signed in, but school registration is incomplete:","Akaunti haina uanachama wa shule. Hakikisha usajili wa shule umekamilika.":"This account is not linked to a school. Make sure school registration is complete.","Imeshindwa kufungua shule:":"Could not open school:","Hifadhi mwanafunzi":"Save student","Mwanafunzi":"Student","Somo":"Subject","Hisabati":"Mathematics","Hifadhi alama":"Save marks","Hifadhi mahudhurio ya leo":"Save today's attendance","Historia ya mahudhurio":"Attendance history","Tarehe":"Date","Hali":"Status","Chagua siku":"Choose a day","Jumatatu":"Monday","Jumanne":"Tuesday","Jumatano":"Wednesday","Alhamisi":"Thursday","Ijumaa":"Friday","Jumamosi":"Saturday","Ongeza kipindi":"Add period","Mpango":"Plan","Kiasi":"Amount","Njia ya malipo":"Payment method","Tuma taarifa ya malipo":"Submit payment details","Ada ya ShulePro na taarifa za malipo":"ShulePro fees and payment information","TxID / Reference":"Transaction ID / Reference","Subscription ya shule":"School subscription","Historia ya malipo":"Payment history","Chapisha / Hifadhi PDF":"Print / Save PDF","Chapisha ukurasa huu na uchague Save as PDF kwenye kifaa chako.":"Print this page and select Save as PDF on your device.","Backup inajumuisha data ambayo akaunti yako inaruhusiwa kusoma. Hifadhi faili kwa usalama.":"The backup contains data your account is authorized to read. Store the file securely.","Pakua Backup JSON":"Download JSON backup","Rejesha wanafunzi kutoka JSON":"Restore students from JSON","Weka jina la mwanafunzi.":"Enter the student's name.","Mwanafunzi amehifadhiwa.":"Student saved.","Haijahifadhiwa:":"Could not save:","Imeshindwa kusoma wanafunzi:":"Could not load students:","Chagua mwanafunzi, weka somo na alama 0 hadi 100.":"Select a student, enter a subject, and enter a score from 0 to 100.","Alama zimehifadhiwa.":"Marks saved.","Alama hazijahifadhiwa:":"Could not save marks:","Hakuna wanafunzi wa kuhifadhi.":"There are no students to save.","Mahudhurio ya leo yamehifadhiwa.":"Today's attendance has been saved.","Mahudhurio hayajahifadhiwa:":"Could not save attendance:","Chagua siku sahihi na jaza muda, somo na darasa.":"Select a valid day and enter the time, subject, and class.","Kipindi kimeongezwa.":"Period added.","Ratiba haijahifadhiwa.":"Could not save timetable.","Imeshindwa kupakia mahudhurio:":"Could not load attendance:","Imeshindwa kupakia malipo/bei:":"Could not load payments/prices:","Chagua mpango na weka TxID/reference ya malipo.":"Choose a plan and enter the payment transaction ID/reference.","Taarifa ya malipo imetumwa. Subiri uhakiki wa Super Admin.":"Payment details submitted. Wait for Super Admin verification.","Taarifa haijatumwa:":"Could not submit payment details:","Backup imepakuliwa.":"Backup downloaded.","Backup haijakamilika:":"Backup failed:","Imeshindikana kurejesha backup:":"Could not restore backup:","Wanafunzi wamerejeshwa. Data ya shule nyingine haijahamishwa.":"Students restored. Data from other schools was not imported.","Thibitisha":"Approve","Kataa":"Reject","Muhtasari":"Summary","Idadi ya wanafunzi waliopakiwa:":"Number of students loaded:","Malipo yamethibitishwa; subscription imewashwa.":"Payment approved; subscription activated.","Malipo yamekataliwa.":"Payment rejected.","Kitendo kimeshindikana:":"Action failed:","Umethibitisha fedha zimeingia kwenye akaunti ya malipo?":"Have you confirmed that the funds have arrived in the payment account?","Sababu ya kukataa:":"Reason for rejection:","Lugha imebadilishwa.":"Language changed."});
+Object.assign(LANG_TEXT.fr,{"Jina la shule":"Nom de l’école","Jina kamili la msimamizi":"Nom complet de l’administrateur","Namba ya simu (si lazima)":"Téléphone (facultatif)","Nenosiri (angalau herufi 6)":"Mot de passe (6 caractères minimum)","Nchi":"Pays","Lugha ya mwanzo":"Langue par défaut","Chagua kifurushi cha ShulePro":"Choisir une offre ShulePro","Wanafunzi":"Élèves","Mahudhurio":"Présences","Ratiba":"Emploi du temps","Ripoti":"Rapports","Backup & Lugha":"Sauvegarde et langue","Hifadhi mwanafunzi":"Enregistrer l’élève","Hifadhi alama":"Enregistrer les notes","Hifadhi mahudhurio ya leo":"Enregistrer les présences du jour","Tuma taarifa ya malipo":"Envoyer les informations de paiement","Chapisha / Hifadhi PDF":"Imprimer / Enregistrer PDF","Thibitisha":"Approuver","Kataa":"Rejeter"});
+Object.assign(LANG_TEXT.ar,{"Jina la shule":"اسم المدرسة","Jina kamili la msimamizi":"الاسم الكامل للمسؤول","Namba ya simu (si lazima)":"رقم الهاتف (اختياري)","Nenosiri (angalau herufi 6)":"كلمة المرور (6 أحرف على الأقل)","Nchi":"الدولة","Lugha ya mwanzo":"اللغة الافتراضية","Chagua kifurushi cha ShulePro":"اختر باقة ShulePro","Wanafunzi":"الطلاب","Mahudhurio":"الحضور","Ratiba":"الجدول","Ripoti":"التقارير","Backup & Lugha":"النسخ الاحتياطي واللغة","Hifadhi mwanafunzi":"حفظ الطالب","Hifadhi alama":"حفظ الدرجات","Hifadhi mahudhurio ya leo":"حفظ حضور اليوم","Tuma taarifa ya malipo":"إرسال معلومات الدفع","Chapisha / Hifadhi PDF":"طباعة / حفظ PDF","Thibitisha":"اعتماد","Kataa":"رفض"});
+Object.assign(LANG_TEXT.zh,{"Jina la shule":"学校名称","Jina kamili la msimamizi":"管理员全名","Namba ya simu (si lazima)":"电话号码（可选）","Nenosiri (angalau herufi 6)":"密码（至少6个字符）","Nchi":"国家","Lugha ya mwanzo":"默认语言","Chagua kifurushi cha ShulePro":"选择 ShulePro 套餐","Wanafunzi":"学生","Mahudhurio":"出勤","Ratiba":"课程表","Ripoti":"报告","Backup & Lugha":"备份与语言","Hifadhi mwanafunzi":"保存学生","Hifadhi alama":"保存成绩","Hifadhi mahudhurio ya leo":"保存今日出勤","Tuma taarifa ya malipo":"提交付款信息","Chapisha / Hifadhi PDF":"打印 / 保存PDF","Thibitisha":"批准","Kataa":"拒绝"});
+Object.assign(LANG_TEXT.es,{"Jina la shule":"Nombre de la escuela","Jina kamili la msimamizi":"Nombre completo del administrador","Namba ya simu (si lazima)":"Teléfono (opcional)","Nenosiri (angalau herufi 6)":"Contraseña (mínimo 6 caracteres)","Nchi":"País","Lugha ya mwanzo":"Idioma predeterminado","Chagua kifurushi cha ShulePro":"Elegir un paquete de ShulePro","Wanafunzi":"Estudiantes","Mahudhurio":"Asistencia","Ratiba":"Horario","Ripoti":"Informes","Backup & Lugha":"Copia de seguridad e idioma","Hifadhi mwanafunzi":"Guardar estudiante","Hifadhi alama":"Guardar calificaciones","Hifadhi mahudhurio ya leo":"Guardar asistencia de hoy","Tuma taarifa ya malipo":"Enviar datos de pago","Chapisha / Hifadhi PDF":"Imprimir / Guardar PDF","Thibitisha":"Aprobar","Kataa":"Rechazar"});
+
 function applyLanguage(lang){
-  const dict=LANG_TEXT[lang]||LANG_TEXT.sw, reverse={};
-  Object.values(LANG_TEXT).forEach(d=>Object.entries(d).forEach(([sw,tr])=>{if(tr)reverse[tr]=sw}));
+  const dict=LANG_TEXT[lang]||LANG_TEXT.en, reverse={};
+  Object.values(LANG_TEXT).forEach(d=>Object.entries(d).forEach(([source,target])=>{if(target)reverse[String(target).trim().toLowerCase()]=source}));
+  const lookup=new Map(Object.entries(dict).map(([source,target])=>[source.trim().toLowerCase(),target]));
   const walker=document.createTreeWalker(document.body,NodeFilter.SHOW_TEXT);
   let node;
   while((node=walker.nextNode())){
-    if(!node.parentElement||['SCRIPT','STYLE'].includes(node.parentElement.tagName))continue;
+    const parent=node.parentElement;if(!parent||['SCRIPT','STYLE','NOSCRIPT'].includes(parent.tagName))continue;
     const raw=node.nodeValue,trim=raw.trim();if(!trim)continue;
-    const key=reverse[trim]||trim;if(dict[key])node.nodeValue=raw.replace(trim,dict[key]);
+    const source=reverse[trim.toLowerCase()]||trim,translated=lookup.get(source.trim().toLowerCase());
+    if(translated&&translated!==trim)node.nodeValue=raw.replace(trim,translated);
   }
-  document.querySelectorAll('[placeholder]').forEach(input=>{
-    const value=input.getAttribute('placeholder'),key=reverse[value]||value;
-    if(dict[key])input.setAttribute('placeholder',dict[key]);
-  });
+  ['placeholder','title','aria-label','alt'].forEach(attr=>document.querySelectorAll('['+attr+']').forEach(elm=>{
+    const value=elm.getAttribute(attr);if(!value)return;
+    const source=reverse[value.trim().toLowerCase()]||value,translated=lookup.get(source.trim().toLowerCase());
+    if(translated&&translated!==value)elm.setAttribute(attr,translated);
+  }));
   document.documentElement.lang=lang;document.documentElement.dir=lang==='ar'?'rtl':'ltr';
 }
 function setLang(lang){
-  if(!LANG_TEXT[lang])lang='sw';
-  localStorage.setItem('shulepro_lang',lang);
+  if(!LANG_TEXT[lang])lang='en';
+  localStorage.setItem('shulepro_language_v2',lang);
   ['globalLang','regLang','languageSelect'].forEach(id=>{if(el(id))el(id).value=lang});
   applyLanguage(lang);
-  if(el('backupMsg'))message('backupMsg',({sw:'Lugha imebadilishwa.',en:'Language changed.',fr:'Langue modifiée.',ar:'تم تغيير اللغة.',zh:'语言已更改。',es:'Idioma cambiado.'})[lang],'ok');
+  if(el('backupMsg'))message('backupMsg',({sw:'Lugha imebadilishwa.',en:'Language changed.',fr:'Langue modifiée.',ar:'تم تغيير اللغة.',zh:'语言已更改。',es:'Idioma cambiado.'})[lang]||'Language changed.','ok');
 }
 document.addEventListener('DOMContentLoaded',()=>{
-  const lang=localStorage.getItem('shulepro_lang')||'sw';setLang(lang);
-  const observer=new MutationObserver(()=>applyLanguage(localStorage.getItem('shulepro_lang')||'sw'));
+  const lang=localStorage.getItem('shulepro_language_v2')||'en';setLang(lang);
+  const observer=new MutationObserver(()=>applyLanguage(localStorage.getItem('shulepro_language_v2')||'en'));
   observer.observe(document.body,{childList:true,subtree:true});
 });
-
 async function loadSuperAdmin(){
  const [schoolsRes,payRes,subsRes,studentsRes]=await Promise.all([
   db.from('schools').select('id,school_name,school_code,country_code,created_at,is_active').order('created_at',{ascending:false}),
