@@ -29,7 +29,7 @@ html[dir="rtl"] body{text-align:right}html[dir="rtl"] th,html[dir="rtl"] td{text
 <header>
  <div><div class="brand">SHULEPRO GLOBAL</div><div class="muted">School Management System</div></div>
  <div style="text-align:right"><strong id="schoolName">Karibu</strong><div class="muted" id="schoolCode"></div></div>
- <select id="globalLang" aria-label="Language" onchange="setLang(this.value)" style="width:auto;max-width:145px;margin:0"><option value="fr">Français</option><option value="ar">العربية</option><option value="zh">中文</option><option value="es">Español</option<option value="en">English</option><option value="sw">Kiswahili</option></select><button id="logoutBtn" class="dark hidden" onclick="logout()">Toka</button>
+ <select id="globalLang" aria-label="Language" onchange="setLang(this.value)" style="width:auto;max-width:145px;margin:0"><option value="en">English</option><option value="sw">Kiswahili</option><option value="fr">Français</option><option value="ar">العربية</option><option value="zh">中文</option><option value="es">Español</option></select><button id="logoutBtn" class="dark hidden" onclick="logout()">Toka</button>
 </header>
 
 <div class="wrap">
@@ -46,7 +46,7 @@ html[dir="rtl"] body{text-align:right}html[dir="rtl"] th,html[dir="rtl"] td{text
   <label>Namba ya simu (si lazima)</label><input id="regPhone" placeholder="+255...">
   <label>Nenosiri (angalau herufi 6)</label><input id="regPass" type="password" placeholder="Nenosiri">
   <label>Nchi</label><select id="regCountry"><option value="TZ">Tanzania</option><option value="KE">Kenya</option><option value="UG">Uganda</option><option value="RW">Rwanda</option><option value="US">United States</option><option value="GB">United Kingdom</option><option value="OTHER">Other</option></select>
-  <label>Lugha ya mwanzo</label><select id="regLang" onchange="setLang(this.value)"><option value="fr">Français</option><option value="ar">العربية</option><option value="zh">中文</option><option value="es">Español</option<option value="en">English</option><option value="sw">Kiswahili</option></select>
+  <label>Lugha ya mwanzo</label><select id="regLang" onchange="setLang(this.value)"><option value="en">English</option><option value="sw">Kiswahili</option><option value="fr">Français</option><option value="ar">العربية</option><option value="zh">中文</option><option value="es">Español</option></select>
   <button style="width:100%;margin-top:10px" onclick="register()">Sajili Shule</button>
   <div id="regMsg"></div>
  </div>
@@ -123,7 +123,7 @@ html[dir="rtl"] body{text-align:right}html[dir="rtl"] th,html[dir="rtl"] td{text
   <h3>Backup & Lugha</h3><p class="muted">Backup inajumuisha data ambayo akaunti yako inaruhusiwa kusoma. Hifadhi faili kwa usalama.</p>
   <div class="actions"><button onclick="exportBackup()">Pakua Backup JSON</button><button class="secondary" onclick="document.getElementById('importFile').click()">Rejesha wanafunzi kutoka JSON</button></div>
   <input type="file" id="importFile" accept=".json,application/json" class="hidden" onchange="importBackup(event)">
-  <label>Lugha</label><select id="languageSelect" onchange="setLang(this.value)"><option value="fr">Français</option><option value="ar">العربية</option><option value="zh">中文</option><option value="es">Español</option<option value="en">English</option><option value="sw">Kiswahili</option></select>
+  <label>Lugha</label><select id="languageSelect" onchange="setLang(this.value)"><option value="en">English</option><option value="sw">Kiswahili</option><option value="fr">Français</option><option value="ar">العربية</option><option value="zh">中文</option><option value="es">Español</option></select>
   <div id="backupMsg"></div>
  </div>
 </section>
