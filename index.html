@@ -158,7 +158,10 @@ async function completePendingRegistration(){
  if(!p)return null;
  const {data,error}=await db.rpc('register_school',{p_school_name:p.school_name,p_school_code:p.school_code,p_full_name:p.full_name,p_country_code:p.country_code});
  if(error)throw error;
- localStorage.removeItem('shulepro_pending_registration');return data;
+ localStorage.removeItem('shulepro_pending_registration');
+ const {error:metaError}=await db.auth.updateUser({data:{shulepro_registration:null}});
+ if(metaError)console.warn('Registration metadata cleanup:',metaError.message);
+ return data;
 }
 async function login(){
  const email=el('loginEmail').value.trim().toLowerCase(),password=el('loginPass').value;
@@ -229,8 +232,12 @@ async function markAttendance(){
  const {data:students,error}=await db.from('students').select('id').eq('school_id',currentSchoolId);
  if(error){message('attMsg','Imeshindwa kusoma wanafunzi: '+error.message,'err');return}
  if(!students?.length){message('attMsg','Hakuna wanafunzi wa kuweka mahudhurio.','err');return}
- const today=new Date().toLocaleDateString('en-CA');
- const rows=students.map(s=>({school_id:currentSchoolId,student_id:s.id,attend_date:today,status:'Present'}));
+ const today=new Date(Date.now()-new Date().getTimezoneOffset()*60000).toISOString().slice(0,10);
+ const {data:already,error:checkError}=await db.from('attendance').select('student_id').eq('school_id',currentSchoolId).eq('attend_date',today);
+ if(checkError){message('attMsg','Imeshindwa kukagua mahudhurio yaliyopo: '+checkError.message,'err');return}
+ const marked=new Set((already||[]).map(x=>x.student_id));
+ const rows=students.filter(s=>!marked.has(s.id)).map(s=>({school_id:currentSchoolId,student_id:s.id,attend_date:today,status:'Present'}));
+ if(!rows.length){message('attMsg','Mahudhurio ya leo tayari yamejazwa.','info');await loadAttendance();return}
  const {error:insertError}=await db.from('attendance').insert(rows);
  if(insertError){message('attMsg','Mahudhurio hayajahifadhiwa: '+insertError.message,'err');return}
  message('attMsg','Mahudhurio ya leo yamehifadhiwa.','ok');await loadAttendance();
