@@ -117,7 +117,7 @@ label{font-size:13px;font-weight:650;color:#475569}.grid{display:grid;grid-templ
 <script>
 'use strict';
 // Supabase project configuration
-const SUPABASE_URL = "https://btrxhcfkniewwsazvn.supabase.co";
+const SUPABASE_URL = "https://btrxhcfhnriekwsazvnc.supabase.co";
 const SUPABASE_ANON_KEY = "sb_publishable_bom_7JYZ54SJy869vpnT8g_EZhcHZDg";
 const db = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
   auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true}
@@ -146,8 +146,7 @@ async function completePendingRegistration(){
  const raw=localStorage.getItem('shulepro_pending_registration');if(!raw)return;
  const p=JSON.parse(raw);
  const {data,error}=await db.rpc('register_school',{
-  p_school_name:p.school_name,p_school_code:p.school_code,p_full_name:p.full_name,
-  p_country_code:p.country_code,p_language:p.language
+  p_school_name:p.school_name,p_school_code:p.school_code,p_full_name:p.full_name,  p_country_code:p.country_code,
  });
  if(error)throw error;
  localStorage.removeItem('shulepro_pending_registration');
@@ -188,7 +187,7 @@ function showTab(id,node){
 async function addStudent(){
  const name=el('stuName').value.trim(),cls=el('stuClass').value.trim();
  if(!name){message('stuMsg','Weka jina la mwanafunzi.','err');return}
- const {error}=await db.from('students').insert({school_id:currentSchoolId,name,class:cls});
+ const {error}=await db.from('students').insert({school_id:currentSchoolId,full_name:name,class_name:cls});
  if(error){message('stuMsg','Haijahifadhiwa: '+error.message,'err');return}
  el('stuName').value='';el('stuClass').value='';message('stuMsg','Mwanafunzi amehifadhiwa.','ok');await loadStudents();
 }
@@ -196,8 +195,8 @@ async function loadStudents(){
  const {data,error}=await db.from('students').select('*').eq('school_id',currentSchoolId).order('created_at',{ascending:false});
  if(error){message('stuMsg','Imeshindwa kusoma wanafunzi: '+error.message,'err');return}
  studentsCache=data||[];
- el('studentsTable').innerHTML='<tr><th>Jina</th><th>Darasa</th></tr>'+studentsCache.map(s=>`<tr><td>${esc(s.name||s.full_name||'')}</td><td>${esc(s.class||s.class_name||'')}</td></tr>`).join('');
- const opts=studentsCache.map(s=>`<option value="${esc(s.id)}">${esc(s.name||s.full_name||s.id)}</option>`).join('');
+ el('studentsTable').innerHTML='<tr><th>Jina</th><th>Darasa</th></tr>'+studentsCache.map(s=>`<tr><td>${esc(s.full_name||s.name||'')}</td><td>${esc(s.class_name||s.class||'')}</td></tr>`).join('');
+ const opts=studentsCache.map(s=>`<option value="${esc(s.id)}">${esc(s.full_name||s.name||s.id)}</option>`).join('');
  el('markStudent').innerHTML=opts;
 }
 async function addMark(){
@@ -208,16 +207,16 @@ async function addMark(){
  message('markMsg','Alama zimehifadhiwa.','ok');await loadMarks();
 }
 async function loadMarks(){
- const {data,error}=await db.from('marks').select('*,students(name)').eq('school_id',currentSchoolId);
+ const {data,error}=await db.from('marks').select('*,students(full_name)').eq('school_id',currentSchoolId);
  if(error){el('marksTable').innerHTML='';message('markMsg','Imeshindwa kusoma alama: '+error.message,'err');return}
- el('marksTable').innerHTML='<tr><th>Mwanafunzi</th><th>Somo</th><th>Alama</th></tr>'+(data||[]).map(m=>`<tr><td>${esc(m.students?.name||m.student_id)}</td><td>${esc(m.subject||'')}</td><td>${esc(m.score)}</td></tr>`).join('');
+ el('marksTable').innerHTML='<tr><th>Mwanafunzi</th><th>Somo</th><th>Alama</th></tr>'+(data||[]).map(m=>`<tr><td>${esc(m.students?.full_name||m.student_id)}</td><td>${esc(m.subject||'')}</td><td>${esc(m.score)}</td></tr>`).join('');
 }
 async function markAttendance(){
  const {data:students,error}=await db.from('students').select('id').eq('school_id',currentSchoolId);
  if(error){message('attMsg','Imeshindwa kusoma wanafunzi: '+error.message,'err');return}
  if(!students?.length){message('attMsg','Hakuna wanafunzi wa kuweka mahudhurio.','err');return}
  const today=new Date().toLocaleDateString('en-CA');
- const rows=students.map(s=>({school_id:currentSchoolId,student_id:s.id,attend_date:today,status:'present'}));
+ const rows=students.map(s=>({school_id:currentSchoolId,student_id:s.id,attend_date:today,status:'Present'}));
  const {error:insertError}=await db.from('attendance').insert(rows);
  if(insertError){message('attMsg','Mahudhurio hayajahifadhiwa: '+insertError.message,'err');return}
  message('attMsg','Mahudhurio ya leo yamehifadhiwa.','ok');await loadAttendance();
@@ -230,19 +229,19 @@ async function loadAttendance(){
 async function addTimetable(){
  const day=el('ttDay').value.trim(),time_slot=el('ttTime').value.trim(),subject=el('ttSubject').value.trim(),class_name=el('ttClass').value.trim();
  if(!day||!time_slot||!subject||!class_name){message('ttMsg','Jaza taarifa zote za kipindi.','err');return}
- const {error}=await db.from('timetable').insert({school_id:currentSchoolId,day,time_slot,subject,class_name});
+ const {error}=await db.from('timetable').insert({school_id:currentSchoolId,day_of_week:day,period_time:time_slot,subject,class_name});
  if(error){message('ttMsg','Ratiba haijahifadhiwa. Hakikisha jedwali timetable na columns zake zipo: '+error.message,'err');return}
  message('ttMsg','Kipindi kimeongezwa.','ok');await loadTimetable();
 }
 async function loadTimetable(){
  const {data,error}=await db.from('timetable').select('*').eq('school_id',currentSchoolId);
  if(error){el('ttTable').innerHTML='';message('ttMsg','Jedwali la ratiba halipatikani au haliruhusu kusoma: '+error.message,'err');return}
- el('ttTable').innerHTML='<tr><th>Siku</th><th>Muda</th><th>Somo</th><th>Darasa</th></tr>'+(data||[]).map(t=>`<tr><td>${esc(t.day||'')}</td><td>${esc(t.time_slot||'')}</td><td>${esc(t.subject||'')}</td><td>${esc(t.class_name||'')}</td></tr>`).join('');
+ el('ttTable').innerHTML='<tr><th>Siku</th><th>Muda</th><th>Somo</th><th>Darasa</th></tr>'+(data||[]).map(t=>`<tr><td>${esc(t.day_of_week||'')}</td><td>${esc(t.period_time||'')}</td><td>${esc(t.subject||'')}</td><td>${esc(t.class_name||'')}</td></tr>`).join('');
 }
 async function loadFees(){
  const {data,error}=await db.from('payments').select('*').eq('school_id',currentSchoolId).order('created_at',{ascending:false}).limit(100);
  if(error){el('feesTable').innerHTML='';message('backupMsg','Imeshindwa kusoma payments: '+error.message,'err');return}
- el('feesTable').innerHTML='<tr><th>Tarehe</th><th>Kiasi</th><th>TxID</th><th>Status</th></tr>'+(data||[]).map(p=>`<tr><td>${esc((p.created_at||'').slice(0,10))}</td><td>${esc(p.amount??'')}</td><td>${esc(p.txid||'')}</td><td>${esc(p.status||'')}</td></tr>`).join('');
+ el('feesTable').innerHTML='<tr><th>Tarehe</th><th>Kiasi</th><th>TxID</th><th>Status</th></tr>'+(data||[]).map(p=>`<tr><td>${esc((p.created_at||'').slice(0,10))}</td><td>${esc(p.amount??'')}</td><td>${esc(p.transaction_id||'')}</td><td>${esc(p.status||'')}</td></tr>`).join('');
 }
 function buildReport(){
  const total=studentsCache.length;
