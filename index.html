@@ -63,6 +63,12 @@ label{font-size:13px;font-weight:650;color:#475569}.grid{display:grid;grid-templ
  <div class="card">
   <div><strong id="welcome">Dashboard</strong><div class="muted">Taarifa zinachujwa kwa shule uliyoingia kupitia School Membership na sera za Supabase RLS.</div></div>
  </div>
+ <section id="planChoicePanel" class="card hidden">
+  <h2>Chagua kifurushi cha ShulePro</h2>
+  <p class="muted">Chagua kifurushi unachopanga kutumia. Utapata siku 14 za majaribio bila malipo kabla ya kuhitaji kufanya malipo. Hakuna fedha zitakazokatwa kwa kuchagua kifurushi.</p>
+  <div id="trialPlanMessage"></div>
+  <div id="trialPlans" class="grid"></div>
+ </section>
  <section id="superAdminPanel" class="card hidden">
   <h3>SHULEPRO – Super Admin</h3><p class="muted">Muhtasari wa mfumo mzima. Thibitisha malipo baada ya kuhakiki fedha kwenye chanzo husika.</p>
   <div id="adminSummary" class="grid"></div><h4>Shule zote</h4><div class="tablewrap"><table id="adminSchoolsTable"></table></div>
@@ -177,14 +183,14 @@ async function startApp(user){
  currentUser=user;
  const {data:isAdmin,error:adminError}=await db.rpc('is_super_admin');if(adminError)throw adminError;
  el('auth').classList.add('hidden');el('app').classList.remove('hidden');el('logoutBtn').classList.remove('hidden');
+ el('planChoicePanel').classList.add('hidden');
  if(isAdmin){
   currentSchoolId=null;currentSchool=null;el('schoolName').textContent='SYSTEM ADMIN';el('schoolCode').textContent='GLOBAL';
   el('welcome').textContent='Super Admin: '+(user.user_metadata?.full_name||user.email);
   el('superAdminPanel').classList.remove('hidden');document.querySelector('.tabs').classList.add('hidden');
   document.querySelectorAll('.pane').forEach(x=>x.classList.add('hidden'));await loadSuperAdmin();return;
  }
- el('superAdminPanel').classList.add('hidden');document.querySelector('.tabs').classList.remove('hidden');
- document.querySelectorAll('.pane').forEach(x=>x.classList.remove('hidden'));
+ el('superAdminPanel').classList.add('hidden');
  const {data:members,error}=await db.from('school_memberships').select('school_id,role').eq('user_id',user.id);
  if(error)throw error;
  if(!members||!members.length){el('auth').classList.remove('hidden');el('app').classList.add('hidden');message('loginMsg','Akaunti haina uanachama wa shule. Hakikisha usajili wa shule umekamilika.','err');return}
@@ -192,7 +198,45 @@ async function startApp(user){
  const {data:school,error:schoolError}=await db.from('schools').select('*').eq('id',currentSchoolId).single();
  if(schoolError)throw schoolError;currentSchool=school;
  el('schoolName').textContent=school.school_name||'Shule';el('schoolCode').textContent=school.school_code||'';
- el('welcome').textContent='Karibu, '+(user.user_metadata?.full_name||user.email);await loadAll();
+ el('welcome').textContent='Karibu, '+(user.user_metadata?.full_name||user.email);
+ const {data:subs,error:subError}=await db.from('subscriptions').select('id,status,trial_ends_at,ends_at').eq('school_id',currentSchoolId).order('created_at',{ascending:false}).limit(1);
+ if(subError)throw subError;
+ if(!subs||!subs.length){
+  document.querySelector('.tabs').classList.add('hidden');
+  document.querySelectorAll('.pane').forEach(x=>x.classList.add('hidden'));
+  el('planChoicePanel').classList.remove('hidden');
+  await loadTrialPlans();return;
+ }
+ el('planChoicePanel').classList.add('hidden');
+ document.querySelector('.tabs').classList.remove('hidden');
+ document.querySelectorAll('.pane').forEach(x=>x.classList.remove('hidden'));
+ await loadAll();
+}
+async function loadTrialPlans(){
+ const {data:prices,error}=await db.from('plan_prices').select('id,plan_id,billing_period,duration_months,amount,currency').eq('is_active',true).eq('plan_id','premium').order('amount');
+ if(error){message('trialPlanMessage','Imeshindwa kupakia vifurushi: '+error.message,'err');return}
+ if(!prices||!prices.length){message('trialPlanMessage','Hakuna vifurushi vinavyopatikana kwa sasa.','err');return}
+ el('trialPlans').innerHTML=prices.map(p=>{
+  const label=p.billing_period==='multi_year'?((p.duration_months-3)/12)+' years + 3 bonus months':p.billing_period==='monthly'?'Monthly':p.billing_period==='quarterly'?'3 Months':'Yearly';
+  return '<div class="card"><h3>'+esc(label)+'</h3><h2>'+esc(p.amount)+' '+esc(p.currency)+'</h2><p class="muted">Siku 14 za majaribio bila malipo</p><button style="width:100%" onclick="startSchoolTrial(\''+esc(p.id)+'\')">Chagua kifurushi hiki</button></div>';
+ }).join('');
+}
+async function startSchoolTrial(priceId){
+ const buttons=el('trialPlans').querySelectorAll('button');buttons.forEach(b=>b.disabled=true);
+ message('trialPlanMessage','Tunawasha siku 14 za majaribio...','info');
+ try{
+  const {data,error}=await db.rpc('start_school_trial',{p_price_id:priceId});
+  if(error)throw error;
+  el('planChoicePanel').classList.add('hidden');
+  document.querySelector('.tabs').classList.remove('hidden');
+  document.querySelectorAll('.pane').forEach(x=>x.classList.remove('hidden'));
+  message('paymentMsg','Hongera! Siku 14 za majaribio zimeanza. Hakuna malipo yaliyokatwa. Mwisho wa majaribio: '+new Date(data.trial_ends_at).toLocaleString(),'ok');
+  await loadAll();
+  showTab('wanafunzi',document.querySelector('.tab[data-tab="wanafunzi"]'));
+ }catch(e){
+  message('trialPlanMessage','Imeshindikana kuanzisha majaribio: '+e.message,'err');
+  buttons.forEach(b=>b.disabled=false);
+ }
 }
 async function logout(){await db.auth.signOut();currentUser=null;currentSchoolId=null;currentSchool=null;location.reload()}
 function showTab(id,node){
