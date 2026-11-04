@@ -1,0 +1,282 @@
+<!doctype html>
+<html lang="sw">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#0f172a">
+<title>SHULEPRO GLOBAL V29.1</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+:root{--blue:#1e40af;--navy:#0f172a;--bg:#f3f6fb;--line:#e5e7eb;--muted:#64748b}
+*{box-sizing:border-box}body{font-family:Inter,system-ui,Arial,sans-serif;background:var(--bg);margin:0;color:#172033}
+header{background:white;padding:14px 18px;display:flex;gap:12px;justify-content:space-between;align-items:center;box-shadow:0 2px 10px #0000000b;position:sticky;top:0;z-index:5}
+.brand{font-weight:900;color:var(--navy);letter-spacing:.3px}.muted{color:var(--muted);font-size:13px}
+.wrap{max-width:1200px;margin:auto;padding:12px}.card{background:#fff;border:1px solid var(--line);border-radius:15px;padding:18px;margin:12px 0;box-shadow:0 4px 18px #0f172a08}
+.auth{max-width:460px;margin:35px auto;padding:0;overflow:hidden}.authhead{display:grid;grid-template-columns:1fr 1fr}
+button{background:var(--blue);color:#fff;border:0;padding:10px 15px;border-radius:9px;font-weight:650;cursor:pointer}
+button.secondary{background:#e8eefc;color:#1e40af}button.dark{background:#111827}button:disabled{opacity:.55;cursor:not-allowed}
+input,select{font:inherit;padding:11px;border:1px solid #d6dce7;border-radius:9px;width:100%;margin:5px 0;background:white}
+label{font-size:13px;font-weight:650;color:#475569}.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.tabs{display:flex;gap:7px;flex-wrap:wrap;margin:10px 0}.tab{background:#e8eefc;color:#1e40af;border-radius:20px;padding:9px 13px;cursor:pointer;font-size:14px}.tab.active{background:var(--blue);color:white}
+.pane{display:none}.pane.active{display:block}.tablewrap{overflow:auto}table{border-collapse:collapse;width:100%;min-width:480px;margin-top:12px}th,td{border-bottom:1px solid var(--line);padding:9px;text-align:left;font-size:14px}th{background:#f8fafc}
+.msg{padding:10px;border-radius:8px;margin:10px 0;font-size:14px;white-space:pre-wrap}.ok{background:#ecfdf5;color:#166534}.err{background:#fef2f2;color:#991b1b}.info{background:#eff6ff;color:#1e40af}
+.actions{display:flex;gap:8px;flex-wrap:wrap}.hidden{display:none!important}
+@media(max-width:650px){.grid{grid-template-columns:1fr}header{align-items:flex-start}.card{padding:14px}}
+@media print{header,.tabs,.no-print,button{display:none!important}body{background:#fff}.card{box-shadow:none;border:0}}
+</style>
+</head>
+<body>
+<header>
+ <div><div class="brand">SHULEPRO GLOBAL</div><div class="muted">School Management System</div></div>
+ <div style="text-align:right"><strong id="schoolName">Karibu</strong><div class="muted" id="schoolCode"></div></div>
+ <button id="logoutBtn" class="dark hidden" onclick="logout()">Toka</button>
+</header>
+
+<div class="wrap">
+<section id="auth" class="card auth">
+ <div class="authhead">
+  <button id="regTabBtn" onclick="showAuth('reg')">Sajili Shule</button>
+  <button id="loginTabBtn" class="secondary" onclick="showAuth('login')">Ingia</button>
+ </div>
+ <div id="regPane" style="padding:18px">
+  <h2>Sajili shule</h2>
+  <label>Jina la shule</label><input id="regName" placeholder="Jina la Shule">
+  <label>Jina kamili la msimamizi</label><input id="regFullName" placeholder="Jina kamili">
+  <label>Email ya msimamizi</label><input id="regEmail" type="email" placeholder="name@example.com">
+  <label>Namba ya simu (si lazima)</label><input id="regPhone" placeholder="+255...">
+  <label>Nenosiri (angalau herufi 6)</label><input id="regPass" type="password" placeholder="Nenosiri">
+  <label>Nchi</label><select id="regCountry"><option value="TZ">Tanzania</option><option value="KE">Kenya</option><option value="UG">Uganda</option><option value="RW">Rwanda</option><option value="US">United States</option><option value="GB">United Kingdom</option><option value="OTHER">Other</option></select>
+  <label>Lugha ya mwanzo</label><select id="regLang"><option value="sw">Kiswahili</option><option value="en">English</option><option value="fr">Français</option><option value="ar">العربية</option><option value="zh">中文</option><option value="es">Español</option></select>
+  <button style="width:100%;margin-top:10px" onclick="register()">Sajili Shule</button>
+  <div id="regMsg"></div>
+ </div>
+ <div id="loginPane" class="hidden" style="padding:18px">
+  <h2>Ingia kwenye akaunti</h2>
+  <label>Email</label><input id="loginEmail" type="email" placeholder="Email">
+  <label>Nenosiri</label><input id="loginPass" type="password" placeholder="Nenosiri">
+  <button style="width:100%;margin-top:10px" onclick="login()">Ingia</button>
+  <div id="loginMsg"></div>
+ </div>
+</section>
+
+<section id="app" class="hidden">
+ <div class="card">
+  <div><strong id="welcome">Dashboard</strong><div class="muted">Taarifa zinachujwa kwa shule uliyoingia kupitia School Membership na sera za Supabase RLS.</div></div>
+ </div>
+ <nav class="tabs no-print">
+  <div class="tab active" data-tab="wanafunzi" onclick="showTab('wanafunzi',this)">Wanafunzi</div>
+  <div class="tab" data-tab="alama" onclick="showTab('alama',this)">Alama</div>
+  <div class="tab" data-tab="mahudhurio" onclick="showTab('mahudhurio',this)">Mahudhurio</div>
+  <div class="tab" data-tab="ratiba" onclick="showTab('ratiba',this)">Ratiba</div>
+  <div class="tab" data-tab="ada" onclick="showTab('ada',this)">Ada & TxID</div>
+  <div class="tab" data-tab="report" onclick="showTab('report',this)">Ripoti</div>
+  <div class="tab" data-tab="backup" onclick="showTab('backup',this)">Backup & Lugha</div>
+ </nav>
+
+ <div id="wanafunzi" class="card pane active">
+  <h3>Wanafunzi</h3><div class="grid"><div><label>Jina la mwanafunzi</label><input id="stuName" placeholder="Jina kamili"></div><div><label>Darasa</label><input id="stuClass" placeholder="Mfano: Form I"></div></div>
+  <button onclick="addStudent()">Hifadhi mwanafunzi</button><div id="stuMsg"></div><div class="tablewrap"><table id="studentsTable"></table></div>
+ </div>
+
+ <div id="alama" class="card pane">
+  <h3>Alama</h3><div class="grid"><div><label>Mwanafunzi</label><select id="markStudent"></select></div><div><label>Somo</label><input id="markSubject" placeholder="Hisabati"></div><div><label>Alama</label><input id="markScore" type="number" min="0" max="100" placeholder="0 - 100"></div></div>
+  <button onclick="addMark()">Hifadhi alama</button><div id="markMsg"></div><div class="tablewrap"><table id="marksTable"></table></div>
+ </div>
+
+ <div id="mahudhurio" class="card pane">
+  <h3>Mahudhurio</h3><p class="muted">Kitendo hiki kitaweka present kwa wanafunzi wote wa shule kwa tarehe ya leo. Hakihakikishi mahudhurio ya mtu bila mwalimu kuyathibitisha.</p>
+  <button onclick="markAttendance()">Weka wote present leo</button><div id="attMsg"></div><div class="tablewrap"><table id="attTable"></table></div>
+ </div>
+
+ <div id="ratiba" class="card pane">
+  <h3>Ratiba ya vipindi</h3><div class="grid"><input id="ttDay" placeholder="Siku"><input id="ttTime" placeholder="08:00-09:00"><input id="ttSubject" placeholder="Somo"><input id="ttClass" placeholder="Darasa"></div>
+  <button onclick="addTimetable()">Ongeza kipindi</button><div id="ttMsg"></div><div class="tablewrap"><table id="ttTable"></table></div>
+ </div>
+
+ <div id="ada" class="card pane">
+  <h3>Ada na malipo</h3>
+  <div class="msg info">Sehemu hii haitathibitisha malipo ya M-Pesa/Tigo kwa kuingiza TxID pekee. Uthibitishaji halisi unahitaji muunganisho wa mtoa huduma au ukaguzi wa msimamizi. Hapa tunaonyesha rekodi za payments zilizopo kwenye database.</div>
+  <div class="tablewrap"><table id="feesTable"></table></div>
+ </div>
+
+ <div id="report" class="card pane">
+  <h3>Ripoti ya shule</h3><p class="muted">Chapisha ukurasa huu na uchague Save as PDF kwenye kifaa chako.</p><button class="no-print" onclick="window.print()">Chapisha / Hifadhi PDF</button>
+  <div id="reportArea"></div>
+ </div>
+
+ <div id="backup" class="card pane">
+  <h3>Backup & Lugha</h3><p class="muted">Backup inajumuisha data ambayo akaunti yako inaruhusiwa kusoma. Hifadhi faili kwa usalama.</p>
+  <div class="actions"><button onclick="exportBackup()">Pakua Backup JSON</button><button class="secondary" onclick="document.getElementById('importFile').click()">Rejesha wanafunzi kutoka JSON</button></div>
+  <input type="file" id="importFile" accept=".json,application/json" class="hidden" onchange="importBackup(event)">
+  <label>Lugha</label><select id="languageSelect" onchange="setLang(this.value)"><option value="sw">Kiswahili</option><option value="en">English</option><option value="fr">Français</option><option value="ar">العربية</option><option value="zh">中文</option><option value="es">Español</option></select>
+  <div id="backupMsg"></div>
+ </div>
+</section>
+</div>
+
+<script>
+'use strict';
+// Supabase project configuration
+const SUPABASE_URL = "https://btrxhcfkniewwsazvn.supabase.co";
+const SUPABASE_ANON_KEY = "sb_publishable_bom_7JYZ54SJy869vpnT8g_EZhcHZDg";
+const db = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+  auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true}
+});
+let currentUser=null, currentSchoolId=null, currentSchool=null, studentsCache=[];
+
+function el(id){return document.getElementById(id)}
+function message(id,text,type='info'){el(id).innerHTML='';const d=document.createElement('div');d.className='msg '+type;d.textContent=text;el(id).appendChild(d)}
+function showAuth(which){el('regPane').classList.toggle('hidden',which!=='reg');el('loginPane').classList.toggle('hidden',which!=='login');el('regTabBtn').className=which==='reg'?'':'secondary';el('loginTabBtn').className=which==='login'?'':'secondary'}
+function schoolCode(){return 'SP'+Math.random().toString(36).slice(2,8).toUpperCase()}
+async function register(){
+ const name=el('regName').value.trim(),full=el('regFullName').value.trim(),email=el('regEmail').value.trim().toLowerCase(),pass=el('regPass').value,phone=el('regPhone').value.trim(),country=el('regCountry').value,lang=el('regLang').value;
+ if(!name||!full||!email||pass.length<6){message('regMsg','Jaza jina la shule, jina kamili, email na nenosiri lenye angalau herufi 6.','err');return}
+ message('regMsg','Inatengeneza akaunti...','info');
+ try{
+  const {data,error}=await db.auth.signUp({email,password:pass,options:{data:{full_name:full,phone,school_name:name}}});
+  if(error)throw error;
+  const pending={school_name:name,full_name:full,country_code:country,language:lang,school_code:schoolCode()};
+  localStorage.setItem('shulepro_pending_registration',JSON.stringify(pending));
+  if(data.session){await completePendingRegistration();return}
+  message('regMsg','Akaunti imetengenezwa. Fungua email yako uthibitishe akaunti, kisha rudi hapa na uingie. Usajili wa shule utakamilika baada ya kuingia.','ok');
+  showAuth('login');el('loginEmail').value=email;
+ }catch(e){message('regMsg','Usajili umeshindikana: '+e.message,'err')}
+}
+async function completePendingRegistration(){
+ const raw=localStorage.getItem('shulepro_pending_registration');if(!raw)return;
+ const p=JSON.parse(raw);
+ const {data,error}=await db.rpc('register_school',{
+  p_school_name:p.school_name,p_school_code:p.school_code,p_full_name:p.full_name,
+  p_country_code:p.country_code,p_language:p.language
+ });
+ if(error)throw error;
+ localStorage.removeItem('shulepro_pending_registration');
+}
+async function login(){
+ const email=el('loginEmail').value.trim().toLowerCase(),password=el('loginPass').value;
+ if(!email||!password){message('loginMsg','Weka email na nenosiri.','err');return}
+ message('loginMsg','Inakagua akaunti...','info');
+ try{
+  const {data,error}=await db.auth.signInWithPassword({email,password});if(error)throw error;
+  try{await completePendingRegistration()}catch(e){throw new Error('Umeingia, lakini usajili wa shule haujakamilika: '+e.message)}
+  await startApp(data.user);
+ }catch(e){message('loginMsg','Imeshindikana kuingia: '+e.message,'err')}
+}
+async function startApp(user){
+ currentUser=user;
+ // Resolve school through authenticated membership; never trust a school ID from localStorage.
+ const {data:members,error}=await db.from('school_memberships').select('school_id,role').eq('user_id',user.id);
+ if(error)throw error;
+ if(!members||!members.length){el('auth').classList.remove('hidden');el('app').classList.add('hidden');message('loginMsg','Akaunti haina uanachama wa shule. Hakikisha usajili wa shule umekamilika.','err');return}
+ currentSchoolId=members[0].school_id;
+ const {data:school,error:schoolError}=await db.from('schools').select('*').eq('id',currentSchoolId).single();
+ if(schoolError)throw schoolError;
+ currentSchool=school;
+ el('schoolName').textContent=school.school_name||'Shule';
+ el('schoolCode').textContent=school.school_code||'';
+ el('welcome').textContent='Karibu, '+(user.user_metadata?.full_name||user.email);
+ el('auth').classList.add('hidden');el('app').classList.remove('hidden');el('logoutBtn').classList.remove('hidden');
+ await loadAll();
+}
+async function logout(){await db.auth.signOut();currentUser=null;currentSchoolId=null;currentSchool=null;location.reload()}
+function showTab(id,node){
+ document.querySelectorAll('.pane').forEach(x=>x.classList.remove('active'));
+ document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));
+ el(id).classList.add('active');if(node)node.classList.add('active');
+ if(id==='wanafunzi')loadStudents();if(id==='alama')loadMarks();if(id==='mahudhurio')loadAttendance();if(id==='ratiba')loadTimetable();if(id==='ada')loadFees();if(id==='report')buildReport();
+}
+async function addStudent(){
+ const name=el('stuName').value.trim(),cls=el('stuClass').value.trim();
+ if(!name){message('stuMsg','Weka jina la mwanafunzi.','err');return}
+ const {error}=await db.from('students').insert({school_id:currentSchoolId,name,class:cls});
+ if(error){message('stuMsg','Haijahifadhiwa: '+error.message,'err');return}
+ el('stuName').value='';el('stuClass').value='';message('stuMsg','Mwanafunzi amehifadhiwa.','ok');await loadStudents();
+}
+async function loadStudents(){
+ const {data,error}=await db.from('students').select('*').eq('school_id',currentSchoolId).order('created_at',{ascending:false});
+ if(error){message('stuMsg','Imeshindwa kusoma wanafunzi: '+error.message,'err');return}
+ studentsCache=data||[];
+ el('studentsTable').innerHTML='<tr><th>Jina</th><th>Darasa</th></tr>'+studentsCache.map(s=>`<tr><td>${esc(s.name||s.full_name||'')}</td><td>${esc(s.class||s.class_name||'')}</td></tr>`).join('');
+ const opts=studentsCache.map(s=>`<option value="${esc(s.id)}">${esc(s.name||s.full_name||s.id)}</option>`).join('');
+ el('markStudent').innerHTML=opts;
+}
+async function addMark(){
+ const student_id=el('markStudent').value,subject=el('markSubject').value.trim(),score=Number(el('markScore').value);
+ if(!student_id||!subject||!Number.isFinite(score)||score<0||score>100){message('markMsg','Chagua mwanafunzi, weka somo na alama 0 hadi 100.','err');return}
+ const {error}=await db.from('marks').insert({school_id:currentSchoolId,student_id,subject,score});
+ if(error){message('markMsg','Alama hazijahifadhiwa: '+error.message,'err');return}
+ message('markMsg','Alama zimehifadhiwa.','ok');await loadMarks();
+}
+async function loadMarks(){
+ const {data,error}=await db.from('marks').select('*,students(name)').eq('school_id',currentSchoolId);
+ if(error){el('marksTable').innerHTML='';message('markMsg','Imeshindwa kusoma alama: '+error.message,'err');return}
+ el('marksTable').innerHTML='<tr><th>Mwanafunzi</th><th>Somo</th><th>Alama</th></tr>'+(data||[]).map(m=>`<tr><td>${esc(m.students?.name||m.student_id)}</td><td>${esc(m.subject||'')}</td><td>${esc(m.score)}</td></tr>`).join('');
+}
+async function markAttendance(){
+ const {data:students,error}=await db.from('students').select('id').eq('school_id',currentSchoolId);
+ if(error){message('attMsg','Imeshindwa kusoma wanafunzi: '+error.message,'err');return}
+ if(!students?.length){message('attMsg','Hakuna wanafunzi wa kuweka mahudhurio.','err');return}
+ const today=new Date().toLocaleDateString('en-CA');
+ const rows=students.map(s=>({school_id:currentSchoolId,student_id:s.id,attend_date:today,status:'present'}));
+ const {error:insertError}=await db.from('attendance').insert(rows);
+ if(insertError){message('attMsg','Mahudhurio hayajahifadhiwa: '+insertError.message,'err');return}
+ message('attMsg','Mahudhurio ya leo yamehifadhiwa.','ok');await loadAttendance();
+}
+async function loadAttendance(){
+ const {data,error}=await db.from('attendance').select('*,students(name)').eq('school_id',currentSchoolId).order('attend_date',{ascending:false}).limit(100);
+ if(error){message('attMsg','Imeshindwa kusoma mahudhurio: '+error.message,'err');return}
+ el('attTable').innerHTML='<tr><th>Tarehe</th><th>Mwanafunzi</th><th>Hali</th></tr>'+(data||[]).map(a=>`<tr><td>${esc(a.attend_date||'')}</td><td>${esc(a.students?.name||a.student_id)}</td><td>${esc(a.status||'')}</td></tr>`).join('');
+}
+async function addTimetable(){
+ const day=el('ttDay').value.trim(),time_slot=el('ttTime').value.trim(),subject=el('ttSubject').value.trim(),class_name=el('ttClass').value.trim();
+ if(!day||!time_slot||!subject||!class_name){message('ttMsg','Jaza taarifa zote za kipindi.','err');return}
+ const {error}=await db.from('timetable').insert({school_id:currentSchoolId,day,time_slot,subject,class_name});
+ if(error){message('ttMsg','Ratiba haijahifadhiwa. Hakikisha jedwali timetable na columns zake zipo: '+error.message,'err');return}
+ message('ttMsg','Kipindi kimeongezwa.','ok');await loadTimetable();
+}
+async function loadTimetable(){
+ const {data,error}=await db.from('timetable').select('*').eq('school_id',currentSchoolId);
+ if(error){el('ttTable').innerHTML='';message('ttMsg','Jedwali la ratiba halipatikani au haliruhusu kusoma: '+error.message,'err');return}
+ el('ttTable').innerHTML='<tr><th>Siku</th><th>Muda</th><th>Somo</th><th>Darasa</th></tr>'+(data||[]).map(t=>`<tr><td>${esc(t.day||'')}</td><td>${esc(t.time_slot||'')}</td><td>${esc(t.subject||'')}</td><td>${esc(t.class_name||'')}</td></tr>`).join('');
+}
+async function loadFees(){
+ const {data,error}=await db.from('payments').select('*').eq('school_id',currentSchoolId).order('created_at',{ascending:false}).limit(100);
+ if(error){el('feesTable').innerHTML='';message('backupMsg','Imeshindwa kusoma payments: '+error.message,'err');return}
+ el('feesTable').innerHTML='<tr><th>Tarehe</th><th>Kiasi</th><th>TxID</th><th>Status</th></tr>'+(data||[]).map(p=>`<tr><td>${esc((p.created_at||'').slice(0,10))}</td><td>${esc(p.amount??'')}</td><td>${esc(p.txid||'')}</td><td>${esc(p.status||'')}</td></tr>`).join('');
+}
+function buildReport(){
+ const total=studentsCache.length;
+ el('reportArea').innerHTML=`<h2>${esc(currentSchool?.school_name||'Shule')}</h2><p>School Code: ${esc(currentSchool?.school_code||'')}</p><p>Tarehe: ${new Date().toLocaleDateString()}</p><h3>Muhtasari</h3><p>Idadi ya wanafunzi waliopakiwa: ${total}</p>`;
+}
+async function exportBackup(){
+ try{
+  const names=['students','marks','attendance','payments'];const backup={format:'ShuleProBackupV1',school_id:currentSchoolId,exported_at:new Date().toISOString(),tables:{}};
+  for(const table of names){const {data,error}=await db.from(table).select('*').eq('school_id',currentSchoolId);if(error)throw new Error(table+': '+error.message);backup.tables[table]=data||[]}
+  const blob=new Blob([JSON.stringify(backup,null,2)],{type:'application/json'}),url=URL.createObjectURL(blob),a=document.createElement('a');
+  a.href=url;a.download='shulepro-backup-'+currentSchoolId+'.json';a.click();URL.revokeObjectURL(url);message('backupMsg','Backup imepakuliwa.','ok');
+ }catch(e){message('backupMsg','Backup haijakamilika: '+e.message,'err')}
+}
+async function importBackup(event){
+ const file=event.target.files?.[0];if(!file)return;
+ try{
+  const parsed=JSON.parse(await file.text());
+  if(parsed.format!=='ShuleProBackupV1'||!parsed.tables?.students)throw new Error('Muundo wa backup si sahihi.');
+  if(!confirm('Rejesha wanafunzi '+parsed.tables.students.length+' kwenye shule hii? Data iliyopo haitafutwa.'))return;
+  const rows=parsed.tables.students.map(({id,created_at,updated_at,...s})=>({...s,school_id:currentSchoolId}));
+  if(rows.length){const {error}=await db.from('students').insert(rows);if(error)throw error}
+  message('backupMsg','Wanafunzi wamerejeshwa. Data ya shule nyingine haijahamishwa.','ok');await loadStudents();
+ }catch(e){message('backupMsg','Imeshindikana kurejesha backup: '+e.message,'err')}
+ finally{event.target.value=''}
+}
+function esc(v){return String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
+function setLang(lang){localStorage.setItem('shulepro_lang',lang);message('backupMsg','Lugha imechaguliwa. Tafsiri kamili ya moduli zote bado inahitaji kukamilishwa.','info')}
+async function loadAll(){await loadStudents();await loadMarks();await loadAttendance();await loadTimetable();await loadFees();buildReport()}
+async function boot(){
+ const {data:{session}}=await db.auth.getSession();
+ if(session){try{await startApp(session.user)}catch(e){message('loginMsg','Imeshindwa kufungua shule: '+e.message,'err')}}
+}
+db.auth.onAuthStateChange((_event,session)=>{if(!session){el('app').classList.add('hidden');el('logoutBtn').classList.add('hidden');el('auth').classList.remove('hidden')}});
+window.addEventListener('DOMContentLoaded',boot);
+</script>
+</body>
+</html>
