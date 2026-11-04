@@ -91,7 +91,7 @@ label{font-size:13px;font-weight:650;color:#475569}.grid{display:grid;grid-templ
 
  <div id="mahudhurio" class="card pane">
   <h3>Mahudhurio</h3><p class="muted">Kitendo hiki kitaweka present kwa wanafunzi wote wa shule kwa tarehe ya leo. Hakihakikishi mahudhurio ya mtu bila mwalimu kuyathibitisha.</p>
-  <button onclick="markAttendance()">Weka wote present leo</button><div id="attMsg"></div><div class="tablewrap"><table id="attTable"></table></div>
+  <p class="muted">Chagua hali ya kila mwanafunzi. Unaweza kurekebisha mahudhurio ya siku hiyo kabla ya kuhifadhi.</p><button onclick="saveAttendance()">Hifadhi mahudhurio ya leo</button><div id="attMsg"></div><div class="tablewrap"><table id="attEntryTable"></table></div><h4>Historia ya mahudhurio</h4><div class="tablewrap"><table id="attTable"></table></div>
  </div>
 
  <div id="ratiba" class="card pane">
@@ -228,24 +228,28 @@ async function loadMarks(){
  if(error){el('marksTable').innerHTML='';message('markMsg','Imeshindwa kusoma alama: '+error.message,'err');return}
  el('marksTable').innerHTML='<tr><th>Mwanafunzi</th><th>Somo</th><th>Alama</th></tr>'+(data||[]).map(m=>`<tr><td>${esc(m.students?.full_name||m.student_id)}</td><td>${esc(m.subject||'')}</td><td>${esc(m.score)}</td></tr>`).join('');
 }
-async function markAttendance(){
+function localToday(){return new Date(Date.now()-new Date().getTimezoneOffset()*60000).toISOString().slice(0,10)}
+async function saveAttendance(){
  const {data:students,error}=await db.from('students').select('id').eq('school_id',currentSchoolId);
  if(error){message('attMsg','Imeshindwa kusoma wanafunzi: '+error.message,'err');return}
- if(!students?.length){message('attMsg','Hakuna wanafunzi wa kuweka mahudhurio.','err');return}
- const today=new Date(Date.now()-new Date().getTimezoneOffset()*60000).toISOString().slice(0,10);
- const {data:already,error:checkError}=await db.from('attendance').select('student_id').eq('school_id',currentSchoolId).eq('attend_date',today);
- if(checkError){message('attMsg','Imeshindwa kukagua mahudhurio yaliyopo: '+checkError.message,'err');return}
- const marked=new Set((already||[]).map(x=>x.student_id));
- const rows=students.filter(s=>!marked.has(s.id)).map(s=>({school_id:currentSchoolId,student_id:s.id,attend_date:today,status:'Present'}));
- if(!rows.length){message('attMsg','Mahudhurio ya leo tayari yamejazwa.','info');await loadAttendance();return}
- const {error:insertError}=await db.from('attendance').insert(rows);
- if(insertError){message('attMsg','Mahudhurio hayajahifadhiwa: '+insertError.message,'err');return}
+ if(!students?.length){message('attMsg','Hakuna wanafunzi wa kuhifadhi.','err');return}
+ const today=localToday();
+ const rows=students.map(s=>({school_id:currentSchoolId,student_id:s.id,attend_date:today,status:el('attStatus_'+s.id)?.value||'Present'}));
+ const {error:saveError}=await db.from('attendance').upsert(rows,{onConflict:'student_id,attend_date'});
+ if(saveError){message('attMsg','Mahudhurio hayajahifadhiwa: '+saveError.message,'err');return}
  message('attMsg','Mahudhurio ya leo yamehifadhiwa.','ok');await loadAttendance();
 }
 async function loadAttendance(){
- const {data,error}=await db.from('attendance').select('*,students(full_name)').eq('school_id',currentSchoolId).order('attend_date',{ascending:false}).limit(100);
- if(error){message('attMsg','Imeshindwa kusoma mahudhurio: '+error.message,'err');return}
- el('attTable').innerHTML='<tr><th>Tarehe</th><th>Mwanafunzi</th><th>Hali</th></tr>'+(data||[]).map(a=>`<tr><td>${esc(a.attend_date||'')}</td><td>${esc(a.students?.full_name||a.student_id)}</td><td>${esc(a.status||'')}</td></tr>`).join('');
+ const today=localToday();
+ const [studentsRes,todayRes,historyRes]=await Promise.all([
+  db.from('students').select('id,full_name,class_name').eq('school_id',currentSchoolId).order('full_name'),
+  db.from('attendance').select('student_id,status').eq('school_id',currentSchoolId).eq('attend_date',today),
+  db.from('attendance').select('*,students(full_name)').eq('school_id',currentSchoolId).order('attend_date',{ascending:false}).limit(100)
+ ]);
+ const err=studentsRes.error||todayRes.error||historyRes.error;if(err){message('attMsg','Imeshindwa kupakia mahudhurio: '+err.message,'err');return}
+ const current=new Map((todayRes.data||[]).map(x=>[x.student_id,x.status]));
+ el('attEntryTable').innerHTML='<tr><th>Mwanafunzi</th><th>Darasa</th><th>Hali</th></tr>'+(studentsRes.data||[]).map(s=>`<tr><td>${esc(s.full_name)}</td><td>${esc(s.class_name||'')}</td><td><select id="attStatus_${esc(s.id)}"><option value="Present" ${(current.get(s.id)||'Present')==='Present'?'selected':''}>Present</option><option value="Absent" ${current.get(s.id)==='Absent'?'selected':''}>Absent</option><option value="Late" ${current.get(s.id)==='Late'?'selected':''}>Late</option></select></td></tr>`).join('');
+ el('attTable').innerHTML='<tr><th>Tarehe</th><th>Mwanafunzi</th><th>Hali</th></tr>'+(historyRes.data||[]).map(a=>`<tr><td>${esc(a.attend_date||'')}</td><td>${esc(a.students?.full_name||a.student_id)}</td><td>${esc(a.status||'')}</td></tr>`).join('');
 }
 async function addTimetable(){
  const day=el('ttDay').value,time_slot=el('ttTime').value.trim(),subject=el('ttSubject').value.trim(),class_name=el('ttClass').value.trim();
@@ -266,7 +270,7 @@ async function loadFees(){
   db.from('plan_prices').select('id,plan_id,billing_period,duration_months,amount,currency').eq('is_active',true).order('amount')
  ]);
  const err=payRes.error||subRes.error||priceRes.error;if(err){message('paymentMsg','Imeshindwa kupakia malipo/bei: '+err.message,'err');return}
- el('paymentPrice').innerHTML=(priceRes.data||[]).map(p=>`<option value="${esc(p.id)}" data-amount="${esc(p.amount)}" data-currency="${esc(p.currency)}">${esc(p.plan_id)} – ${esc(p.billing_period)} (${esc(p.amount)} ${esc(p.currency)})</option>`).join('');
+ el('paymentPrice').innerHTML=(priceRes.data||[]).map(p=>{const label=p.billing_period==='multi_year'?((p.duration_months-3)/12)+' years + 3 bonus months':p.billing_period;return `<option value="${esc(p.id)}" data-amount="${esc(p.amount)}" data-currency="${esc(p.currency)}">${esc(p.plan_id)} – ${esc(label)} (${esc(p.amount)} ${esc(p.currency)})</option>`}).join('');
  updatePaymentAmount();
  el('subscriptionTable').innerHTML='<tr><th>Mpango</th><th>Status</th><th>Mwanzo</th><th>Mwisho</th></tr>'+(subRes.data||[]).map(s=>`<tr><td>${esc(s.plan_id||s.plan||'')}</td><td>${esc(s.status||'')}</td><td>${esc((s.starts_at||'').slice(0,10))}</td><td>${esc((s.ends_at||s.trial_ends_at||'').slice(0,10)||'—')}</td></tr>`).join('');
  el('feesTable').innerHTML='<tr><th>Tarehe</th><th>Kiasi</th><th>TxID</th><th>Njia</th><th>Status</th></tr>'+(payRes.data||[]).map(p=>`<tr><td>${esc((p.created_at||'').slice(0,10))}</td><td>${esc(p.amount??'')} ${esc(p.currency||'')}</td><td>${esc(p.transaction_id||'')}</td><td>${esc(p.payment_method||p.provider||'')}</td><td>${esc(p.status||'')}</td></tr>`).join('');
