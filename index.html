@@ -159,7 +159,7 @@ function schoolCode(){const a=new Uint8Array(6);crypto.getRandomValues(a);return
 async function register(){
  const name=el('regName').value.trim(),full=el('regFullName').value.trim(),email=el('regEmail').value.trim().toLowerCase(),pass=el('regPass').value,phone=el('regPhone').value.trim(),country=el('regCountry').value,lang='en';
  const button=el('registerBtn');if(button)button.disabled=true;
- const emailOk=/^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(email);
+ const emailOk=email.includes('@')&&email.includes('.')&&email.indexOf('@')>0&&email.lastIndexOf('.')>email.indexOf('@')+1&&email.lastIndexOf('.')<email.length-1;
  if(!name||name.length<2||!full||full.length<2||!emailOk||pass.length<6||!country){
   message('regMsg','Complete all required fields: school name, administrator name, valid email, password (at least 6 characters), and country.','err');if(button)button.disabled=false;return;
  }
