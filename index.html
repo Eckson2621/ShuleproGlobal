@@ -40,7 +40,7 @@ html[dir="rtl"] body{text-align:right}html[dir="rtl"] th,html[dir="rtl"] td{text
   <button id="regTabBtn" type="button">Register School</button>
   <button id="loginTabBtn" class="secondary" type="button">Sign In</button>
  </div>
- <div id="regPane" class="hidden" style="padding:18px">
+ <div id="regPane" style="padding:18px">
   <h2>Register Your School</h2>
   <label>School Name</label><input id="regName" placeholder="Enter school name">
   <label>Administrator Full Name</label><input id="regFullName" placeholder="Enter full name">
@@ -51,7 +51,7 @@ html[dir="rtl"] body{text-align:right}html[dir="rtl"] th,html[dir="rtl"] td{text
   <button id="registerBtn" type="button" style="width:100%;margin-top:10px">Create School Account</button>
   <div id="regMsg"></div>
  </div>
- <div id="loginPane" style="padding:18px">
+ <div id="loginPane" class="hidden" style="padding:18px">
   <h2>Sign In to Your Account</h2>
   <label>Email Address</label><input id="loginEmail" type="email" placeholder="Enter your email">
   <label>Password</label><input id="loginPass" type="password" placeholder="Enter your password">
@@ -165,6 +165,7 @@ function showAuth(which){
 window.showAuth=showAuth;
 function schoolCode(){const a=new Uint8Array(6);crypto.getRandomValues(a);return 'SP'+Array.from(a,x=>x.toString(36).padStart(2,'0')).join('').toUpperCase().slice(0,10)}
 async function register(){
+ if(!db){message('regMsg','Supabase haijapakia. Hakikisha intaneti ipo kisha refresh ukurasa.','err');return}
  const name=el('regName').value.trim(),full=el('regFullName').value.trim(),email=el('regEmail').value.trim().toLowerCase(),pass=el('regPass').value,phone=el('regPhone').value.trim(),country=el('regCountry').value,lang='en';
  const button=el('registerBtn');if(button)button.disabled=true;
  const emailOk=email.includes('@')&&email.includes('.')&&email.indexOf('@')>0&&email.lastIndexOf('.')>email.indexOf('@')+1&&email.lastIndexOf('.')<email.length-1;
@@ -211,6 +212,7 @@ async function completePendingRegistration(){
  return data;
 }
 async function login(){
+ if(!db){message('loginMsg','Supabase haijapakia. Hakikisha intaneti ipo kisha refresh ukurasa.','err');return}
  const email=el('loginEmail').value.trim().toLowerCase(),password=el('loginPass').value;
  if(!email||!password){message('loginMsg','Enter your email address and password.','err');return}
  message('loginMsg','Signing in...','info');
