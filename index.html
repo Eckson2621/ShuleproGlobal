@@ -893,7 +893,8 @@ async function completeStaffInvitation(){
  if(password!==confirmPassword){message('inviteSetupMsg','The passwords do not match.','err');return;}
  button.disabled=true;message('inviteSetupMsg','Activating your account...','info');
  try{
-  const {data,error}=await db.auth.updateUser({password});
+  const {data:current}=await db.auth.getUser();
+  const {data,error}=await db.auth.updateUser({password,data:{...(current.user?.user_metadata||{}),invitation_completed:true}});
   if(error)throw error;
   inviteFlowDetected=false;el('inviteSetup').classList.add('hidden');
   await startApp(data.user);
@@ -908,7 +909,8 @@ async function boot(){
  if(!window.supabase?.createClient){message('regMsg','Supabase library did not load. Check your connection and refresh.','err');return}
  const {data:{session}}=await db.auth.getSession();
  if(session){
-  if(inviteFlowDetected){showInvitePasswordSetup();return;}
+  const inviteMeta=session.user?.user_metadata||{};
+  if(inviteFlowDetected||(inviteMeta.invited_school_id&&!inviteMeta.invitation_completed)){showInvitePasswordSetup();return;}
   try{await completePendingRegistration();await startApp(session.user)}catch(e){message('loginMsg','Could not complete registration or open school: '+e.message,'err')}
  }
 }
