@@ -477,58 +477,157 @@ Object.assign(LANG_TEXT.es,{
  "School workspace":"Espacio de trabajo escolar","School Dashboard":"Panel de la escuela","Overview":"Resumen","Core modules":"Módulos principales","Search modules...":"Buscar módulos...","School Administration":"Administración escolar","Students & Admissions":"Estudiantes y admisiones","Teachers & Human Resources":"Docentes y recursos humanos","Academic Management":"Gestión académica","Attendance & Scheduling":"Asistencia y horarios","Finance & Accounts":"Finanzas y contabilidad","Parent & Student Portals":"Portales de padres y estudiantes","Communication & Notifications":"Comunicación y notificaciones","Library Management":"Gestión de biblioteca","Hostel & Boarding":"Internado y alojamiento","Transport Management":"Gestión del transporte","Inventory & Assets":"Inventario y activos","Events, Discipline & Welfare":"Eventos, disciplina y bienestar","Settings, Security & Data":"Configuración, seguridad y datos","School Profile":"Perfil de la escuela","Academic Years & Terms":"Años y períodos académicos","Departments & Subjects":"Departamentos y asignaturas","Classes & Streams":"Clases y secciones","Policies & Documents":"Políticas y documentos","School setup saved successfully.":"La configuración de la escuela se guardó correctamente."
 });
 
-/* Language engine: always translate from each element's original text.
-   This prevents one selected language from becoming the source for the next language. */
+
+/* Workspace and Super Admin terminology: English source -> Swahili/French/Arabic/Chinese/Spanish. */
+const SP_WORKSPACE_I18N={
+"School workspace":["Eneo la kazi la shule","Espace de travail scolaire","مساحة عمل المدرسة","学校工作区","Espacio de trabajo escolar"],
+"School Dashboard":["Dashibodi ya shule","Tableau de bord de l’école","لوحة تحكم المدرسة","学校仪表板","Panel de la escuela"],
+"A unified view of your school operations.":["Muhtasari wa shughuli za shule yako.","Une vue unifiée des activités de votre école.","عرض موحد لعمليات مدرستك.","学校运营统一视图。","Una vista unificada de las operaciones escolares."],
+"Search modules...":["Tafuta moduli...","Rechercher des modules...","ابحث عن الوحدات...","搜索模块...","Buscar módulos..."],
+"Overview":["Muhtasari","Vue d’ensemble","نظرة عامة","概览","Resumen"],
+"Core modules":["Moduli kuu","Modules principaux","الوحدات الأساسية","核心模块","Módulos principales"],
+"School Administration":["Usimamizi wa shule","Administration scolaire","إدارة المدرسة","学校管理","Administración escolar"],
+"Students & Admissions":["Wanafunzi na udahili","Élèves et admissions","الطلاب والقبول","学生与招生","Estudiantes y admisiones"],
+"Teachers & Human Resources":["Walimu na rasilimali watu","Enseignants et ressources humaines","المعلمون والموارد البشرية","教师与人力资源","Docentes y recursos humanos"],
+"Academic Management":["Usimamizi wa taaluma","Gestion académique","الإدارة الأكاديمية","教学管理","Gestión académica"],
+"Attendance & Scheduling":["Mahudhurio na ratiba","Présences et emplois du temps","الحضور والجداول","考勤与课程安排","Asistencia y horarios"],
+"Finance & Accounts":["Fedha na hesabu","Finances et comptabilité","المالية والحسابات","财务与账目","Finanzas y contabilidad"],
+"Parent & Student Portals":["Milango ya wazazi na wanafunzi","Portails parents et élèves","بوابات أولياء الأمور والطلاب","家长与学生门户","Portales de padres y estudiantes"],
+"Communication & Notifications":["Mawasiliano na taarifa","Communication et notifications","الاتصالات والإشعارات","沟通与通知","Comunicación y notificaciones"],
+"Library Management":["Usimamizi wa maktaba","Gestion de la bibliothèque","إدارة المكتبة","图书馆管理","Gestión de biblioteca"],
+"Hostel & Boarding":["Bweni na malazi","Internat et hébergement","السكن الداخلي والإقامة","宿舍管理","Internado y alojamiento"],
+"Transport Management":["Usimamizi wa usafiri","Gestion du transport","إدارة النقل","交通管理","Gestión del transporte"],
+"Inventory & Assets":["Stoo na mali","Stocks et équipements","المخزون والأصول","库存与资产","Inventario y activos"],
+"Events, Discipline & Welfare":["Matukio, nidhamu na ustawi","Événements, discipline et bien-être","الفعاليات والانضباط والرعاية","活动、纪律与学生关怀","Eventos, disciplina y bienestar"],
+"Settings, Security & Data":["Mipangilio, usalama na data","Paramètres, sécurité et données","الإعدادات والأمان والبيانات","设置、安全与数据","Configuración, seguridad y datos"],
+"School Profile":["Wasifu wa shule","Profil de l’école","ملف المدرسة","学校资料","Perfil de la escuela"],
+"Academic Years & Terms":["Miaka na mihula ya masomo","Années et périodes scolaires","السنوات والفصول الدراسية","学年与学期","Años y períodos académicos"],
+"Departments & Subjects":["Idara na masomo","Départements et matières","الأقسام والمواد","部门与科目","Departamentos y asignaturas"],
+"Classes & Streams":["Madarasa na mikondo","Classes et sections","الفصول والشُعب","班级与分班","Clases y secciones"],
+"Policies & Documents":["Sera na nyaraka","Politiques et documents","السياسات والمستندات","政策与文件","Políticas y documentos"],
+"Admissions & Enrolment":["Udahili na uandikishaji","Admissions et inscriptions","القبول والتسجيل","招生与入学","Admisiones y matrícula"],
+"Parents & Guardians":["Wazazi na walezi","Parents et tuteurs","أولياء الأمور والأوصياء","家长与监护人","Padres y tutores"],
+"Student Welfare & Discipline":["Ustawi na nidhamu ya wanafunzi","Bien-être et discipline des élèves","رعاية الطلاب وانضباطهم","学生关怀与纪律","Bienestar y disciplina estudiantil"],
+"Staff Directory & Roles":["Orodha ya wafanyakazi na majukumu","Annuaire du personnel et fonctions","دليل الموظفين والأدوار","员工名录与职责","Directorio y funciones del personal"],
+"Teacher Workload & Appraisal":["Mzigo wa kazi na tathmini ya walimu","Charge de travail et évaluation des enseignants","عبء عمل المعلمين وتقييمهم","教师工作量与考核","Carga laboral y evaluación docente"],
+"Leave & Staff Requests":["Likizo na maombi ya wafanyakazi","Congés et demandes du personnel","إجازات وطلبات الموظفين","员工请假与申请","Permisos y solicitudes del personal"],
+"Payroll & Benefits":["Mishahara na marupurupu","Paie et avantages","الرواتب والمزايا","工资与福利","Nómina y beneficios"],
+"Curriculum & Education Levels":["Mitaala na ngazi za elimu","Programmes et niveaux d’enseignement","المناهج والمراحل التعليمية","课程与教育阶段","Planes de estudio y niveles educativos"],
+"Lesson Plans & Topic Coverage":["Maandalio ya masomo na mada zilizofundishwa","Plans de cours et progression des thèmes","خطط الدروس وتغطية الموضوعات","教案与教学进度","Planes de clase y cobertura de temas"],
+"Examination Administration":["Usimamizi wa mitihani","Gestion des examens","إدارة الامتحانات","考试管理","Administración de exámenes"],
+"Learning Support & Interventions":["Msaada na uimarishaji wa ujifunzaji","Soutien et interventions pédagogiques","دعم التعلم والتدخلات","学习支持与干预","Apoyo e intervenciones de aprendizaje"],
+"Attendance Follow-ups":["Ufuatiliaji wa mahudhurio","Suivi des présences","متابعة الحضور","考勤跟进","Seguimiento de asistencia"],
+"Student Fees & Debt Reports":["Ada za wanafunzi na ripoti za madeni","Frais des élèves et rapports de dettes","رسوم الطلاب وتقارير الديون","学生费用与欠费报告","Cuotas y reportes de deudas"],
+"Fee Structures & Invoices":["Miundo ya ada na ankara","Structures tarifaires et factures","هياكل الرسوم والفواتير","收费结构与发票","Estructuras de cuotas y facturas"],
+"Receipts & Other Income":["Risiti na mapato mengine","Reçus et autres revenus","الإيصالات والإيرادات الأخرى","收据与其他收入","Recibos y otros ingresos"],
+"Expenses & Procurement":["Matumizi na manunuzi","Dépenses et achats","المصروفات والمشتريات","支出与采购","Gastos y adquisiciones"],
+"Budgets & Financial Reports":["Bajeti na ripoti za fedha","Budgets et rapports financiers","الميزانيات والتقارير المالية","预算与财务报告","Presupuestos e informes financieros"],
+"Announcements & Notices":["Matangazo na taarifa","Annonces et avis","الإعلانات والإشعارات","公告与通知","Anuncios y avisos"],
+"Library Catalogue":["Orodha ya vitabu vya maktaba","Catalogue de la bibliothèque","فهرس المكتبة","图书馆目录","Catálogo de biblioteca"],
+"Book Loans & Returns":["Ukopeshaji na urejeshaji wa vitabu","Prêts et retours de livres","إعارة الكتب وإرجاعها","图书借阅与归还","Préstamos y devoluciones de libros"],
+"Vehicles & Drivers":["Magari na madereva","Véhicules et conducteurs","المركبات والسائقون","车辆与司机","Vehículos y conductores"],
+"Routes & Stops":["Njia na vituo","Itinéraires et arrêts","المسارات والمحطات","路线与站点","Rutas y paradas"],
+"Stock & Inventory":["Stoo na hesabu ya vifaa","Stock et inventaire","المخزون والجرد","库存管理","Existencias e inventario"],
+"School Assets & Maintenance":["Mali za shule na matengenezo","Équipements scolaires et maintenance","أصول المدرسة وصيانتها","学校资产与维护","Activos y mantenimiento escolar"],
+"User Access Register":["Orodha ya ruhusa za watumiaji","Registre des accès utilisateurs","سجل صلاحيات المستخدمين","用户访问登记","Registro de acceso de usuarios"],
+"Operational Audit Notes":["Kumbukumbu za ukaguzi wa shughuli","Notes d’audit opérationnel","ملاحظات التدقيق التشغيلي","运营审计记录","Notas de auditoría operativa"],
+"Backup & Recovery Log":["Kumbukumbu za nakala rudufu na urejeshaji","Journal de sauvegarde et restauration","سجل النسخ الاحتياطي والاستعادة","备份与恢复日志","Registro de copias y recuperación"],
+"AI Insights & Recommendations":["Uchambuzi na mapendekezo ya AI","Analyses et recommandations IA","رؤى وتوصيات الذكاء الاصطناعي","人工智能分析与建议","Análisis y recomendaciones de IA"],
+"AI Report Requests":["Maombi ya ripoti za AI","Demandes de rapports IA","طلبات تقارير الذكاء الاصطناعي","AI报告请求","Solicitudes de informes de IA"],
+"Save school setup":["Hifadhi mipangilio ya shule","Enregistrer la configuration de l’école","حفظ إعدادات المدرسة","保存学校设置","Guardar configuración escolar"],
+"School setup saved successfully.":["Mipangilio ya shule imehifadhiwa kikamilifu.","Configuration de l’école enregistrée.","تم حفظ إعدادات المدرسة بنجاح。","学校设置已成功保存。","La configuración de la escuela se guardó correctamente."],
+"GLOBAL CONTROL CENTER":["KITUO KIKUU CHA USIMAMIZI","CENTRE DE CONTRÔLE GLOBAL","مركز التحكم العام","全球控制中心","CENTRO DE CONTROL GLOBAL"],
+"ShuleProGlobal Super Admin":["Msimamizi Mkuu wa ShuleProGlobal","Super administrateur ShuleProGlobal","المسؤول الأعلى ShuleProGlobal","ShuleProGlobal超级管理员","Superadministrador de ShuleProGlobal"],
+"Manage schools, memberships, subscriptions, payments and system activity across the platform.":["Simamia shule, wanachama, usajili, malipo na shughuli za mfumo mzima.","Gérez les écoles, les membres, les abonnements, les paiements et l’activité de la plateforme.","إدارة المدارس والعضويات والاشتراكات والمدفوعات ونشاط النظام.","管理平台中的学校、成员、订阅、付款和系统活动。","Administre escuelas, membresías, suscripciones, pagos y actividad de la plataforma."],
+"Schools":["Shule","Écoles","المدارس","学校","Escuelas"],
+"Users & Roles":["Watumiaji na majukumu","Utilisateurs et rôles","المستخدمون والأدوار","用户与角色","Usuarios y roles"],
+"Payments":["Malipo","Paiements","المدفوعات","付款","Pagos"],
+"Subscriptions":["Usajili","Abonnements","الاشتراكات","订阅","Suscripciones"],
+"Academic Data":["Taarifa za kitaaluma","Données académiques","البيانات الأكاديمية","学术数据","Datos académicos"],
+"Audit Logs":["Kumbukumbu za ukaguzi","Journaux d’audit","سجلات التدقيق","审计日志","Registros de auditoría"],
+"Plans & Pricing":["Mipango na bei","Offres et tarifs","الخطط والأسعار","套餐与价格","Planes y precios"],
+"Loading global data…":["Inapakia taarifa za mfumo...","Chargement des données globales…","جارٍ تحميل البيانات العامة…","正在加载全局数据…","Cargando datos globales…"],
+"School directory":["Orodha ya shule","Répertoire des écoles","دليل المدارس","学校目录","Directorio de escuelas"],
+"Payment verification queue and history":["Foleni ya uhakiki na historia ya malipo","File de vérification et historique des paiements","قائمة التحقق من المدفوعات وسجلها","付款审核队列与历史记录","Cola de verificación e historial de pagos"],
+"Subscription register":["Orodha ya usajili","Registre des abonnements","سجل الاشتراكات","订阅登记","Registro de suscripciones"],
+"Global audit log":["Kumbukumbu za ukaguzi wa mfumo mzima","Journal d’audit global","سجل التدقيق العام","全局审计日志","Registro de auditoría global"],
+"Platform status":["Hali ya jukwaa","État de la plateforme","حالة المنصة","平台状态","Estado de la plataforma"],
+"Full name":["Jina kamili","Nom complet","الاسم الكامل","全名","Nombre completo"],
+"Role":["Jukumu","Rôle","الدور","角色","Rol"],
+"Change role":["Badilisha jukumu","Modifier le rôle","تغيير الدور","更改角色","Cambiar función"],
+"School name":["Jina la shule","Nom de l’école","اسم المدرسة","学校名称","Nombre de la escuela"],
+"Country":["Nchi","Pays","الدولة","国家","País"],
+"Created":["Tarehe ya kuundwa","Créé le","تاريخ الإنشاء","创建时间","Creado"],
+"Status":["Hali","Statut","الحالة","状态","Estado"],
+"Action":["Kitendo","Action","الإجراء","操作","Acción"],
+"Approve":["Thibitisha","Approuver","اعتماد","批准","Aprobar"],
+"Reject":["Kataa","Rejeter","رفض","拒绝","Rechazar"],
+"Activate":["Washa","Activer","تفعيل","启用","Activar"],
+"Suspend":["Simamisha","Suspendre","تعليق","暂停","Suspender"],
+"ACTIVE":["INAENDELEA","ACTIF","نشط","启用","ACTIVO"],
+"INACTIVE":["HAIFANYI KAZI","INACTIF","غير نشط","停用","INACTIVO"],
+"Unable to load schools:":["Imeshindwa kupakia shule:","Impossible de charger les écoles :","تعذر تحميل المدارس:","无法加载学校：","No se pudieron cargar las escuelas:"],
+"Unable to load memberships:":["Imeshindwa kupakia wanachama:","Impossible de charger les membres :","تعذر تحميل العضويات:","无法加载成员：","No se pudieron cargar las membresías:"],
+"Unable to load payments:":["Imeshindwa kupakia malipo:","Impossible de charger les paiements :","تعذر تحميل المدفوعات:","无法加载付款：","No se pudieron cargar los pagos:"],
+"Unable to load subscriptions:":["Imeshindwa kupakia usajili:","Impossible de charger les abonnements :","تعذر charger les abonnements :","无法加载订阅：","No se pudieron cargar las suscripciones:"],
+"Role update failed:":["Imeshindikana kubadilisha jukumu:","Échec de la mise à jour du rôle :","فشل تحديث الدور:","角色更新失败：","Error al actualizar el rol:"],
+"User role updated.":["Jukumu la mtumiaji limebadilishwa.","Rôle utilisateur mis à jour.","تم تحديث دور المستخدم。","用户角色已更新。","Función de usuario actualizada."],
+"Payment approved; subscription activated.":["Malipo yamethibitishwa; usajili umewezeshwa.","Paiement approuvé ; abonnement activé.","تمت الموافقة على الدفع وتفعيل الاشتراك。","付款已批准；订阅已激活。","Pago aprobado; suscripción activada."],
+"Payment details submitted. Wait for Super Admin verification.":["Taarifa za malipo zimetumwa. Subiri uhakiki wa Msimamizi Mkuu.","Informations de paiement envoyées. Attendez la vérification du super administrateur.","تم إرسال تفاصيل الدفع. انتظر تحقق المسؤول الأعلى。","付款信息已提交。请等待超级管理员审核。","Datos de pago enviados. Espere la verificación del superadministrador."]
+};
+const SP_LANG_KEYS=['sw','fr','ar','zh','es'];
+SP_LANG_KEYS.forEach((lang,index)=>{if(!LANG_TEXT[lang])LANG_TEXT[lang]={};Object.keys(SP_WORKSPACE_I18N).forEach(key=>{LANG_TEXT[lang][key]=SP_WORKSPACE_I18N[key][index];});});
+Object.keys(SP_WORKSPACE_I18N).forEach(key=>{LANG_TEXT.en[key]=key;});
+
+/* Language engine with original-value tracking for live/dynamic DOM updates. */
+const __spTextOriginal=new WeakMap(),__spTextRendered=new WeakMap(),__spAttrOriginal=new WeakMap(),__spAttrRendered=new WeakMap();
 function applyLanguage(lang){
   const dict=LANG_TEXT[lang]||LANG_TEXT.en;
   const lookup=new Map(Object.entries(dict).map(([source,target])=>[String(source).trim().toLocaleLowerCase(),String(target)]));
-  const translate=(original)=>{
-    const key=String(original??'').trim().toLocaleLowerCase();
-    return lookup.has(key)?lookup.get(key):String(original??'');
-  };
+  const translate=(value)=>{const key=String(value??'').trim().toLocaleLowerCase();return lookup.has(key)?lookup.get(key):String(value??'');};
   const walker=document.createTreeWalker(document.body,NodeFilter.SHOW_TEXT);
   let node;
   while((node=walker.nextNode())){
-    const parent=node.parentElement;
-    if(!parent||['SCRIPT','STYLE','NOSCRIPT'].includes(parent.tagName))continue;
-    if(!Object.prototype.hasOwnProperty.call(node,'__spOriginalText'))node.__spOriginalText=node.nodeValue;
-    const original=node.__spOriginalText,trim=original.trim();
-    if(!trim)continue;
+    const parent=node.parentElement;if(!parent||['SCRIPT','STYLE','NOSCRIPT'].includes(parent.tagName))continue;
+    const current=node.nodeValue;
+    let original=__spTextOriginal.get(node);
+    const last=__spTextRendered.get(node);
+    if(original===undefined||current!==last){original=current;__spTextOriginal.set(node,original);}
+    const trim=original.trim();if(!trim)continue;
     const translated=translate(trim);
-    if(translated!==trim){
-      const start=original.indexOf(trim),end=start+trim.length;
-      node.nodeValue=original.slice(0,start)+translated+original.slice(end);
-    }else if(node.nodeValue!==original){
-      node.nodeValue=original;
-    }
+    const start=original.indexOf(trim);
+    const output=translated===trim?original:original.slice(0,start)+translated+original.slice(start+trim.length);
+    if(current!==output)node.nodeValue=output;
+    __spTextRendered.set(node,output);
   }
   ['placeholder','title','aria-label','alt'].forEach(attr=>{
     document.querySelectorAll('['+attr+']').forEach(elm=>{
-      const store='__spOriginal_'+attr;
-      if(!Object.prototype.hasOwnProperty.call(elm,store))elm[store]=elm.getAttribute(attr)||'';
-      const original=elm[store],translated=translate(original);
-      if(elm.getAttribute(attr)!==translated)elm.setAttribute(attr,translated);
+      let originals=__spAttrOriginal.get(elm);if(!originals){originals={};__spAttrOriginal.set(elm,originals);}
+      let rendered=__spAttrRendered.get(elm);if(!rendered){rendered={};__spAttrRendered.set(elm,rendered);}
+      const current=elm.getAttribute(attr)||'';
+      if(originals[attr]===undefined||current!==rendered[attr])originals[attr]=current;
+      const output=translate(originals[attr]);
+      if(current!==output)elm.setAttribute(attr,output);
+      rendered[attr]=output;
     });
   });
-  document.documentElement.lang=lang;
-  document.documentElement.dir=lang==='ar'?'rtl':'ltr';
-  const title=translate(document.title);
-  if(title!==document.title)document.title=title;
+  document.documentElement.lang=lang;document.documentElement.dir=lang==='ar'?'rtl':'ltr';
+  const title=translate(document.title);if(title!==document.title)document.title=title;
 }
 window.applyLanguage=applyLanguage;
 function setLang(lang){
   if(!LANG_TEXT[lang])lang='en';
   try{localStorage.setItem('shulepro_language_v2',lang)}catch(e){}
-  ['globalLang','regLang','languageSelect'].forEach(id=>{if(el(id))el(id).value=lang});
+  ['globalLang','regLang','languageSelect'].forEach(id=>{const node=document.getElementById(id);if(node)node.value=lang;});
   applyLanguage(lang);
-  if(el('backupMsg'))message('backupMsg',({sw:'Lugha imebadilishwa.',en:'Language changed.',fr:'Langue modifiée.',ar:'تم تغيير اللغة.',zh:'语言已更改。',es:'Idioma cambiado.'})[lang]||'Language changed.','ok');
+  const msg=({sw:'Lugha imebadilishwa.',en:'Language changed.',fr:'Langue modifiée.',ar:'تم تغيير اللغة.',zh:'语言已更改。',es:'Idioma cambiado.'})[lang]||'Language changed.';
+  const box=document.getElementById('backupMsg');if(box){box.textContent=msg;box.className='success';}
 }
 window.setLang=setLang;
 document.addEventListener('DOMContentLoaded',()=>{
-  let lang='sw';
-  try{lang=localStorage.getItem('shulepro_language_v2')||'sw'}catch(e){}
+  let lang='sw';try{lang=localStorage.getItem('shulepro_language_v2')||'sw'}catch(e){}
   setLang(lang);
-  const observer=new MutationObserver(()=>applyLanguage((()=>{try{return localStorage.getItem('shulepro_language_v2')||'sw'}catch(e){return 'sw'}})()));
+  const observer=new MutationObserver(()=>{let current='sw';try{current=localStorage.getItem('shulepro_language_v2')||'sw'}catch(e){}applyLanguage(current);});
   observer.observe(document.body,{childList:true,subtree:true,characterData:true,attributes:true,attributeFilter:['placeholder','title','aria-label','alt']});
 });
 async function loadSuperAdmin(){
