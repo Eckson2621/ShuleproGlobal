@@ -109,6 +109,7 @@ var s=document.createElement('style');s.id='spWorkspaceStyles';s.textContent=
 '.sp-records{display:grid;gap:8px}.sp-record{display:flex;justify-content:space-between;gap:10px;align-items:center;background:#fff;border:1px solid #e4eaf3;border-radius:11px;padding:11px 13px}.sp-record strong{font-size:12px;color:#17233d}.sp-record small{display:block;font-size:10px;color:#64748b;margin-top:4px}.sp-notice{border-radius:11px;padding:12px 14px;background:#fff8e7;border:1px solid #f5e1a9;color:#77530b;font-size:11px;line-height:1.6;margin:11px 0}.sp-connection{background:linear-gradient(135deg,#f5f7ff,#f0edff);border:1px solid #dedafa;border-radius:14px;padding:16px;margin-top:13px}.sp-connection strong{color:#45358b}.sp-muted{font-size:10px;color:#64748b}.sp-back{background:transparent;border:0;color:#2454b5;font-weight:800;padding:6px 0;cursor:pointer}'+
 '@media(max-width:900px){#spGlobalHub{grid-template-columns:1fr}.sp-side{position:relative;top:0;max-height:none}.sp-side nav{display:flex;flex-wrap:wrap;gap:3px}.sp-nav-label{width:100%;margin:9px 5px 3px}.sp-nav-btn{width:auto}.sp-card-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}'+
 '@media(max-width:560px){.sp-kpis{grid-template-columns:repeat(2,minmax(0,1fr))}.sp-card-grid{grid-template-columns:1fr}.sp-form{grid-template-columns:1fr}.sp-title{font-size:20px}.sp-topline{padding:11px}}';
+s.textContent += '.spa-shell{background:#fff;border:1px solid #e4eaf3;border-radius:16px;padding:16px;margin:14px 0}.spa-nav{display:flex;gap:7px;flex-wrap:wrap;margin-bottom:14px}.spa-nav button{border:0;border-radius:9px;background:#edf2fb;color:#234a8f;padding:9px 12px;font-size:11px;font-weight:800}.spa-nav button.active{background:#173d82;color:#fff}.spa-table{width:100%;border-collapse:collapse;min-width:620px}.spa-table th,.spa-table td{padding:9px;border-bottom:1px solid #e7edf5;text-align:left;font-size:11px}.spa-table th{background:#f5f8fc;color:#475569}.spa-status{border-radius:20px;padding:4px 7px;font-size:9px;font-weight:800;background:#e8f8ef;color:#167345}.spa-status.off{background:#fff0f0;color:#a52a2a}.spa-content{overflow:auto}.spa-kpis{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}.spa-kpi{padding:13px;border:1px solid #e5eaf2;border-radius:12px}.spa-kpi strong{display:block;font-size:22px;color:#14213d}.spa-kpi small{color:#64748b;font-size:10px}';
 document.head.appendChild(s);
 }
 function createHub(){
@@ -234,6 +235,67 @@ var rows=result.data||[];if(!rows.length){box.innerHTML='<div class="sp-notice" 
 box.innerHTML=rows.map(function(r){var extra=Object.entries(r.payload||{}).filter(function(x){return x[1];}).slice(1,4).map(function(x){return x[0]+': '+x[1];}).join(' · ');return '<article class="sp-record"><div><strong>'+esc(r.title)+'</strong><small>'+esc(extra||r.status)+' · '+esc(new Date(r.created_at).toLocaleDateString())+'</small></div><button class="sp-btn danger" data-delete="'+r.id+'">Delete</button></article>';}).join('');
 box.querySelectorAll('[data-delete]').forEach(function(b){b.onclick=async function(){if(!confirm('Delete this record?'))return;var del=await db.from('school_module_records').delete().eq('id',b.dataset.delete).eq('school_id',currentSchoolId);if(del.error){alert('Delete failed: '+del.error.message);return;}loadRecords(key);};});
 }
+function createAdminHub(){
+var panel=$('superAdminPanel');if(!panel||$('spAdminHub'))return;
+var hub=document.createElement('section');hub.id='spAdminHub';hub.className='spa-shell';
+hub.innerHTML='<div class="sp-eyebrow">GLOBAL CONTROL CENTER</div><div class="sp-title">ShuleProGlobal Super Admin</div><div class="sp-subtitle">Manage schools, memberships, subscriptions, payments and system activity across the platform.</div><nav class="spa-nav" id="spaNav"><button data-section="overview" class="active">Overview</button><button data-section="schools">Schools</button><button data-section="users">Users & Roles</button><button data-section="payments">Payments</button><button data-section="subscriptions">Subscriptions</button><button data-section="academic">Academic Data</button><button data-section="audit">Audit Logs</button><button data-section="plans">Plans & Pricing</button></nav><div class="spa-content" id="spaContent">Loading global data…</div>';
+panel.parentElement.insertBefore(hub,panel);panel.classList.add('hidden');
+hub.querySelectorAll('[data-section]').forEach(function(b){b.onclick=function(){hub.querySelectorAll('[data-section]').forEach(function(x){x.classList.remove('active');});b.classList.add('active');renderAdminSection(b.dataset.section);};});
+renderAdminSection('overview');
+}
+async function adminCount(table){
+var r=await db.from(table).select('*',{count:'exact',head:true});if(r.error)return '—';return r.count==null?'—':r.count;
+}
+async function renderAdminSection(section){
+var box=$('spaContent');if(!box)return;box.textContent='Loading…';
+if(section==='overview'){
+var names=['schools','school_memberships','students','teachers','classes','payments','subscriptions'];
+var labels=['Schools','User memberships','Students','Teachers','Classes','Payment records','Subscriptions'];
+var counts=await Promise.all(names.map(adminCount));
+box.innerHTML='<div class="spa-kpis">'+labels.map(function(n,i){return '<div class="spa-kpi"><small>'+n+'</small><strong>'+counts[i]+'</strong></div>';}).join('')+'</div><div class="sp-connection"><strong>Platform status</strong><p class="sp-muted">Super Admin access is verified through the is_super_admin() database function. All school data queries remain subject to database policies and the authenticated session.</p></div>';
+return;
+}
+if(section==='schools'){
+var r=await db.from('schools').select('id,school_name,school_code,country_code,is_active,created_at').order('created_at',{ascending:false}).limit(300);
+if(r.error){box.textContent='Unable to load schools: '+r.error.message;return;}
+box.innerHTML='<h3>School directory</h3><table class="spa-table"><tr><th>School</th><th>Code</th><th>Country</th><th>Created</th><th>Status</th><th>Action</th></tr>'+ (r.data||[]).map(function(x){return '<tr><td>'+esc(x.school_name)+'</td><td>'+esc(x.school_code)+'</td><td>'+esc(x.country_code)+'</td><td>'+esc((x.created_at||'').slice(0,10))+'</td><td><span class="spa-status '+(x.is_active?'':'off')+'">'+(x.is_active?'ACTIVE':'INACTIVE')+'</span></td><td><button class="sp-btn alt" data-school="'+x.id+'" data-active="'+x.is_active+'">'+(x.is_active?'Suspend':'Activate')+'</button></td></tr>';}).join('')+'</table>';
+box.querySelectorAll('[data-school]').forEach(function(b){b.onclick=async function(){var next=b.dataset.active!=='true';if(!confirm((next?'Activate':'Suspend')+' this school?'))return;var u=await db.from('schools').update({is_active:next}).eq('id',b.dataset.school);if(u.error){alert(u.error.message);return;}renderAdminSection('schools');};});return;
+}
+if(section==='users'){
+var r=await db.from('school_memberships').select('id,school_id,user_id,full_name,role,created_at').order('created_at',{ascending:false}).limit(500);
+if(r.error){box.textContent='Unable to load memberships: '+r.error.message;return;}
+var roles=['owner','headmaster','academic_master','teacher','accountant','parent','student'];
+box.innerHTML='<h3>School users & role assignments</h3><table class="spa-table"><tr><th>Full name</th><th>User ID</th><th>School ID</th><th>Role</th><th>Change role</th></tr>'+(r.data||[]).map(function(x){return '<tr><td>'+esc(x.full_name||'—')+'</td><td>'+esc(x.user_id)+'</td><td>'+esc(x.school_id)+'</td><td>'+esc(x.role)+'</td><td><select data-role="'+x.id+'" style="min-width:130px">'+roles.map(function(role){return '<option '+(role===x.role?'selected':'')+'>'+role+'</option>';}).join('')+'</select></td></tr>';}).join('')+'</table>';
+box.querySelectorAll('[data-role]').forEach(function(sel){sel.onchange=async function(){var u=await db.from('school_memberships').update({role:sel.value}).eq('id',sel.dataset.role);if(u.error){alert('Role update failed: '+u.error.message);renderAdminSection('users');return;}alert('User role updated.');};});return;
+}
+if(section==='payments'){
+var r=await db.from('payments').select('id,school_id,amount,currency,transaction_id,payment_method,status,created_at').order('created_at',{ascending:false}).limit(300);
+if(r.error){box.textContent='Unable to load payments: '+r.error.message;return;}
+box.innerHTML='<h3>Payment verification queue and history</h3><table class="spa-table"><tr><th>Date</th><th>School</th><th>Amount</th><th>Reference</th><th>Method</th><th>Status</th><th>Action</th></tr>'+(r.data||[]).map(function(x){return '<tr><td>'+esc((x.created_at||'').slice(0,10))+'</td><td>'+esc(x.school_id)+'</td><td>'+esc(x.amount)+' '+esc(x.currency)+'</td><td>'+esc(x.transaction_id||'—')+'</td><td>'+esc(x.payment_method||'—')+'</td><td>'+esc(x.status)+'</td><td>'+(x.status==='pending'?'<button class="sp-btn" data-review="'+x.id+'">Review</button>':'—')+'</td></tr>';}).join('')+'</table>';
+box.querySelectorAll('[data-review]').forEach(function(b){b.onclick=function(){if(typeof reviewPayment==='function')reviewPayment(b.dataset.review,'approve');};});return;
+}
+if(section==='subscriptions'){
+var r=await db.from('subscriptions').select('school_id,plan_id,status,starts_at,ends_at,trial_ends_at,amount,currency,price_id').order('created_at',{ascending:false}).limit(500);
+if(r.error){box.textContent='Unable to load subscriptions: '+r.error.message;return;}
+box.innerHTML='<h3>Subscription register</h3><table class="spa-table"><tr><th>School</th><th>Plan</th><th>Price ID</th><th>Status</th><th>Starts</th><th>Ends</th><th>Amount</th></tr>'+(r.data||[]).map(function(x){return '<tr><td>'+esc(x.school_id)+'</td><td>'+esc(x.plan_id)+'</td><td>'+esc(x.price_id||'—')+'</td><td>'+esc(x.status)+'</td><td>'+esc((x.starts_at||'').slice(0,10))+'</td><td>'+esc((x.ends_at||x.trial_ends_at||'').slice(0,10))+'</td><td>'+esc(x.amount||'—')+' '+esc(x.currency||'')+'</td></tr>';}).join('')+'</table>';return;
+}
+if(section==='academic'){
+var tables=['students','teachers','classes','marks','results','attendance','timetable','reports'];
+var vals=await Promise.all(tables.map(adminCount));
+box.innerHTML='<h3>Academic data oversight</h3><div class="spa-kpis">'+tables.map(function(t,i){return '<div class="spa-kpi"><small>'+t.replace(/_/g,' ')+'</small><strong>'+vals[i]+'</strong></div>';}).join('')+'</div><div class="sp-notice">Counts are global platform totals visible to the authenticated Super Admin. Detailed student and school operations remain managed inside each school workspace.</div>';return;
+}
+if(section==='audit'){
+var r=await db.from('audit_logs').select('school_id,actor_id,action,record_type,record_id,created_at').order('created_at',{ascending:false}).limit(300);
+if(r.error){box.textContent='Unable to load audit logs: '+r.error.message;return;}
+box.innerHTML='<h3>Global audit log</h3><table class="spa-table"><tr><th>Date</th><th>School</th><th>Actor</th><th>Action</th><th>Record type</th><th>Record ID</th></tr>'+(r.data||[]).map(function(x){return '<tr><td>'+esc((x.created_at||'').slice(0,19).replace('T',' '))+'</td><td>'+esc(x.school_id||'—')+'</td><td>'+esc(x.actor_id||'—')+'</td><td>'+esc(x.action)+'</td><td>'+esc(x.record_type||'—')+'</td><td>'+esc(x.record_id||'—')+'</td></tr>';}).join('')+'</table>';return;
+}
+if(section==='plans'){
+var [plans,prices]=await Promise.all([db.from('plans').select('*').order('id'),db.from('plan_prices').select('*').order('amount')]);
+if(plans.error||prices.error){box.textContent='Unable to load plan pricing: '+(plans.error||prices.error).message;return;}
+box.innerHTML='<h3>Plans</h3><table class="spa-table"><tr><th>Plan</th><th>Name</th><th>Max students</th><th>Max teachers</th><th>Max classes</th></tr>'+(plans.data||[]).map(function(x){return '<tr><td>'+esc(x.id)+'</td><td>'+esc(x.plan_name)+'</td><td>'+esc(x.max_students||'Unlimited')+'</td><td>'+esc(x.max_teachers||'Unlimited')+'</td><td>'+esc(x.max_classes||'Unlimited')+'</td></tr>';}).join('')+'</table><h3 style="margin-top:20px">Prices</h3><table class="spa-table"><tr><th>Price ID</th><th>Billing</th><th>Duration</th><th>Amount</th><th>Currency</th><th>Active</th></tr>'+(prices.data||[]).map(function(x){return '<tr><td>'+esc(x.id)+'</td><td>'+esc(x.billing_period)+'</td><td>'+esc(x.duration_months)+' months</td><td>'+esc(x.amount)+'</td><td>'+esc(x.currency)+'</td><td>'+esc(x.is_active?'Yes':'No')+'</td></tr>';}).join('')+'</table>';return;
+}
+box.textContent='Unknown admin section.';
+}
 function init(){
 style();
 var original=window.startApp;
@@ -245,11 +307,15 @@ var app=$('app');
 if(app&&window.MutationObserver){
   var observer=new MutationObserver(function(){
     if(currentSchoolId&&!app.classList.contains('hidden'))createHub();
+    var adminPanel=$('superAdminPanel');
+    if(!currentSchoolId&&adminPanel&&!adminPanel.classList.contains('hidden'))createAdminHub();
   });
   observer.observe(app,{attributes:true,childList:true,subtree:true});
 }
 setTimeout(function(){if(currentSchoolId&&app&&!app.classList.contains('hidden'))createHub();},1500);
 if(currentSchoolId&&app&&!app.classList.contains('hidden'))createHub();
+var adminPanel=$('superAdminPanel');
+if(!currentSchoolId&&adminPanel&&!adminPanel.classList.contains('hidden'))createAdminHub();
 }
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init);else init();
 })();
