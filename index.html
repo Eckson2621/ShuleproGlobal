@@ -40,7 +40,7 @@ html[dir="rtl"] body{text-align:right}html[dir="rtl"] th,html[dir="rtl"] td{text
   <button id="regTabBtn" onclick="showAuth('reg')">Register School</button>
   <button id="loginTabBtn" class="secondary" onclick="showAuth('login')">Sign In</button>
  </div>
- <div id="regPane" style="padding:18px">
+ <div id="regPane" class="hidden" style="padding:18px">
   <h2>Register Your School</h2>
   <label>School Name</label><input id="regName" placeholder="Enter school name">
   <label>Administrator Full Name</label><input id="regFullName" placeholder="Enter full name">
@@ -51,7 +51,7 @@ html[dir="rtl"] body{text-align:right}html[dir="rtl"] th,html[dir="rtl"] td{text
   <button id="registerBtn" style="width:100%;margin-top:10px" onclick="register()">Create School Account</button>
   <div id="regMsg"></div>
  </div>
- <div id="loginPane" class="hidden" style="padding:18px">
+ <div id="loginPane" style="padding:18px">
   <h2>Sign In to Your Account</h2>
   <label>Email Address</label><input id="loginEmail" type="email" placeholder="Enter your email">
   <label>Password</label><input id="loginPass" type="password" placeholder="Enter your password">
