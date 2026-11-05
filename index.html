@@ -157,28 +157,36 @@ function message(id,text,type='info'){el(id).innerHTML='';const d=document.creat
 function showAuth(which){el('regPane').classList.toggle('hidden',which!=='reg');el('loginPane').classList.toggle('hidden',which!=='login');el('regTabBtn').className=which==='reg'?'':'secondary';el('loginTabBtn').className=which==='login'?'':'secondary'}
 function schoolCode(){const a=new Uint8Array(6);crypto.getRandomValues(a);return 'SP'+Array.from(a,x=>x.toString(36).padStart(2,'0')).join('').toUpperCase().slice(0,10)}
 async function register(){
- const name=el('regName').value.trim(),full=el('regFullName').value.trim(),email=el('regEmail').value.trim().toLowerCase(),pass=el('regPass').value,phone=el('regPhone').value.trim(),country=el('regCountry').value,lang=localStorage.getItem('shulepro_language_v2')||'en';
+ const name=el('regName').value.trim(),full=el('regFullName').value.trim(),email=el('regEmail').value.trim().toLowerCase(),pass=el('regPass').value,phone=el('regPhone').value.trim(),country=el('regCountry').value,lang='en';
  const button=el('registerBtn');if(button)button.disabled=true;
- if(!name||!full||!email||pass.length<6){message('regMsg','Please enter the school name, administrator full name, email address, and a password of at least 6 characters.','err');if(button)button.disabled=false;return}
+ const emailOk=/^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(email);
+ if(!name||name.length<2||!full||full.length<2||!emailOk||pass.length<6||!country){
+  message('regMsg','Complete all required fields: school name, administrator name, valid email, password (at least 6 characters), and country.','err');if(button)button.disabled=false;return;
+ }
  message('regMsg','Creating your account...','info');
  try{
   const pending={school_name:name,full_name:full,country_code:country,language:lang,school_code:schoolCode()};
   const {data,error}=await db.auth.signUp({email,password:pass,options:{data:{full_name:full,phone,school_name:name,shulepro_registration:pending}}});
   if(error)throw error;
+  if(data.user&&Array.isArray(data.user.identities)&&data.user.identities.length===0){
+   showAuth('login');el('loginEmail').value=email;el('loginPass').value='';
+   message('loginMsg','An account with this email already exists. Sign in instead, or use a different email address to register a new school.','err');return;
+  }
   localStorage.setItem('shulepro_pending_registration',JSON.stringify(pending));
   if(data.session){
-   await completePendingRegistration();
+   try{await completePendingRegistration();}catch(setupError){
+    showAuth('login');el('loginEmail').value=email;el('loginPass').value='';
+    message('loginMsg','Your account was created, but school setup is not complete yet. Sign in again to finish setup: '+setupError.message,'err');
+    await db.auth.signOut();return;
+   }
    await db.auth.signOut();
-   el('auth').classList.remove('hidden');el('app').classList.add('hidden');el('logoutBtn').classList.add('hidden');
-   showAuth('login');el('loginEmail').value=email;el('loginPass').value='';
-   message('loginMsg','School registration is complete. Please sign in using your registered email and password.','ok');
-   return;
   }
-  showAuth('login');el('loginEmail').value=email;
-  message('loginMsg','Your account has been created. Please verify your email using the link we sent, then sign in here to complete your school registration.','ok');
+  el('auth').classList.remove('hidden');el('app').classList.add('hidden');el('logoutBtn').classList.add('hidden');
+  showAuth('login');el('loginEmail').value=email;el('loginPass').value='';
+  message('loginMsg',data.session?'School registration is complete. Sign in with your email and password.':'Your account has been created. Check your email and confirm your address, then sign in here to complete school registration.','ok');
  }catch(e){
   try{await db.auth.signOut()}catch(_){}
-  const detail=/failed to fetch|networkerror|load failed/i.test(e.message)?'Unable to reach the registration server. Check your internet connection and refresh the page.':e.message;
+  const detail=/failed to fetch|networkerror|load failed/i.test(e.message)?'Cannot reach the registration server. Check your internet connection and try again.':e.message;
   showAuth('reg');message('regMsg','Registration failed: '+detail,'err');
  }finally{if(button)button.disabled=false}
 }
@@ -196,16 +204,16 @@ async function completePendingRegistration(){
 }
 async function login(){
  const email=el('loginEmail').value.trim().toLowerCase(),password=el('loginPass').value;
- if(!email||!password){message('loginMsg','Weka email na nenosiri.','err');return}
- message('loginMsg','Inakagua akaunti...','info');
+ if(!email||!password){message('loginMsg','Enter your email address and password.','err');return}
+ message('loginMsg','Signing in...','info');
  try{
   const {data,error}=await db.auth.signInWithPassword({email,password});if(error)throw error;
   try{await completePendingRegistration()}catch(e){
    await db.auth.signOut();
-   throw new Error('Akaunti imeingia lakini usajili wa shule haujakamilika: '+e.message+'. Jaribu kuingia tena baada ya kurekebisha tatizo.');
+   throw new Error('Email sign-in succeeded, but school registration could not be completed: '+e.message+'. Check your email confirmation and try signing in again.');
   }
   await startApp(data.user);
- }catch(e){message('loginMsg','Imeshindikana kuingia: '+e.message,'err')}
+ }catch(e){message('loginMsg','Sign-in failed: '+e.message,'err')}
 }
 async function startApp(user){
  currentUser=user;
