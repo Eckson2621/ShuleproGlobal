@@ -372,7 +372,7 @@ async function loadMarks(){
  const error=resultsRes.error||studentsRes.error;
  if(error){el('marksTable').innerHTML='';message('markMsg','Imeshindwa kusoma matokeo: '+error.message,'err');return}
  const names=new Map((studentsRes.data||[]).map(s=>[s.id,s.full_name]));
- el('marksTable').innerHTML='<tr><th>Mwanafunzi</th><th>Mtihani</th><th>Somo</th><th>Alama</th><th>Grade</th></tr>'+(resultsRes.data||[]).map(m=>'<tr><td>'+esc(names.get(m.student_id)||m.student_id)+'</td><td>'+esc(m.exam_name||'Assessment')+'</td><td>'+esc(m.subject||'')+'</td><td>'+esc(m.marks)+'</td><td><strong>'+esc(m.grade||gradeFromScore(Number(m.marks)))+'</strong></td></tr>').join('')||'<tr><td colspan="5">Hakuna matokeo bado.</td></tr>';
+ const rows=resultsRes.data||[];el('marksTable').innerHTML='<tr><th>Mwanafunzi</th><th>Mtihani</th><th>Somo</th><th>Alama</th><th>Grade</th></tr>'+(rows.length?rows.map(m=>'<tr><td>'+esc(names.get(m.student_id)||m.student_id)+'</td><td>'+esc(m.exam_name||'Assessment')+'</td><td>'+esc(m.subject||'')+'</td><td>'+esc(m.marks)+'</td><td><strong>'+esc(m.grade||gradeFromScore(Number(m.marks)))+'</strong></td></tr>').join(''):'<tr><td colspan="5">Hakuna matokeo bado.</td></tr>');
 }
 function localToday(){return new Date(Date.now()-new Date().getTimezoneOffset()*60000).toISOString().slice(0,10)}
 async function saveAttendance(){
@@ -459,21 +459,34 @@ async function buildReport(){
 }
 async function exportBackup(){
  try{
-  const names=['students','marks','attendance','payments'];const backup={format:'ShuleProBackupV1',school_id:currentSchoolId,exported_at:new Date().toISOString(),tables:{}};
-  for(const table of names){const {data,error}=await db.from(table).select('*').eq('school_id',currentSchoolId);if(error)throw new Error(table+': '+error.message);backup.tables[table]=data||[]}
+  const names=['students','teachers','classes','marks','results','attendance','fees','student_fee_payments','timetable','school_module_records','settings'];
+  const backup={format:'ShuleProBackupV2',school_id:currentSchoolId,exported_at:new Date().toISOString(),tables:{}};
+  for(const table of names){const {data,error}=await db.from(table).select('*').eq('school_id',currentSchoolId);if(error)throw new Error(table+': '+error.message);backup.tables[table]=data||[];}
   const blob=new Blob([JSON.stringify(backup,null,2)],{type:'application/json'}),url=URL.createObjectURL(blob),a=document.createElement('a');
-  a.href=url;a.download='shulepro-backup-'+currentSchoolId+'.json';a.click();URL.revokeObjectURL(url);message('backupMsg','Backup imepakuliwa.','ok');
+  a.href=url;a.download='shulepro-backup-'+currentSchoolId+'.json';a.click();URL.revokeObjectURL(url);message('backupMsg','Backup kamili imepakuliwa.','ok');
  }catch(e){message('backupMsg','Backup haijakamilika: '+e.message,'err')}
 }
 async function importBackup(event){
  const file=event.target.files?.[0];if(!file)return;
  try{
   const parsed=JSON.parse(await file.text());
-  if(parsed.format!=='ShuleProBackupV1'||!parsed.tables?.students)throw new Error('Muundo wa backup si sahihi.');
-  if(!confirm('Rejesha wanafunzi '+parsed.tables.students.length+' kwenye shule hii? Data iliyopo haitafutwa.'))return;
-  const rows=parsed.tables.students.map(({id,created_at,updated_at,...s})=>({...s,school_id:currentSchoolId}));
-  if(rows.length){const {error}=await db.from('students').insert(rows);if(error)throw error}
-  message('backupMsg','Wanafunzi wamerejeshwa. Data ya shule nyingine haijahamishwa.','ok');await loadStudents();
+  if(!['ShuleProBackupV1','ShuleProBackupV2'].includes(parsed.format)||!parsed.tables?.students||!Array.isArray(parsed.tables.students))throw new Error('Muundo wa backup si sahihi.');
+  if(!confirm('Rejesha taarifa za shule kutoka backup? Data iliyopo haitafutwa; rekodi zenye ID zinazofanana zitarukwa.'))return;
+  const order=['students','teachers','classes','marks','results','attendance','fees','student_fee_payments','timetable','school_module_records'];
+  const allowed=new Set(order);
+  for(const table of order){
+   const source=parsed.tables[table];if(!Array.isArray(source)||!source.length)continue;
+   const rows=source.map(row=>{
+    const copy={...row,school_id:currentSchoolId};
+    if(table==='school_module_records')copy.created_by=currentUser&&currentUser.id;
+    return copy;
+   });
+   const {error}=await db.from(table).upsert(rows,{onConflict:'id',ignoreDuplicates:true});
+   if(error)throw new Error(table+': '+error.message);
+  }
+  const settingRows=Array.isArray(parsed.tables.settings)?parsed.tables.settings:[];
+  if(settingRows.length){const rows=settingRows.map(x=>({...x,school_id:currentSchoolId}));const {error}=await db.from('settings').upsert(rows,{onConflict:'school_id',ignoreDuplicates:true});if(error)throw new Error('settings: '+error.message);}
+  message('backupMsg','Backup imerejeshwa. Rekodi zilizokuwepo hazijafutwa; zinazofanana kwa ID zimerukwa.','ok');await loadStudents();await loadMarks();
  }catch(e){message('backupMsg','Imeshindikana kurejesha backup: '+e.message,'err')}
  finally{event.target.value=''}
 }
