@@ -31,7 +31,7 @@ html[dir="rtl"] body{text-align:right}html[dir="rtl"] th,html[dir="rtl"] td{text
 <header>
  <div><div class="brand">SHULEPRO GLOBAL</div><div class="muted">School Management System</div><div class="company-credit">Developed and operated by EAM VENTURES LTD <span>(company registration pending)</span></div></div>
  <div style="text-align:right"><strong id="schoolName"></strong><div class="muted" id="schoolCode"></div></div>
- <span class="muted" style="font-size:12px">Staff: English · Parent reports: country language</span><button id="logoutBtn" class="dark hidden" onclick="logout()">Toka</button>
+ <label class="muted" for="globalLang">Interface language <select id="globalLang" onchange="setLang(this.value)" style="display:inline-block;width:auto;min-width:118px;padding:7px;margin:0 0 0 5px"><option value="sw">Kiswahili</option><option value="en">English</option><option value="fr">Français</option><option value="ar">العربية</option><option value="zh">中文</option><option value="es">Español</option></select></label><button id="logoutBtn" class="dark hidden" onclick="logout()">Toka</button>
 </header>
 
 <div class="wrap">
@@ -171,9 +171,10 @@ function showAuth(which){
 }
 window.showAuth=showAuth;
 function schoolCode(){const a=new Uint8Array(6);crypto.getRandomValues(a);return 'SP'+Array.from(a,x=>x.toString(36).padStart(2,'0')).join('').toUpperCase().slice(0,10)}
+function languageForCountry(code){const map={TZ:'sw',KE:'en',UG:'en',RW:'fr',BI:'fr',CD:'fr',CG:'fr',CI:'fr',SN:'fr',CM:'fr',GA:'fr',BJ:'fr',BF:'fr',NE:'fr',TG:'fr',GN:'fr',ML:'fr',TD:'fr',CF:'fr',MG:'fr',FR:'fr',BE:'fr',CH:'fr',LU:'fr',ES:'es',MX:'es',AR:'es',CO:'es',PE:'es',CL:'es',VE:'es',EC:'es',BO:'es',PY:'es',UY:'es',CR:'es',PA:'es',GT:'es',HN:'es',SV:'es',NI:'es',CU:'es',DO:'es',CN:'zh',TW:'zh',HK:'zh',MO:'zh',SA:'ar',EG:'ar',MA:'ar',DZ:'ar',TN:'ar',LY:'ar',SD:'ar',JO:'ar',LB:'ar',IQ:'ar',YE:'ar',AE:'ar',QA:'ar',KW:'ar',BH:'ar',OM:'ar',PS:'ar'};return map[String(code||'').toUpperCase()]||'en';}
 async function register(){
  if(!db){message('regMsg','Supabase haijapakia. Hakikisha intaneti ipo kisha refresh ukurasa.','err');return}
- const name=el('regName').value.trim(),full=el('regFullName').value.trim(),email=el('regEmail').value.trim().toLowerCase(),pass=el('regPass').value,phone=el('regPhone').value.trim(),country=el('regCountry').value,lang='en';
+ const name=el('regName').value.trim(),full=el('regFullName').value.trim(),email=el('regEmail').value.trim().toLowerCase(),pass=el('regPass').value,phone=el('regPhone').value.trim(),country=el('regCountry').value,lang=languageForCountry(country);
  const button=el('registerBtn');if(button)button.disabled=true;
  const emailOk=email.includes('@')&&email.includes('.')&&email.indexOf('@')>0&&email.lastIndexOf('.')>email.indexOf('@')+1&&email.lastIndexOf('.')<email.length-1;
  if(!name||name.length<2||!full||full.length<2||!emailOk||pass.length<6||!country){
@@ -712,7 +713,7 @@ function applyLanguage(lang){
   const walker=document.createTreeWalker(document.body,NodeFilter.SHOW_TEXT);
   let node;
   while((node=walker.nextNode())){
-    const parent=node.parentElement;if(!parent||['SCRIPT','STYLE','NOSCRIPT'].includes(parent.tagName)||parent.closest('#regPane,#regTabBtn,#loginPane,#loginTabBtn,#reportArea'))continue;
+    const parent=node.parentElement;if(!parent||['SCRIPT','STYLE','NOSCRIPT'].includes(parent.tagName)||parent.closest('#reportArea'))continue;
     const current=node.nodeValue;
     let original=__spTextOriginal.get(node);
     const last=__spTextRendered.get(node);
@@ -725,7 +726,7 @@ function applyLanguage(lang){
     __spTextRendered.set(node,output);
   }
   ['placeholder','title','aria-label','alt'].forEach(attr=>{
-    document.querySelectorAll('['+attr+']').forEach(elm=>{if(elm.closest('#regPane,#loginPane,#reportArea'))return;
+    document.querySelectorAll('['+attr+']').forEach(elm=>{if(elm.closest('#reportArea'))return;
       let originals=__spAttrOriginal.get(elm);if(!originals){originals={};__spAttrOriginal.set(elm,originals);}
       let rendered=__spAttrRendered.get(elm);if(!rendered){rendered={};__spAttrRendered.set(elm,rendered);}
       const current=elm.getAttribute(attr)||'';
@@ -740,18 +741,20 @@ function applyLanguage(lang){
 }
 window.applyLanguage=applyLanguage;
 function setLang(lang){
-  try{localStorage.setItem('shulepro_language_v2','en')}catch(e){}
-  ['globalLang','regLang','languageSelect'].forEach(id=>{const node=document.getElementById(id);if(node)node.value='en';});
-  applyLanguage('en');
+  const supported=['sw','en','fr','ar','zh','es'];
+  const active=supported.includes(String(lang))?String(lang):'en';
+  try{localStorage.setItem('shulepro_language_v2',active)}catch(e){}
+  const selector=document.getElementById('globalLang');if(selector)selector.value=active;
+  applyLanguage(active);
   const box=document.getElementById('backupMsg');
-  if(box){box.textContent='Professional modules are displayed in English. Parent reports use the language associated with the school country.';box.className='success';}
+  if(box){box.textContent=({sw:'Lugha ya mfumo imebadilishwa.',en:'System language changed.',fr:'La langue du système a été modifiée.',ar:'تم تغيير لغة النظام.',zh:'系统语言已更改。',es:'Se cambió el idioma del sistema.'})[active];box.className='success';}
   if(typeof buildReport==='function'&&document.getElementById('reportArea'))buildReport();
 }
 window.setLang=setLang;
 document.addEventListener('DOMContentLoaded',()=>{
   let lang='sw';try{lang=localStorage.getItem('shulepro_language_v2')||'sw'}catch(e){}
   setLang(lang);
-  const observer=new MutationObserver(()=>{let current='sw';try{current=localStorage.getItem('shulepro_language_v2')||'sw'}catch(e){}applyLanguage('en');});
+  const observer=new MutationObserver(()=>{let current='sw';try{current=localStorage.getItem('shulepro_language_v2')||'sw'}catch(e){}applyLanguage(current);});
   observer.observe(document.body,{childList:true,subtree:true,characterData:true,attributes:true,attributeFilter:['placeholder','title','aria-label','alt']});
 });
 async function loadSuperAdmin(){
