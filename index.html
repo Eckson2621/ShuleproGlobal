@@ -272,8 +272,15 @@ async function startApp(user){
  if(!subs||!subs.length){
   document.querySelector('.tabs').classList.add('hidden');
   document.querySelectorAll('.pane').forEach(x=>x.classList.add('hidden'));
-  el('planChoicePanel').classList.remove('hidden');
-  await loadTrialPlans();return;
+  if(currentRole==='owner'){
+   el('planChoicePanel').classList.remove('hidden');
+   await loadTrialPlans();
+  }else{
+   el('planChoicePanel').classList.add('hidden');
+   const note=el('roleDescription');
+   if(note)note.textContent='Your '+(ROLE_DASHBOARDS[currentRole]?.title||'staff')+' account is active, but the school subscription has not been activated. Please ask the School Owner to activate the school plan.';
+  }
+  return;
  }
  el('planChoicePanel').classList.add('hidden');
  document.querySelector('.tabs').classList.remove('hidden');
