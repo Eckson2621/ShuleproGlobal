@@ -225,7 +225,7 @@ $('spTeacherForm').onsubmit=async function(e){
   if(response.error)throw new Error(response.error.message||'Invitation service failed.');
   if(response.data&&response.data.error)throw new Error(response.data.error);
   msg.className='sp-notice success';msg.textContent='Invitation sent to '+payload.email+'. Ask the staff member to check Inbox and Spam, open the invitation and set a password.';
-  form.reset();openTeachers();
+  form.reset();alert('Invitation sent to '+payload.email+'. Ask the staff member to check Inbox and Spam, open the invitation and set a password.');openTeachers();
  }catch(err){
   msg.className='sp-notice error';msg.textContent='Invitation failed: '+(err.message||String(err));
  }finally{button.disabled=false;button.textContent='＋ Send invitation email';}
