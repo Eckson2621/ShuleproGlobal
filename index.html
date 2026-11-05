@@ -30,7 +30,7 @@ html[dir="rtl"] body{text-align:right}html[dir="rtl"] th,html[dir="rtl"] td{text
 <header>
  <div><div class="brand">SHULEPRO GLOBAL</div><div class="muted">School Management System</div><div class="company-credit">Developed and operated by EAM VENTURES LTD <span>(company registration pending)</span></div></div>
  <div style="text-align:right"><strong id="schoolName">Karibu</strong><div class="muted" id="schoolCode"></div></div>
- <select id="globalLang" aria-label="Language" onchange="setLang(this.value)" style="width:auto;max-width:145px;margin:0"><option value="en">English</option><option value="sw">Kiswahili</option><option value="fr">Français</option><option value="ar">العربية</option><option value="zh">中文</option><option value="es">Español</option></select><button id="logoutBtn" class="dark hidden" onclick="logout()">Toka</button>
+ <span class="muted" style="font-size:12px">Staff: English · Parent reports: country language</span><button id="logoutBtn" class="dark hidden" onclick="logout()">Toka</button>
 </header>
 
 <div class="wrap">
@@ -135,7 +135,7 @@ html[dir="rtl"] body{text-align:right}html[dir="rtl"] th,html[dir="rtl"] td{text
   <h3>Backup & Lugha</h3><p class="muted">Backup inajumuisha data ambayo akaunti yako inaruhusiwa kusoma. Hifadhi faili kwa usalama.</p>
   <div class="actions"><button onclick="exportBackup()">Pakua Backup JSON</button><button class="secondary" onclick="document.getElementById('importFile').click()">Rejesha wanafunzi kutoka JSON</button></div>
   <input type="file" id="importFile" accept=".json,application/json" class="hidden" onchange="importBackup(event)">
-  <label>Lugha</label><select id="languageSelect" onchange="setLang(this.value)"><option value="en">English</option><option value="sw">Kiswahili</option><option value="fr">Français</option><option value="ar">العربية</option><option value="zh">中文</option><option value="es">Español</option></select>
+  <p class="muted">Professional modules are displayed in English. Parent-facing reports automatically use the language associated with the school's selected country.</p>
   <div id="backupMsg"></div>
  </div>
 </section>
@@ -396,9 +396,22 @@ async function submitPayment(){
  if(error){message('paymentMsg','Taarifa haijatumwa: '+error.message,'err');return}
  el('paymentTx').value='';message('paymentMsg','Taarifa ya malipo imetumwa. Subiri uhakiki wa Super Admin.','ok');await loadFees();
 }
+function getParentReportLanguage(){
+ const code=String(currentSchool?.country_code||'').toUpperCase();
+ const groups={sw:['TZ','KE'],fr:['FR','SN','CI','CD','CG','CM','BJ','BF','BI','CF','TD','KM','DJ','GA','GN','GQ','MG','ML','NE','RW','SC','TG','VU','MC','BE','LU','CH'],ar:['SA','AE','QA','KW','BH','OM','YE','EG','JO','LB','SY','IQ','PS','LY','TN','DZ','MA','SD','MR','SO'],zh:['CN','TW','SG'],es:['ES','MX','AR','BO','CL','CO','CR','CU','DO','EC','SV','GQ','GT','HN','NI','PA','PY','PE','PR','UY','VE']};
+ for(const lang of Object.keys(groups))if(groups[lang].includes(code))return lang;
+ return 'en';
+}
+function parentReportText(lang){
+ const dict={en:{title:'Parent Report',schoolCode:'School Code',date:'Date',summary:'School Summary',students:'Total students registered'},sw:{title:'Ripoti ya Mzazi',schoolCode:'Namba ya Shule',date:'Tarehe',summary:'Muhtasari wa Shule',students:'Jumla ya wanafunzi waliosajiliwa'},fr:{title:'Rapport aux parents',schoolCode:'Code de l’établissement',date:'Date',summary:'Résumé de l’établissement',students:'Nombre total d’élèves inscrits'},ar:{title:'تقرير ولي الأمر',schoolCode:'رمز المدرسة',date:'التاريخ',summary:'ملخص المدرسة',students:'إجمالي الطلاب المسجلين'},zh:{title:'家长报告',schoolCode:'学校代码',date:'日期',summary:'学校概况',students:'注册学生总数'},es:{title:'Informe para padres',schoolCode:'Código de la escuela',date:'Fecha',summary:'Resumen escolar',students:'Total de estudiantes registrados'}};
+ return dict[lang]||dict.en;
+}
 function buildReport(){
- const total=studentsCache.length;
- el('reportArea').innerHTML=`<h2>${esc(currentSchool?.school_name||'Shule')}</h2><p>School Code: ${esc(currentSchool?.school_code||'')}</p><p>Tarehe: ${new Date().toLocaleDateString()}</p><h3>Muhtasari</h3><p>Idadi ya wanafunzi waliopakiwa: ${total}</p>`;
+ const total=studentsCache.length,lang=getParentReportLanguage(),t=parentReportText(lang);
+ const locale={sw:'sw-TZ',fr:'fr-FR',ar:'ar',zh:'zh-CN',es:'es-ES',en:'en-US'}[lang]||'en-US';
+ const date=new Intl.DateTimeFormat(locale,{year:'numeric',month:'long',day:'numeric'}).format(new Date());
+ el('reportArea').setAttribute('lang',lang);el('reportArea').setAttribute('dir',lang==='ar'?'rtl':'ltr');
+ el('reportArea').innerHTML=`<h2>${esc(currentSchool?.school_name||'')}</h2><h3>${esc(t.title)}</h3><p>${esc(t.schoolCode)}: ${esc(currentSchool?.school_code||'')}</p><p>${esc(t.date)}: ${esc(date)}</p><h3>${esc(t.summary)}</h3><p>${esc(t.students)}: ${total}</p>`;
 }
 async function exportBackup(){
  try{
@@ -702,18 +715,18 @@ function applyLanguage(lang){
 }
 window.applyLanguage=applyLanguage;
 function setLang(lang){
-  if(!LANG_TEXT[lang])lang='en';
-  try{localStorage.setItem('shulepro_language_v2',lang)}catch(e){}
-  ['globalLang','regLang','languageSelect'].forEach(id=>{const node=document.getElementById(id);if(node)node.value=lang;});
-  applyLanguage(lang);
-  const msg=({sw:'Lugha imebadilishwa.',en:'Language changed.',fr:'Langue modifiée.',ar:'تم تغيير اللغة.',zh:'语言已更改。',es:'Idioma cambiado.'})[lang]||'Language changed.';
-  const box=document.getElementById('backupMsg');if(box){box.textContent=msg;box.className='success';}
+  try{localStorage.setItem('shulepro_language_v2','en')}catch(e){}
+  ['globalLang','regLang','languageSelect'].forEach(id=>{const node=document.getElementById(id);if(node)node.value='en';});
+  applyLanguage('en');
+  const box=document.getElementById('backupMsg');
+  if(box){box.textContent='Professional modules are displayed in English. Parent reports use the language associated with the school country.';box.className='success';}
+  if(typeof buildReport==='function'&&document.getElementById('reportArea'))buildReport();
 }
 window.setLang=setLang;
 document.addEventListener('DOMContentLoaded',()=>{
   let lang='sw';try{lang=localStorage.getItem('shulepro_language_v2')||'sw'}catch(e){}
   setLang(lang);
-  const observer=new MutationObserver(()=>{let current='sw';try{current=localStorage.getItem('shulepro_language_v2')||'sw'}catch(e){}applyLanguage(current);});
+  const observer=new MutationObserver(()=>{let current='sw';try{current=localStorage.getItem('shulepro_language_v2')||'sw'}catch(e){}applyLanguage('en');});
   observer.observe(document.body,{childList:true,subtree:true,characterData:true,attributes:true,attributeFilter:['placeholder','title','aria-label','alt']});
 });
 async function loadSuperAdmin(){
