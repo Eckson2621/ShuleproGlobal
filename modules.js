@@ -183,8 +183,21 @@ box.innerHTML=rows.map(function(r){var extra=Object.entries(r.payload||{}).filte
 box.querySelectorAll('[data-delete]').forEach(function(b){b.onclick=async function(){if(!confirm('Delete this record?'))return;var del=await db.from('school_module_records').delete().eq('id',b.dataset.delete).eq('school_id',currentSchoolId);if(del.error){alert('Delete failed: '+del.error.message);return;}loadRecords(key);};});
 }
 function init(){
-style();var original=window.startApp;if(typeof original==='function'&&!original.__spWrapped){var wrapped=async function(user){await original(user);setTimeout(function(){if(currentSchoolId&&$('app')&&!$('app').classList.contains('hidden'))createHub();},0);};wrapped.__spWrapped=true;window.startApp=wrapped;}
-if(currentSchoolId&&$('app')&&!$('app').classList.contains('hidden'))createHub();
+style();
+var original=window.startApp;
+if(typeof original==='function'&&!original.__spWrapped){
+  var wrapped=async function(user){await original(user);if(currentSchoolId&&$('app')&&!$('app').classList.contains('hidden'))createHub();};
+  wrapped.__spWrapped=true;window.startApp=wrapped;
+}
+var app=$('app');
+if(app&&window.MutationObserver){
+  var observer=new MutationObserver(function(){
+    if(currentSchoolId&&!app.classList.contains('hidden'))createHub();
+  });
+  observer.observe(app,{attributes:true,childList:true,subtree:true});
+}
+setTimeout(function(){if(currentSchoolId&&app&&!app.classList.contains('hidden'))createHub();},1500);
+if(currentSchoolId&&app&&!app.classList.contains('hidden'))createHub();
 }
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init);else init();
 })();
