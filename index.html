@@ -273,13 +273,14 @@ async function addStudent(){
  const admission=el('stuAdmission').value.trim(),gender=el('stuGender').value;
  if(!name||!cls){message('stuMsg','Jaza jina kamili na darasa.','err');return}
  if(name.length>160||cls.length>80||admission.length>60){message('stuMsg','Baadhi ya taarifa zimezidi urefu unaoruhusiwa.','err');return}
+ const wasEditing=!!editingStudentId;
  const payload={full_name:name,class_name:cls,admission_number:admission||null,gender:gender||null};
  const result=editingStudentId
   ?await db.from('students').update(payload).eq('id',editingStudentId).eq('school_id',currentSchoolId).select('id').maybeSingle()
   :await db.from('students').insert({...payload,school_id:currentSchoolId}).select('id').single();
  if(result.error){message('stuMsg','Haijahifadhiwa: '+result.error.message,'err');return}
  if(editingStudentId&&!result.data){message('stuMsg','Hakuna rekodi iliyobadilishwa. Hakikisha ruhusa za shule zinaruhusu uhariri.','err');return}
- resetStudentForm();message('stuMsg',editingStudentId?'Taarifa za mwanafunzi zimebadilishwa.':'Mwanafunzi amesajiliwa kikamilifu.','ok');await loadStudents();
+ resetStudentForm();message('stuMsg',wasEditing?'Taarifa za mwanafunzi zimebadilishwa.':'Mwanafunzi amesajiliwa kikamilifu.','ok');await loadStudents();
 }
 function renderStudentsTable(){
  const q=(el('stuSearch')?.value||'').trim().toLowerCase();
