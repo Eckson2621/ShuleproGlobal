@@ -875,12 +875,13 @@ async function loadSuperAdmin(){
  const err=schoolsRes.error||payRes.error||subsRes.error||studentsRes.error;if(err){message('adminMsg','Imeshindwa kupakia taarifa: '+err.message,'err');return}
  const schools=schoolsRes.data||[],payments=payRes.data||[],subs=subsRes.data||[];
  el('adminSummary').innerHTML=[['Shule',schools.length],['Malipo pending',payments.length],['Subscriptions',subs.length],['Wanafunzi',studentsRes.count??'—']].map(([k,v])=>`<div class="card"><div class="muted">${esc(k)}</div><h2>${esc(v)}</h2></div>`).join('');
- el('adminSchoolsTable').innerHTML='<tr><th>Shule</th><th>Code</th><th>Nchi</th><th>Status</th><th>Tarehe</th><th>Usimamizi</th></tr>'+schools.map(s=>`<tr><td>${esc(s.school_name)}</td><td>${esc(s.school_code)}</td><td>${esc(s.country_code)}</td><td>${s.is_active?'Active':'Inactive'}</td><td>${esc((s.created_at||'').slice(0,10))}</td><td><button class="secondary" onclick="setSchoolActive('${esc(s.id)}',${!s.is_active})">${s.is_active?'Simamisha':'Washa tena'}</button> <button style="background:#991b1b" onclick="deleteSchool('${esc(s.id)}')">Futa kabisa</button></td></tr>`).join('');
+ el('adminSchoolsTable').innerHTML='<tr><th>Vitendo</th><th>Shule</th><th>Code</th><th>Nchi</th><th>Status</th><th>Tarehe</th></tr>'+schools.map(s=>`<tr data-school-id="${esc(s.id)}" data-school-code="${esc(s.school_code||'')}"><td style="min-width:150px"><button class="secondary" onclick="setSchoolActive('${esc(s.id)}',${!s.is_active})">${s.is_active?'Simamisha':'Washa tena'}</button><br><button style="background:#991b1b;margin-top:6px" onclick="deleteSchool('${esc(s.id)}')">FUTA PERMANENT</button></td><td>${esc(s.school_name)}</td><td>${esc(s.school_code)}</td><td>${esc(s.country_code)}</td><td>${s.is_active?'Active':'Inactive'}</td><td>${esc((s.created_at||'').slice(0,10))}</td></tr>`).join('');
  el('adminPaymentsTable').innerHTML='<tr><th>School ID</th><th>Kiasi</th><th>TxID</th><th>Njia</th><th>Kitendo</th></tr>'+payments.map(p=>`<tr><td>${esc(p.school_id)}</td><td>${esc(p.amount)} ${esc(p.currency)}</td><td>${esc(p.transaction_id||'')}</td><td>${esc(p.payment_method||'')}</td><td><button onclick="reviewPayment('${esc(p.id)}','approve')">Thibitisha</button> <button class="secondary" onclick="reviewPayment('${esc(p.id)}','reject')">Kataa</button></td></tr>`).join('');
  el('adminSubscriptionsTable').innerHTML='<tr><th>School ID</th><th>Mpango</th><th>Status</th><th>Mwisho</th><th>Kiasi</th></tr>'+subs.map(s=>`<tr><td>${esc(s.school_id)}</td><td>${esc(s.plan_id)}</td><td>${esc(s.status)}</td><td>${esc((s.ends_at||s.trial_ends_at||'').slice(0,10))}</td><td>${esc(s.amount??'—')} ${esc(s.currency||'')}</td></tr>`).join('');
 }
 async function setSchoolActive(id,active){
- const schoolName=Array.from(el('adminSchoolsTable').querySelectorAll('tr')).find(r=>r.innerHTML.includes(id))?.cells?.[0]?.textContent||'shule hii';
+ const row=el('adminSchoolsTable').querySelector('tr[data-school-id="'+id+'"]');
+ const schoolName=row?.cells?.[1]?.textContent||'shule hii';
  if(!confirm((active?'Washa tena ':'Simamisha ')+schoolName+'?'))return;
  const {data,error}=await db.rpc('admin_set_school_active',{p_school_id:id,p_is_active:active});
  if(error){message('adminMsg','Imeshindikana kubadilisha hali ya shule: '+error.message,'err');return}
@@ -888,10 +889,10 @@ async function setSchoolActive(id,active){
  await loadSuperAdmin();
 }
 async function deleteSchool(id){
- const row=Array.from(el('adminSchoolsTable').querySelectorAll('tr')).find(r=>r.innerHTML.includes(id));
+ const row=el('adminSchoolsTable').querySelector('tr[data-school-id="'+id+'"]');
  if(!row){message('adminMsg','Shule haijapatikana kwenye orodha. Refresh ukurasa.','err');return}
- const schoolName=row.cells[0]?.textContent||'';
- const schoolCode=row.cells[1]?.textContent||'';
+ const schoolName=row.cells[1]?.textContent||'';
+ const schoolCode=row.getAttribute('data-school-code')||row.cells[2]?.textContent||'';
  if(!schoolCode){message('adminMsg','Shule hii haina School Code; haiwezi kufutwa kwa njia hii.','err');return}
  if(!confirm('ONYO: Unataka kufuta kabisa '+schoolName+'? Wanafunzi, walimu, alama, mahudhurio, madarasa, ada, malipo na subscriptions zake zitafutwa. Kitendo hiki hakiwezi kutenguliwa.'))return;
  const typed=prompt('Andika School Code hii kuthibitisha ufutaji wa kudumu: '+schoolCode);
