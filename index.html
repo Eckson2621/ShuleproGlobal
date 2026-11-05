@@ -226,7 +226,7 @@ async function startApp(user){
  const {data:school,error:schoolError}=await db.from('schools').select('*').eq('id',currentSchoolId).single();
  if(schoolError||!school){el('auth').classList.remove('hidden');el('app').classList.add('hidden');message('loginMsg','Akaunti ya shule haipatikani au imesimamishwa na Super Admin. Wasiliana na msimamizi wa ShuleProGlobal.','err');return;}currentSchool=school;
  el('schoolName').textContent=school.school_name||'Shule';el('schoolCode').textContent=school.school_code||'';
- setLang(school.default_language||school.preferred_language||school.language||'sw');
+ let chosenLanguage='sw';try{chosenLanguage=localStorage.getItem('shulepro_language_v2')||school.default_language||school.preferred_language||school.language||'sw'}catch(e){chosenLanguage=school.default_language||school.preferred_language||school.language||'sw'}setLang(chosenLanguage);
  el('welcome').textContent='Karibu, '+(user.user_metadata?.full_name||user.email);
  const {data:subs,error:subError}=await db.from('subscriptions').select('id,status,trial_ends_at,ends_at').eq('school_id',currentSchoolId).order('created_at',{ascending:false}).limit(1);
  if(subError)throw subError;
@@ -477,36 +477,59 @@ Object.assign(LANG_TEXT.es,{
  "School workspace":"Espacio de trabajo escolar","School Dashboard":"Panel de la escuela","Overview":"Resumen","Core modules":"Módulos principales","Search modules...":"Buscar módulos...","School Administration":"Administración escolar","Students & Admissions":"Estudiantes y admisiones","Teachers & Human Resources":"Docentes y recursos humanos","Academic Management":"Gestión académica","Attendance & Scheduling":"Asistencia y horarios","Finance & Accounts":"Finanzas y contabilidad","Parent & Student Portals":"Portales de padres y estudiantes","Communication & Notifications":"Comunicación y notificaciones","Library Management":"Gestión de biblioteca","Hostel & Boarding":"Internado y alojamiento","Transport Management":"Gestión del transporte","Inventory & Assets":"Inventario y activos","Events, Discipline & Welfare":"Eventos, disciplina y bienestar","Settings, Security & Data":"Configuración, seguridad y datos","School Profile":"Perfil de la escuela","Academic Years & Terms":"Años y períodos académicos","Departments & Subjects":"Departamentos y asignaturas","Classes & Streams":"Clases y secciones","Policies & Documents":"Políticas y documentos","School setup saved successfully.":"La configuración de la escuela se guardó correctamente."
 });
 
+/* Language engine: always translate from each element's original text.
+   This prevents one selected language from becoming the source for the next language. */
 function applyLanguage(lang){
-  const dict=LANG_TEXT[lang]||LANG_TEXT.en, reverse={};
-  Object.values(LANG_TEXT).forEach(d=>Object.entries(d).forEach(([source,target])=>{if(target)reverse[String(target).trim().toLowerCase()]=source}));
-  const lookup=new Map(Object.entries(dict).map(([source,target])=>[source.trim().toLowerCase(),target]));
+  const dict=LANG_TEXT[lang]||LANG_TEXT.en;
+  const lookup=new Map(Object.entries(dict).map(([source,target])=>[String(source).trim().toLocaleLowerCase(),String(target)]));
+  const translate=(original)=>{
+    const key=String(original??'').trim().toLocaleLowerCase();
+    return lookup.has(key)?lookup.get(key):String(original??'');
+  };
   const walker=document.createTreeWalker(document.body,NodeFilter.SHOW_TEXT);
   let node;
   while((node=walker.nextNode())){
-    const parent=node.parentElement;if(!parent||['SCRIPT','STYLE','NOSCRIPT'].includes(parent.tagName))continue;
-    const raw=node.nodeValue,trim=raw.trim();if(!trim)continue;
-    const source=reverse[trim.toLowerCase()]||trim,translated=lookup.get(source.trim().toLowerCase());
-    if(translated&&translated!==trim)node.nodeValue=raw.replace(trim,translated);
+    const parent=node.parentElement;
+    if(!parent||['SCRIPT','STYLE','NOSCRIPT'].includes(parent.tagName))continue;
+    if(!Object.prototype.hasOwnProperty.call(node,'__spOriginalText'))node.__spOriginalText=node.nodeValue;
+    const original=node.__spOriginalText,trim=original.trim();
+    if(!trim)continue;
+    const translated=translate(trim);
+    if(translated!==trim){
+      const start=original.indexOf(trim),end=start+trim.length;
+      node.nodeValue=original.slice(0,start)+translated+original.slice(end);
+    }else if(node.nodeValue!==original){
+      node.nodeValue=original;
+    }
   }
-  ['placeholder','title','aria-label','alt'].forEach(attr=>document.querySelectorAll('['+attr+']').forEach(elm=>{
-    const value=elm.getAttribute(attr);if(!value)return;
-    const source=reverse[value.trim().toLowerCase()]||value,translated=lookup.get(source.trim().toLowerCase());
-    if(translated&&translated!==value)elm.setAttribute(attr,translated);
-  }));
-  document.documentElement.lang=lang;document.documentElement.dir=lang==='ar'?'rtl':'ltr';
+  ['placeholder','title','aria-label','alt'].forEach(attr=>{
+    document.querySelectorAll('['+attr+']').forEach(elm=>{
+      const store='__spOriginal_'+attr;
+      if(!Object.prototype.hasOwnProperty.call(elm,store))elm[store]=elm.getAttribute(attr)||'';
+      const original=elm[store],translated=translate(original);
+      if(elm.getAttribute(attr)!==translated)elm.setAttribute(attr,translated);
+    });
+  });
+  document.documentElement.lang=lang;
+  document.documentElement.dir=lang==='ar'?'rtl':'ltr';
+  const title=translate(document.title);
+  if(title!==document.title)document.title=title;
 }
+window.applyLanguage=applyLanguage;
 function setLang(lang){
   if(!LANG_TEXT[lang])lang='en';
-  localStorage.setItem('shulepro_language_v2',lang);
+  try{localStorage.setItem('shulepro_language_v2',lang)}catch(e){}
   ['globalLang','regLang','languageSelect'].forEach(id=>{if(el(id))el(id).value=lang});
   applyLanguage(lang);
   if(el('backupMsg'))message('backupMsg',({sw:'Lugha imebadilishwa.',en:'Language changed.',fr:'Langue modifiée.',ar:'تم تغيير اللغة.',zh:'语言已更改。',es:'Idioma cambiado.'})[lang]||'Language changed.','ok');
 }
+window.setLang=setLang;
 document.addEventListener('DOMContentLoaded',()=>{
-  const lang=localStorage.getItem('shulepro_language_v2')||'en';setLang(lang);
-  const observer=new MutationObserver(()=>applyLanguage(localStorage.getItem('shulepro_language_v2')||'en'));
-  observer.observe(document.body,{childList:true,subtree:true});
+  let lang='sw';
+  try{lang=localStorage.getItem('shulepro_language_v2')||'sw'}catch(e){}
+  setLang(lang);
+  const observer=new MutationObserver(()=>applyLanguage((()=>{try{return localStorage.getItem('shulepro_language_v2')||'sw'}catch(e){return 'sw'}})()));
+  observer.observe(document.body,{childList:true,subtree:true,characterData:true,attributes:true,attributeFilter:['placeholder','title','aria-label','alt']});
 });
 async function loadSuperAdmin(){
  const [schoolsRes,payRes,subsRes,studentsRes]=await Promise.all([
