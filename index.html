@@ -37,7 +37,7 @@ html[dir="rtl"] body{text-align:right}html[dir="rtl"] th,html[dir="rtl"] td{text
 <section id="auth" class="card auth">
  <div class="authhead">
   <button id="regTabBtn" onclick="showAuth('reg')">Register School</button>
-  <button id="loginTabBtn" class="secondary" onclick="showAuth('login')">Ingia</button>
+  <button id="loginTabBtn" class="secondary" onclick="showAuth('login')">Sign In</button>
  </div>
  <div id="regPane" style="padding:18px">
   <h2>Register Your School</h2>
@@ -51,10 +51,10 @@ html[dir="rtl"] body{text-align:right}html[dir="rtl"] th,html[dir="rtl"] td{text
   <div id="regMsg"></div>
  </div>
  <div id="loginPane" class="hidden" style="padding:18px">
-  <h2>Ingia kwenye akaunti</h2>
-  <label>Email</label><input id="loginEmail" type="email" placeholder="Email">
-  <label>Nenosiri</label><input id="loginPass" type="password" placeholder="Nenosiri">
-  <button style="width:100%;margin-top:10px" onclick="login()">Ingia</button>
+  <h2>Sign In to Your Account</h2>
+  <label>Email Address</label><input id="loginEmail" type="email" placeholder="Enter your email">
+  <label>Password</label><input id="loginPass" type="password" placeholder="Enter your password">
+  <button style="width:100%;margin-top:10px" onclick="login()">Sign In</button>
   <div id="loginMsg"></div>
  </div>
 </section>
@@ -674,7 +674,7 @@ function applyLanguage(lang){
   const walker=document.createTreeWalker(document.body,NodeFilter.SHOW_TEXT);
   let node;
   while((node=walker.nextNode())){
-    const parent=node.parentElement;if(!parent||['SCRIPT','STYLE','NOSCRIPT'].includes(parent.tagName)||parent.closest('#regPane,#regTabBtn'))continue;
+    const parent=node.parentElement;if(!parent||['SCRIPT','STYLE','NOSCRIPT'].includes(parent.tagName)||parent.closest('#regPane,#regTabBtn,#loginPane,#loginTabBtn))continue;
     const current=node.nodeValue;
     let original=__spTextOriginal.get(node);
     const last=__spTextRendered.get(node);
@@ -687,7 +687,7 @@ function applyLanguage(lang){
     __spTextRendered.set(node,output);
   }
   ['placeholder','title','aria-label','alt'].forEach(attr=>{
-    document.querySelectorAll('['+attr+']').forEach(elm=>{if(elm.closest('#regPane'))return;
+    document.querySelectorAll('['+attr+']').forEach(elm=>{if(elm.closest('#regPane,#loginPane'))return;
       let originals=__spAttrOriginal.get(elm);if(!originals){originals={};__spAttrOriginal.set(elm,originals);}
       let rendered=__spAttrRendered.get(elm);if(!rendered){rendered={};__spAttrRendered.set(elm,rendered);}
       const current=elm.getAttribute(attr)||'';
