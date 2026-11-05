@@ -87,8 +87,20 @@ html[dir="rtl"] body{text-align:right}html[dir="rtl"] th,html[dir="rtl"] td{text
  </nav>
 
  <div id="wanafunzi" class="card pane active">
-  <h3>Wanafunzi</h3><div class="grid"><div><label>Jina la mwanafunzi</label><input id="stuName" placeholder="Jina kamili"></div><div><label>Darasa</label><input id="stuClass" placeholder="Mfano: Form I"></div></div>
-  <button onclick="addStudent()">Hifadhi mwanafunzi</button><div id="stuMsg"></div><div class="tablewrap"><table id="studentsTable"></table></div>
+  <h3>Usimamizi wa Wanafunzi</h3>
+  <p class="muted">Sajili, tafuta, hariri na futa taarifa za wanafunzi wa shule hii.</p>
+  <div class="grid">
+   <div><label>Jina kamili la mwanafunzi *</label><input id="stuName" placeholder="Jina kamili" maxlength="160" required></div>
+   <div><label>Darasa *</label><input id="stuClass" placeholder="Mfano: Form I" maxlength="80" required></div>
+   <div><label>Namba ya usajili</label><input id="stuAdmission" placeholder="Mfano: SSS/2026/001" maxlength="60"></div>
+   <div><label>Jinsia</label><select id="stuGender"><option value="">Haijatajwa</option><option value="Male">Mwanaume</option><option value="Female">Mwanamke</option><option value="Other">Nyingine</option></select></div>
+  </div>
+  <button id="stuSaveBtn" onclick="addStudent()">Hifadhi mwanafunzi</button>
+  <button id="stuCancelEdit" class="secondary hidden" onclick="cancelStudentEdit()">Ghairi uhariri</button>
+  <div id="stuMsg"></div>
+  <div class="grid" style="margin-top:14px"><div><label>Tafuta mwanafunzi</label><input id="stuSearch" placeholder="Jina, namba ya usajili au darasa" oninput="renderStudentsTable()"></div></div>
+  <div id="studentCount" class="muted"></div>
+  <div class="tablewrap"><table id="studentsTable"></table></div>
  </div>
 
  <div id="alama" class="card pane">
@@ -247,20 +259,59 @@ function showTab(id,node){
  el(id).classList.add('active');if(node)node.classList.add('active');
  if(id==='wanafunzi')loadStudents();if(id==='alama')loadMarks();if(id==='mahudhurio')loadAttendance();if(id==='ratiba')loadTimetable();if(id==='ada')loadFees();if(id==='report')buildReport();
 }
+let editingStudentId=null;
+function resetStudentForm(){
+ editingStudentId=null;
+ ['stuName','stuClass','stuAdmission'].forEach(id=>{if(el(id))el(id).value=''});
+ if(el('stuGender'))el('stuGender').value='';
+ if(el('stuSaveBtn'))el('stuSaveBtn').textContent='Hifadhi mwanafunzi';
+ if(el('stuCancelEdit'))el('stuCancelEdit').classList.add('hidden');
+}
+function cancelStudentEdit(){resetStudentForm();message('stuMsg','Uhariri umeghairiwa.','info')}
 async function addStudent(){
  const name=el('stuName').value.trim(),cls=el('stuClass').value.trim();
- if(!name){message('stuMsg','Weka jina la mwanafunzi.','err');return}
- const {error}=await db.from('students').insert({school_id:currentSchoolId,full_name:name,class_name:cls});
- if(error){message('stuMsg','Haijahifadhiwa: '+error.message,'err');return}
- el('stuName').value='';el('stuClass').value='';message('stuMsg','Mwanafunzi amehifadhiwa.','ok');await loadStudents();
+ const admission=el('stuAdmission').value.trim(),gender=el('stuGender').value;
+ if(!name||!cls){message('stuMsg','Jaza jina kamili na darasa.','err');return}
+ if(name.length>160||cls.length>80||admission.length>60){message('stuMsg','Baadhi ya taarifa zimezidi urefu unaoruhusiwa.','err');return}
+ const payload={full_name:name,class_name:cls,admission_number:admission||null,gender:gender||null};
+ const result=editingStudentId
+  ?await db.from('students').update(payload).eq('id',editingStudentId).eq('school_id',currentSchoolId).select('id').maybeSingle()
+  :await db.from('students').insert({...payload,school_id:currentSchoolId}).select('id').single();
+ if(result.error){message('stuMsg','Haijahifadhiwa: '+result.error.message,'err');return}
+ if(editingStudentId&&!result.data){message('stuMsg','Hakuna rekodi iliyobadilishwa. Hakikisha ruhusa za shule zinaruhusu uhariri.','err');return}
+ resetStudentForm();message('stuMsg',editingStudentId?'Taarifa za mwanafunzi zimebadilishwa.':'Mwanafunzi amesajiliwa kikamilifu.','ok');await loadStudents();
+}
+function renderStudentsTable(){
+ const q=(el('stuSearch')?.value||'').trim().toLowerCase();
+ const rows=studentsCache.filter(s=>[s.full_name,s.admission_number,s.class_name].some(v=>String(v||'').toLowerCase().includes(q)));
+ if(el('studentCount'))el('studentCount').textContent='Wanafunzi '+rows.length+' kati ya '+studentsCache.length;
+ el('studentsTable').innerHTML='<tr><th>Jina</th><th>Namba ya usajili</th><th>Darasa</th><th>Jinsia</th><th>Vitendo</th></tr>'+rows.map(s=>`<tr><td>${esc(s.full_name||'')}</td><td>${esc(s.admission_number||'—')}</td><td>${esc(s.class_name||'')}</td><td>${esc(s.gender||'—')}</td><td><button type="button" class="secondary" data-student-edit="${esc(s.id)}">Hariri</button> <button type="button" class="secondary" data-student-delete="${esc(s.id)}">Futa</button></td></tr>`).join('')||'<tr><td colspan="5">Hakuna mwanafunzi aliyepatikana.</td></tr>';
+ el('studentsTable').querySelectorAll('[data-student-edit]').forEach(b=>b.onclick=()=>editStudent(b.dataset.studentEdit));
+ el('studentsTable').querySelectorAll('[data-student-delete]').forEach(b=>b.onclick=()=>deleteStudent(b.dataset.studentDelete));
+}
+function editStudent(id){
+ const s=studentsCache.find(x=>x.id===id);if(!s)return;
+ editingStudentId=s.id;el('stuName').value=s.full_name||'';el('stuClass').value=s.class_name||'';
+ el('stuAdmission').value=s.admission_number||'';el('stuGender').value=s.gender||'';
+ el('stuSaveBtn').textContent='Hifadhi mabadiliko';el('stuCancelEdit').classList.remove('hidden');
+ message('stuMsg','Unahariri taarifa za '+s.full_name+'.','info');
+ el('stuName').scrollIntoView({behavior:'smooth',block:'center'});
+}
+async function deleteStudent(id){
+ const s=studentsCache.find(x=>x.id===id);if(!s)return;
+ if(!confirm('Una uhakika unataka kufuta '+s.full_name+'? Ikiwa mwanafunzi ana alama, ada au mahudhurio, database inaweza kuzuia ufutaji ili kulinda historia yake.'))return;
+ const {error,count}=await db.from('students').delete({count:'exact'}).eq('id',id).eq('school_id',currentSchoolId);
+ if(error){message('stuMsg','Mwanafunzi hajafutwa: '+error.message,'err');return}
+ if(count===0){message('stuMsg','Hakuna rekodi iliyofutwa. Hakikisha ruhusa za akaunti.','err');return}
+ if(editingStudentId===id)resetStudentForm();
+ message('stuMsg','Rekodi ya mwanafunzi imefutwa.','ok');await loadStudents();
 }
 async function loadStudents(){
- const {data,error}=await db.from('students').select('*').eq('school_id',currentSchoolId).order('created_at',{ascending:false});
+ const {data,error}=await db.from('students').select('id,school_id,full_name,admission_number,class_name,gender,created_at').eq('school_id',currentSchoolId).order('created_at',{ascending:false});
  if(error){message('stuMsg','Imeshindwa kusoma wanafunzi: '+error.message,'err');return}
- studentsCache=data||[];
- el('studentsTable').innerHTML='<tr><th>Jina</th><th>Darasa</th></tr>'+studentsCache.map(s=>`<tr><td>${esc(s.full_name||s.name||'')}</td><td>${esc(s.class_name||s.class||'')}</td></tr>`).join('');
- const opts=studentsCache.map(s=>`<option value="${esc(s.id)}">${esc(s.full_name||s.name||s.id)}</option>`).join('');
- el('markStudent').innerHTML=opts;
+ studentsCache=data||[];renderStudentsTable();
+ const opts=studentsCache.map(s=>`<option value="${esc(s.id)}">${esc(s.full_name||s.id)}</option>`).join('');
+ if(el('markStudent'))el('markStudent').innerHTML=opts;
 }
 async function addMark(){
  const student_id=el('markStudent').value,subject=el('markSubject').value.trim(),score=Number(el('markScore').value);
