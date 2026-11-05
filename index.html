@@ -449,5 +449,6 @@ async function boot(){
 db.auth.onAuthStateChange((_event,session)=>{if(!session){el('app').classList.add('hidden');el('logoutBtn').classList.add('hidden');el('auth').classList.remove('hidden')}});
 window.addEventListener('DOMContentLoaded',boot);
 </script>
+<script src="./modules.js" defer></script>
 </body>
 </html>
