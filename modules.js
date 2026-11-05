@@ -211,11 +211,25 @@ setTitle('Staff Directory & Roles','Manage the school teacher register.');
 var result=await db.from('teachers').select('id,full_name,subject,phone,login_email,created_at').eq('school_id',currentSchoolId).order('full_name');
 if(result.error){$('spPage').innerHTML='<div class="sp-notice">Unable to load teachers: '+esc(result.error.message)+'</div>';return;}
 var rows=result.data||[];
-var html='<button class="sp-back" id="spBackStaff">← Back to Human Resources</button><form id="spTeacherForm" class="sp-form"><div><label>Teacher full name<input name="full_name" required></label></div><div><label>Subject<input name="subject"></label></div><div><label>Phone<input name="phone"></label></div><div><label>Login email<input name="login_email" type="email"></label></div><div class="sp-wide"><button class="sp-btn" type="submit">＋ Add teacher</button></div></form><div class="sp-section-head"><div><h3>Teacher register</h3><p>'+rows.length+' teacher records</p></div></div><div class="sp-records">';
+var html='<button class="sp-back" id="spBackStaff">← Back to Human Resources</button><form id="spTeacherForm" class="sp-form"><div><label>Staff full name<input name="full_name" required></label></div><div><label>Staff role<select name="role" required><option value="teacher">Teacher</option><option value="headmaster">Headmaster</option><option value="academic_master">Academic Master</option><option value="accountant">Accountant</option></select></label></div><div><label>Subject (teachers only)<input name="subject"></label></div><div><label>Phone<input name="phone"></label></div><div class="sp-wide"><label>Staff login email<input name="login_email" type="email" required></label></div><div class="sp-wide"><button class="sp-btn" type="submit">＋ Send invitation email</button><small class="sp-muted">An invitation link will be sent. Staff members create their own password from the email link.</small><div id="spInviteMsg" role="status" aria-live="polite"></div></div></form><div class="sp-section-head"><div><h3>Teacher register</h3><p>'+rows.length+' teacher records</p></div></div><div class="sp-records">';
 rows.forEach(function(t){html+='<article class="sp-record"><div><strong>'+esc(t.full_name)+'</strong><small>'+esc(t.subject||'No subject')+' · '+esc(t.phone||'')+' · '+esc(t.login_email||'')+'</small></div><button class="sp-btn danger" data-teacher-delete="'+t.id+'">Delete</button></article>';});
 if(!rows.length)html+='<div class="sp-notice">No teacher records yet.</div>';html+='</div>';$('spPage').innerHTML=html;
 $('spBackStaff').onclick=function(){renderGroup('staff');};
-$('spTeacherForm').onsubmit=async function(e){e.preventDefault();var fd=new FormData(e.currentTarget);var saved=await db.from('teachers').insert({school_id:currentSchoolId,full_name:String(fd.get('full_name')).trim(),subject:String(fd.get('subject')||'').trim(),phone:String(fd.get('phone')||'').trim(),login_email:String(fd.get('login_email')||'').trim()});if(saved.error){alert('Could not save teacher: '+saved.error.message);return;}openTeachers();};
+$('spTeacherForm').onsubmit=async function(e){
+ e.preventDefault();
+ var form=e.currentTarget,button=form.querySelector('button[type="submit"]'),fd=new FormData(form);
+ var payload={school_id:currentSchoolId,full_name:String(fd.get('full_name')||'').trim(),email:String(fd.get('login_email')||'').trim(),role:String(fd.get('role')||'teacher'),subject:String(fd.get('subject')||'').trim(),phone:String(fd.get('phone')||'').trim()};
+ var msg=$('spInviteMsg');button.disabled=true;button.textContent='Sending invitation...';msg.className='sp-notice';msg.textContent='Creating staff account and sending invitation email...';
+ try{
+  var response=await db.functions.invoke('invite-school-staff',{body:payload});
+  if(response.error)throw new Error(response.error.message||'Invitation service failed.');
+  if(response.data&&response.data.error)throw new Error(response.data.error);
+  msg.className='sp-notice success';msg.textContent='Invitation sent to '+payload.email+'. Ask the staff member to check Inbox and Spam, open the invitation and set a password.';
+  form.reset();openTeachers();
+ }catch(err){
+  msg.className='sp-notice error';msg.textContent='Invitation failed: '+(err.message||String(err));
+ }finally{button.disabled=false;button.textContent='＋ Send invitation email';}
+};
 $('spPage').querySelectorAll('[data-teacher-delete]').forEach(function(b){b.onclick=async function(){if(!confirm('Delete this teacher record?'))return;var del=await db.from('teachers').delete().eq('id',b.dataset.teacherDelete).eq('school_id',currentSchoolId);if(del.error){alert('Could not delete teacher: '+del.error.message);return;}openTeachers();};});
 }
 async function openClasses(){
