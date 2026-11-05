@@ -696,7 +696,7 @@ function applyLanguage(lang){
   const walker=document.createTreeWalker(document.body,NodeFilter.SHOW_TEXT);
   let node;
   while((node=walker.nextNode())){
-    const parent=node.parentElement;if(!parent||['SCRIPT','STYLE','NOSCRIPT'].includes(parent.tagName)||parent.closest('#regPane,#regTabBtn,#loginPane,#loginTabBtn,#reportArea))continue;
+    const parent=node.parentElement;if(!parent||['SCRIPT','STYLE','NOSCRIPT'].includes(parent.tagName)||parent.closest('#regPane,#regTabBtn,#loginPane,#loginTabBtn,#reportArea'))continue;
     const current=node.nodeValue;
     let original=__spTextOriginal.get(node);
     const last=__spTextRendered.get(node);
