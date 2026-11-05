@@ -649,6 +649,22 @@ const SP_LANG_KEYS=['sw','fr','ar','zh','es'];
 SP_LANG_KEYS.forEach((lang,index)=>{if(!LANG_TEXT[lang])LANG_TEXT[lang]={};Object.keys(SP_WORKSPACE_I18N).forEach(key=>{LANG_TEXT[lang][key]=SP_WORKSPACE_I18N[key][index];});});
 Object.keys(SP_WORKSPACE_I18N).forEach(key=>{LANG_TEXT.en[key]=key;});
 
+/* Build English-source aliases too: the page contains both Swahili and English labels. */
+(function(){
+  ['sw','fr','ar','zh','es'].forEach(function(lang){
+    const target=LANG_TEXT[lang]||{};
+    Object.keys(LANG_TEXT.en||{}).forEach(function(source){
+      const english=LANG_TEXT.en[source];
+      if(typeof english!=='string'||!english.trim())return;
+      let translated=target[source];
+      if((translated===undefined||translated===null||translated==='') && lang==='sw') translated=LANG_TEXT.sw[source];
+      if(typeof translated==='string'&&translated.trim()&&english!==source){
+        target[english]=translated;
+      }
+    });
+  });
+})();
+ 
 /* Language engine with original-value tracking for live/dynamic DOM updates. */
 const __spTextOriginal=new WeakMap(),__spTextRendered=new WeakMap(),__spAttrOriginal=new WeakMap(),__spAttrRendered=new WeakMap();
 function applyLanguage(lang){
