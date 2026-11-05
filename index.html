@@ -164,7 +164,7 @@ async function register(){
  message('regMsg','Inatengeneza akaunti...','info');
  try{
   const pending={school_name:name,full_name:full,country_code:country,language:lang,school_code:schoolCode()};
-  const {data,error}=await db.auth.signUp({email,password:pass,options:{emailRedirectTo:location.origin+location.pathname,data:{full_name:full,phone,school_name:name,shulepro_registration:pending}}});
+  const {data,error}=await db.auth.signUp({email,password:pass,options:{data:{full_name:full,phone,school_name:name,shulepro_registration:pending}}});
   if(error)throw error;
   localStorage.setItem('shulepro_pending_registration',JSON.stringify(pending));
   if(data.session){
