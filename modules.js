@@ -163,6 +163,29 @@ var back=$('spReturnHub');if(!back){back=document.createElement('button');back.i
 back.onclick=function(){document.querySelectorAll('.pane').forEach(function(p){p.classList.add('hidden');});if(nav)nav.classList.add('hidden');$('spGlobalHub').classList.remove('hidden');back.remove();renderHome();};
 }
 function findModule(key){for(var i=0;i<groups.length;i++){var m=groups[i].items.find(function(x){return x[0]===key;});if(m)return {group:groups[i],module:m};}return null;}
+async function openTeachers(){
+setTitle('Staff Directory & Roles','Manage the school teacher register.');
+var result=await db.from('teachers').select('id,full_name,subject,phone,login_email,created_at').eq('school_id',currentSchoolId).order('full_name');
+if(result.error){$('spPage').innerHTML='<div class="sp-notice">Unable to load teachers: '+esc(result.error.message)+'</div>';return;}
+var rows=result.data||[];
+var html='<button class="sp-back" id="spBackStaff">← Back to Human Resources</button><form id="spTeacherForm" class="sp-form"><div><label>Teacher full name<input name="full_name" required></label></div><div><label>Subject<input name="subject"></label></div><div><label>Phone<input name="phone"></label></div><div><label>Login email<input name="login_email" type="email"></label></div><div class="sp-wide"><button class="sp-btn" type="submit">＋ Add teacher</button></div></form><div class="sp-section-head"><div><h3>Teacher register</h3><p>'+rows.length+' teacher records</p></div></div><div class="sp-records">';
+rows.forEach(function(t){html+='<article class="sp-record"><div><strong>'+esc(t.full_name)+'</strong><small>'+esc(t.subject||'No subject')+' · '+esc(t.phone||'')+' · '+esc(t.login_email||'')+'</small></div><button class="sp-btn danger" data-teacher-delete="'+t.id+'">Delete</button></article>';});
+if(!rows.length)html+='<div class="sp-notice">No teacher records yet.</div>';html+='</div>';$('spPage').innerHTML=html;
+$('spBackStaff').onclick=function(){renderGroup('staff');};
+$('spTeacherForm').onsubmit=async function(e){e.preventDefault();var fd=new FormData(e.currentTarget);var saved=await db.from('teachers').insert({school_id:currentSchoolId,full_name:String(fd.get('full_name')).trim(),subject:String(fd.get('subject')||'').trim(),phone:String(fd.get('phone')||'').trim(),login_email:String(fd.get('login_email')||'').trim()});if(saved.error){alert('Could not save teacher: '+saved.error.message);return;}openTeachers();};
+$('spPage').querySelectorAll('[data-teacher-delete]').forEach(function(b){b.onclick=async function(){if(!confirm('Delete this teacher record?'))return;var del=await db.from('teachers').delete().eq('id',b.dataset.teacherDelete).eq('school_id',currentSchoolId);if(del.error){alert('Could not delete teacher: '+del.error.message);return;}openTeachers();};});
+}
+async function openClasses(){
+setTitle('Classes & Streams','Create and manage the classes used by your school.');
+var result=await db.from('classes').select('id,class_name,academic_year,created_at').eq('school_id',currentSchoolId).order('academic_year',{ascending:false});
+if(result.error){$('spPage').innerHTML='<div class="sp-notice">Unable to load classes: '+esc(result.error.message)+'</div>';return;}
+var rows=result.data||[],html='<button class="sp-back" id="spBackClasses">← Back to School Administration</button><form id="spClassForm" class="sp-form"><div><label>Class name<input name="class_name" placeholder="Form I / Grade 1" required></label></div><div><label>Academic year<input name="academic_year" type="number" min="2000" max="2100" value="'+new Date().getFullYear()+'"></label></div><div class="sp-wide"><button class="sp-btn" type="submit">＋ Add class</button></div></form><div class="sp-section-head"><div><h3>Class register</h3><p>'+rows.length+' classes</p></div></div><div class="sp-records">';
+rows.forEach(function(c){html+='<article class="sp-record"><div><strong>'+esc(c.class_name)+'</strong><small>Academic year: '+esc(c.academic_year||'—')+'</small></div><button class="sp-btn danger" data-class-delete="'+c.id+'">Delete</button></article>';});
+if(!rows.length)html+='<div class="sp-notice">No classes created yet.</div>';html+='</div>';$('spPage').innerHTML=html;
+$('spBackClasses').onclick=function(){renderGroup('school');};
+$('spClassForm').onsubmit=async function(e){e.preventDefault();var fd=new FormData(e.currentTarget);var saved=await db.from('classes').insert({school_id:currentSchoolId,class_name:String(fd.get('class_name')).trim(),academic_year:Number(fd.get('academic_year'))||new Date().getFullYear()});if(saved.error){alert('Could not save class: '+saved.error.message);return;}openClasses();};
+$('spPage').querySelectorAll('[data-class-delete]').forEach(function(b){b.onclick=async function(){if(!confirm('Delete this class record?'))return;var del=await db.from('classes').delete().eq('id',b.dataset.classDelete).eq('school_id',currentSchoolId);if(del.error){alert('Could not delete class: '+del.error.message);return;}openClasses();};});
+}
 async function openStudentFees(){
 setTitle('Student Fees & Debt Reports','Manage student fee items and outstanding balances. This is separate from ShulePro subscription payments.');
 var subResult=await db.from('subscriptions').select('status,price_id,ends_at').eq('school_id',currentSchoolId).order('created_at',{ascending:false}).limit(1).maybeSingle();
@@ -193,7 +216,7 @@ $('spFeeRows').querySelectorAll('[data-paid]').forEach(function(b){b.onclick=asy
 }
 function openModule(key,button){
 var found=findModule(key);if(!found)return;setActive(button||document.querySelector('[data-module="'+key+'"]'));
-var m=found.module,fields=m[3];setTitle(m[1],m[2]);if(key==='student_fees'){openStudentFees();return;}
+var m=found.module,fields=m[3];setTitle(m[1],m[2]);if(key==='student_fees'){openStudentFees();return;}if(key==='staff_directory'){openTeachers();return;}if(key==='classes_streams'){openClasses();return;}
 var html='<button class="sp-back" id="spBackGroup">← Back to '+found.group.name+'</button><div class="sp-notice">This workspace stores school-scoped records in the protected ShulePro module workspace. Dedicated approvals, country-specific rules and specialised workflows can be expanded without changing your existing student, marks, attendance, timetable or subscription data.</div><form id="spRecordForm" class="sp-form">';
 fields.forEach(function(f,i){html+='<div class="'+(i===fields.length-1&&fields.length%2?'sp-wide':'')+'"><label>'+esc(f)+'<input name="field'+i+'" placeholder="'+esc(f)+'" '+(/date/i.test(f)?'type="date"':'type="text"')+' '+(i===0?'required':'')+'></label></div>';});
 html+='<div class="sp-wide"><button class="sp-btn" type="submit">＋ Save record</button> <button class="sp-btn alt" type="reset">Clear form</button></div></form><div class="sp-section-head"><div><h3>Saved records</h3><p>Records are scoped to the signed-in school.</p></div><button class="sp-btn alt" id="spRefresh">↻ Refresh</button></div><div id="spRecords" class="sp-records">Loading records…</div>';
