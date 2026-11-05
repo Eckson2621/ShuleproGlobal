@@ -104,7 +104,7 @@ html[dir="rtl"] body{text-align:right}html[dir="rtl"] th,html[dir="rtl"] td{text
  </div>
 
  <div id="alama" class="card pane">
-  <h3>Alama</h3><div class="grid"><div><label>Mwanafunzi</label><select id="markStudent"></select></div><div><label>Somo</label><input id="markSubject" placeholder="Hisabati"></div><div><label>Alama</label><input id="markScore" type="number" min="0" max="100" placeholder="0 - 100"></div></div>
+  <h3>Alama na Mitihani</h3><div class="grid"><div><label>Mwanafunzi</label><select id="markStudent"></select></div><div><label>Jina la mtihani</label><input id="markExam" placeholder="Mtihani wa Muhula wa Kwanza"></div><div><label>Somo</label><input id="markSubject" placeholder="Hisabati"></div><div><label>Alama (0–100)</label><input id="markScore" type="number" min="0" max="100" placeholder="0 - 100"></div></div><p class="muted">Kiwango cha awali cha grade: A 75–100, B 65–74, C 45–64, D 30–44, F 0–29.</p>
   <button onclick="addMark()">Hifadhi alama</button><div id="markMsg"></div><div class="tablewrap"><table id="marksTable"></table></div>
  </div>
 
@@ -355,17 +355,24 @@ async function loadStudents(){
  const opts=studentsCache.map(s=>`<option value="${esc(s.id)}">${esc(s.full_name||s.id)}</option>`).join('');
  if(el('markStudent'))el('markStudent').innerHTML=opts;
 }
+function gradeFromScore(score){return score>=75?'A':score>=65?'B':score>=45?'C':score>=30?'D':'F';}
 async function addMark(){
- const student_id=el('markStudent').value,subject=el('markSubject').value.trim(),score=Number(el('markScore').value);
- if(!student_id||!subject||!Number.isFinite(score)||score<0||score>100){message('markMsg','Chagua mwanafunzi, weka somo na alama 0 hadi 100.','err');return}
- const {error}=await db.from('marks').insert({school_id:currentSchoolId,student_id,subject,score});
+ const student_id=el('markStudent').value,subject=el('markSubject').value.trim(),exam_name=el('markExam').value.trim()||'Assessment',score=Number(el('markScore').value);
+ if(!student_id||!subject||!Number.isFinite(score)||score<0||score>100){message('markMsg','Chagua mwanafunzi, mtihani, somo na alama 0 hadi 100.','err');return}
+ const grade=gradeFromScore(score);
+ const {error}=await db.from('results').insert({school_id:currentSchoolId,student_id,subject,exam_name,marks:score,grade});
  if(error){message('markMsg','Alama hazijahifadhiwa: '+error.message,'err');return}
- message('markMsg','Alama zimehifadhiwa.','ok');await loadMarks();
+ el('markScore').value='';message('markMsg','Alama zimehifadhiwa. Grade: '+grade,'ok');await loadMarks();
 }
 async function loadMarks(){
- const {data,error}=await db.from('marks').select('*,students(full_name)').eq('school_id',currentSchoolId);
- if(error){el('marksTable').innerHTML='';message('markMsg','Imeshindwa kusoma alama: '+error.message,'err');return}
- el('marksTable').innerHTML='<tr><th>Mwanafunzi</th><th>Somo</th><th>Alama</th></tr>'+(data||[]).map(m=>`<tr><td>${esc(m.students?.full_name||m.student_id)}</td><td>${esc(m.subject||'')}</td><td>${esc(m.score)}</td></tr>`).join('');
+ const [resultsRes,studentsRes]=await Promise.all([
+  db.from('results').select('id,student_id,subject,exam_name,marks,grade,created_at').eq('school_id',currentSchoolId).order('created_at',{ascending:false}).limit(1000),
+  db.from('students').select('id,full_name').eq('school_id',currentSchoolId)
+ ]);
+ const error=resultsRes.error||studentsRes.error;
+ if(error){el('marksTable').innerHTML='';message('markMsg','Imeshindwa kusoma matokeo: '+error.message,'err');return}
+ const names=new Map((studentsRes.data||[]).map(s=>[s.id,s.full_name]));
+ el('marksTable').innerHTML='<tr><th>Mwanafunzi</th><th>Mtihani</th><th>Somo</th><th>Alama</th><th>Grade</th></tr>'+(resultsRes.data||[]).map(m=>'<tr><td>'+esc(names.get(m.student_id)||m.student_id)+'</td><td>'+esc(m.exam_name||'Assessment')+'</td><td>'+esc(m.subject||'')+'</td><td>'+esc(m.marks)+'</td><td><strong>'+esc(m.grade||gradeFromScore(Number(m.marks)))+'</strong></td></tr>').join('')||'<tr><td colspan="5">Hakuna matokeo bado.</td></tr>';
 }
 function localToday(){return new Date(Date.now()-new Date().getTimezoneOffset()*60000).toISOString().slice(0,10)}
 async function saveAttendance(){
@@ -432,12 +439,23 @@ function parentReportText(lang){
  const dict={en:{title:'Parent Report',schoolCode:'School Code',date:'Date',summary:'School Summary',students:'Total students registered'},sw:{title:'Ripoti ya Mzazi',schoolCode:'Namba ya Shule',date:'Tarehe',summary:'Muhtasari wa Shule',students:'Jumla ya wanafunzi waliosajiliwa'},fr:{title:'Rapport aux parents',schoolCode:'Code de l’établissement',date:'Date',summary:'Résumé de l’établissement',students:'Nombre total d’élèves inscrits'},ar:{title:'تقرير ولي الأمر',schoolCode:'رمز المدرسة',date:'التاريخ',summary:'ملخص المدرسة',students:'إجمالي الطلاب المسجلين'},zh:{title:'家长报告',schoolCode:'学校代码',date:'日期',summary:'学校概况',students:'注册学生总数'},es:{title:'Informe para padres',schoolCode:'Código de la escuela',date:'Fecha',summary:'Resumen escolar',students:'Total de estudiantes registrados'}};
  return dict[lang]||dict.en;
 }
-function buildReport(){
- const total=studentsCache.length,lang=getParentReportLanguage(),t=parentReportText(lang);
+async function buildReport(){
+ const lang=getParentReportLanguage(),t=parentReportText(lang);
  const locale={sw:'sw-TZ',fr:'fr-FR',ar:'ar',zh:'zh-CN',es:'es-ES',en:'en-US'}[lang]||'en-US';
  const date=new Intl.DateTimeFormat(locale,{year:'numeric',month:'long',day:'numeric'}).format(new Date());
+ const [studentsRes,resultsRes]=await Promise.all([
+  db.from('students').select('id,full_name,admission_number,class_name').eq('school_id',currentSchoolId).order('class_name').order('full_name'),
+  db.from('results').select('id,student_id,subject,exam_name,marks,grade,created_at').eq('school_id',currentSchoolId).order('created_at',{ascending:false})
+ ]);
+ const err=studentsRes.error||resultsRes.error;
+ if(err){el('reportArea').innerHTML='<div class="msg err">Ripoti haikuweza kupakiwa: '+esc(err.message)+'</div>';return;}
+ const byStudent=new Map();(resultsRes.data||[]).forEach(r=>{if(!byStudent.has(r.student_id))byStudent.set(r.student_id,[]);byStudent.get(r.student_id).push(r);});
  el('reportArea').setAttribute('lang',lang);el('reportArea').setAttribute('dir',lang==='ar'?'rtl':'ltr');
- el('reportArea').innerHTML=`<h2>${esc(currentSchool?.school_name||'')}</h2><h3>${esc(t.title)}</h3><p>${esc(t.schoolCode)}: ${esc(currentSchool?.school_code||'')}</p><p>${esc(t.date)}: ${esc(date)}</p><h3>${esc(t.summary)}</h3><p>${esc(t.students)}: ${total}</p>`;
+ const cards=(studentsRes.data||[]).map(st=>{
+  const rows=byStudent.get(st.id)||[],sum=rows.reduce((a,r)=>a+Number(r.marks||0),0),avg=rows.length?sum/rows.length:0;
+  return '<section class="card" style="break-after:page;page-break-after:always"><h2>'+esc(currentSchool?.school_name||'')+'</h2><h3>STUDENT REPORT CARD</h3><p>'+esc(t.date)+': '+esc(date)+'</p><p><strong>'+esc(st.full_name)+'</strong> · Admission: '+esc(st.admission_number||'—')+' · Class: '+esc(st.class_name||'—')+'</p><div class="tablewrap"><table><tr><th>Examination</th><th>Subject</th><th>Marks</th><th>Grade</th></tr>'+(rows.length?rows.map(r=>'<tr><td>'+esc(r.exam_name||'Assessment')+'</td><td>'+esc(r.subject)+'</td><td>'+esc(r.marks)+'</td><td><strong>'+esc(r.grade||gradeFromScore(Number(r.marks)))+'</strong></td></tr>').join(''):'<tr><td colspan="4">No results recorded.</td></tr>')+'</table></div><p><strong>Average:</strong> '+(rows.length?avg.toFixed(2):'—')+' / 100</p><p class="muted">Grade scale: A 75–100 · B 65–74 · C 45–64 · D 30–44 · F 0–29</p></section>';
+ }).join('');
+ el('reportArea').innerHTML='<div class="card"><h2>'+esc(currentSchool?.school_name||'')+'</h2><h3>'+esc(t.title)+'</h3><p>'+esc(t.schoolCode)+': '+esc(currentSchool?.school_code||'')+'</p><p>'+esc(t.date)+': '+esc(date)+'</p><p>Students: '+(studentsRes.data||[]).length+' · Result entries: '+(resultsRes.data||[]).length+'</p></div>'+(cards||'<div class="msg info">Hakuna wanafunzi wa kuonyesha kwenye ripoti.</div>');
 }
 async function exportBackup(){
  try{
