@@ -198,7 +198,7 @@ async function startApp(user){
  if(!members||!members.length){el('auth').classList.remove('hidden');el('app').classList.add('hidden');message('loginMsg','Akaunti haina uanachama wa shule. Hakikisha usajili wa shule umekamilika.','err');return}
  currentSchoolId=members[0].school_id;
  const {data:school,error:schoolError}=await db.from('schools').select('*').eq('id',currentSchoolId).single();
- if(schoolError)throw schoolError;currentSchool=school;
+ if(schoolError||!school){el('auth').classList.remove('hidden');el('app').classList.add('hidden');message('loginMsg','Akaunti ya shule haipatikani au imesimamishwa na Super Admin. Wasiliana na msimamizi wa ShuleProGlobal.','err');return;}currentSchool=school;
  el('schoolName').textContent=school.school_name||'Shule';el('schoolCode').textContent=school.school_code||'';
  el('welcome').textContent='Karibu, '+(user.user_metadata?.full_name||user.email);
  const {data:subs,error:subError}=await db.from('subscriptions').select('id,status,trial_ends_at,ends_at').eq('school_id',currentSchoolId).order('created_at',{ascending:false}).limit(1);
