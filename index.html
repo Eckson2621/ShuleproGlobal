@@ -48,7 +48,7 @@ html[dir="rtl"] body{text-align:right}html[dir="rtl"] th,html[dir="rtl"] td{text
   <label>Nenosiri (angalau herufi 6)</label><input id="regPass" type="password" placeholder="Nenosiri">
   <label>Nchi</label><select id="regCountry"><option value="TZ">Tanzania</option><option value="KE">Kenya</option><option value="UG">Uganda</option><option value="RW">Rwanda</option><option value="US">United States</option><option value="GB">United Kingdom</option><option value="OTHER">Other</option></select>
   <label>Lugha ya mwanzo</label><select id="regLang" onchange="setLang(this.value)"><option value="en">English</option><option value="sw">Kiswahili</option><option value="fr">Français</option><option value="ar">العربية</option><option value="zh">中文</option><option value="es">Español</option></select>
-  <button style="width:100%;margin-top:10px" onclick="register()">Sajili Shule</button>
+  <button id="registerBtn" style="width:100%;margin-top:10px" onclick="register()">Sajili Shule</button>
   <div id="regMsg"></div>
  </div>
  <div id="loginPane" class="hidden" style="padding:18px">
@@ -159,17 +159,29 @@ function showAuth(which){el('regPane').classList.toggle('hidden',which!=='reg');
 function schoolCode(){const a=new Uint8Array(6);crypto.getRandomValues(a);return 'SP'+Array.from(a,x=>x.toString(36).padStart(2,'0')).join('').toUpperCase().slice(0,10)}
 async function register(){
  const name=el('regName').value.trim(),full=el('regFullName').value.trim(),email=el('regEmail').value.trim().toLowerCase(),pass=el('regPass').value,phone=el('regPhone').value.trim(),country=el('regCountry').value,lang=el('regLang').value;
- if(!name||!full||!email||pass.length<6){message('regMsg','Jaza jina la shule, jina kamili, email na nenosiri lenye angalau herufi 6.','err');return}
+ const button=el('registerBtn');if(button)button.disabled=true;
+ if(!name||!full||!email||pass.length<6){message('regMsg','Jaza jina la shule, jina kamili, email na nenosiri lenye angalau herufi 6.','err');if(button)button.disabled=false;return}
  message('regMsg','Inatengeneza akaunti...','info');
  try{
   const pending={school_name:name,full_name:full,country_code:country,language:lang,school_code:schoolCode()};
-  const {data,error}=await db.auth.signUp({email,password:pass,options:{data:{full_name:full,phone,school_name:name,shulepro_registration:pending}}});
+  const {data,error}=await db.auth.signUp({email,password:pass,options:{emailRedirectTo:location.origin+location.pathname,data:{full_name:full,phone,school_name:name,shulepro_registration:pending}}});
   if(error)throw error;
   localStorage.setItem('shulepro_pending_registration',JSON.stringify(pending));
-  if(data.session){await completePendingRegistration();return}
-  message('regMsg','Akaunti imetengenezwa. Fungua email yako uthibitishe akaunti, kisha rudi hapa na uingie. Usajili wa shule utakamilika baada ya kuingia.','ok');
+  if(data.session){
+   await completePendingRegistration();
+   await db.auth.signOut();
+   el('auth').classList.remove('hidden');el('app').classList.add('hidden');el('logoutBtn').classList.add('hidden');
+   showAuth('login');el('loginEmail').value=email;el('loginPass').value='';
+   message('loginMsg','Usajili wa shule umekamilika. Sasa ingia kwa email na nenosiri ulilosajili.','ok');
+   return;
+  }
   showAuth('login');el('loginEmail').value=email;
- }catch(e){const detail=/failed to fetch|networkerror|load failed/i.test(e.message)?'Imeshindikana kufikia seva ya Supabase. Hakikisha intaneti ipo, kisha fungua upya ukurasa.':e.message;message('regMsg','Usajili umeshindikana: '+detail,'err')}
+  message('loginMsg','Akaunti imetengenezwa. Thibitisha email yako kwa kutumia kiungo tulichotuma, kisha ingia hapa kwa email na nenosiri lako ili kukamilisha usajili wa shule.','ok');
+ }catch(e){
+  try{await db.auth.signOut()}catch(_){}
+  const detail=/failed to fetch|networkerror|load failed/i.test(e.message)?'Imeshindikana kufikia seva ya Supabase. Hakikisha intaneti ipo, kisha fungua upya ukurasa.':e.message;
+  showAuth('reg');message('regMsg','Usajili umeshindikana: '+detail,'err');
+ }finally{if(button)button.disabled=false}
 }
 async function completePendingRegistration(){
  const {data:userData,error:userError}=await db.auth.getUser();if(userError)throw userError;
@@ -189,7 +201,10 @@ async function login(){
  message('loginMsg','Inakagua akaunti...','info');
  try{
   const {data,error}=await db.auth.signInWithPassword({email,password});if(error)throw error;
-  try{await completePendingRegistration()}catch(e){throw new Error('Umeingia, lakini usajili wa shule haujakamilika: '+e.message)}
+  try{await completePendingRegistration()}catch(e){
+   await db.auth.signOut();
+   throw new Error('Akaunti imeingia lakini usajili wa shule haujakamilika: '+e.message+'. Jaribu kuingia tena baada ya kurekebisha tatizo.');
+  }
   await startApp(data.user);
  }catch(e){message('loginMsg','Imeshindikana kuingia: '+e.message,'err')}
 }
@@ -212,6 +227,7 @@ async function startApp(user){
  const {data:school,error:schoolError}=await db.from('schools').select('*').eq('id',currentSchoolId).single();
  if(schoolError||!school){el('auth').classList.remove('hidden');el('app').classList.add('hidden');message('loginMsg','Akaunti ya shule haipatikani au imesimamishwa na Super Admin. Wasiliana na msimamizi wa ShuleProGlobal.','err');return;}currentSchool=school;
  el('schoolName').textContent=school.school_name||'Shule';el('schoolCode').textContent=school.school_code||'';
+ setLang(school.default_language||school.preferred_language||school.language||'sw');
  el('welcome').textContent='Karibu, '+(user.user_metadata?.full_name||user.email);
  const {data:subs,error:subError}=await db.from('subscriptions').select('id,status,trial_ends_at,ends_at').eq('school_id',currentSchoolId).order('created_at',{ascending:false}).limit(1);
  if(subError)throw subError;
