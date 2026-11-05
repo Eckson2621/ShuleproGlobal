@@ -159,15 +159,22 @@ function showAuth(which){
   const target=which==='reg'?'reg':'login';
   const reg=el('regPane'),login=el('loginPane');
   const regBtn=el('regTabBtn'),loginBtn=el('loginTabBtn');
-  if(!reg||!login||!regBtn||!loginBtn)return;
-  reg.classList.toggle('hidden',target!=='reg');
-  login.classList.toggle('hidden',target!=='login');
-  reg.style.display=target==='reg'?'block':'none';
-  login.style.display=target==='login'?'block':'none';
-  regBtn.classList.toggle('secondary',target!=='reg');
-  loginBtn.classList.toggle('secondary',target!=='login');
-  regBtn.setAttribute('aria-pressed',String(target==='reg'));
-  loginBtn.setAttribute('aria-pressed',String(target==='login'));
+  if(!reg||!login||!regBtn||!loginBtn)return false;
+  const showRegistration=target==='reg';
+  // Native hidden state plus an important inline display rule avoids CSS conflicts.
+  reg.hidden=!showRegistration;
+  login.hidden=showRegistration;
+  reg.classList.toggle('hidden',!showRegistration);
+  login.classList.toggle('hidden',showRegistration);
+  reg.style.setProperty('display',showRegistration?'block':'none','important');
+  login.style.setProperty('display',showRegistration?'none':'block','important');
+  reg.setAttribute('aria-hidden',String(!showRegistration));
+  login.setAttribute('aria-hidden',String(showRegistration));
+  regBtn.classList.toggle('secondary',!showRegistration);
+  loginBtn.classList.toggle('secondary',showRegistration);
+  regBtn.setAttribute('aria-pressed',String(showRegistration));
+  loginBtn.setAttribute('aria-pressed',String(!showRegistration));
+  return true;
 }
 window.showAuth=showAuth;
 function schoolCode(){const a=new Uint8Array(6);crypto.getRandomValues(a);return 'SP'+Array.from(a,x=>x.toString(36).padStart(2,'0')).join('').toUpperCase().slice(0,10)}
