@@ -183,6 +183,7 @@ async function register(){
  message('regMsg','Creating your account...','info');
  try{
   const pending={school_name:name,full_name:full,email,country_code:country,language:lang,school_code:schoolCode()};
+  try{localStorage.setItem('shulepro_language_v2',lang)}catch(e){}
   const {data,error}=await db.auth.signUp({email,password:pass,options:{data:{full_name:full,phone,school_name:name,shulepro_registration:pending}}});
   if(error)throw error;
   if(data.user&&Array.isArray(data.user.identities)&&data.user.identities.length===0){
@@ -816,7 +817,7 @@ async function loadAll(){await loadStudents();await loadMarks();await loadAttend
 async function boot(){
  if(!window.supabase?.createClient){message('regMsg','Maktaba ya Supabase haijapakia. Hakikisha intaneti ipo kisha refresh.','err');return}
  const {data:{session}}=await db.auth.getSession();
- if(session){try{await startApp(session.user)}catch(e){message('loginMsg','Imeshindwa kufungua shule: '+e.message,'err')}}
+ if(session){try{await completePendingRegistration();await startApp(session.user)}catch(e){message('loginMsg','Imeshindwa kukamilisha usajili au kufungua shule: '+e.message,'err')}}
 }
 if(db)db.auth.onAuthStateChange((_event,session)=>{if(!session){el('app').classList.add('hidden');el('logoutBtn').classList.add('hidden');el('auth').classList.remove('hidden')}});
 // Wire authentication controls directly; do not rely on inline HTML handlers.
