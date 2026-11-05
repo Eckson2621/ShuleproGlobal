@@ -277,18 +277,25 @@ async function startApp(user){
  el('schoolName').textContent=school.school_name||'Shule';el('schoolCode').textContent=school.school_code||'';
  let chosenLanguage='sw';try{chosenLanguage=localStorage.getItem('shulepro_language_v2')||school.default_language||school.preferred_language||school.language||'sw'}catch(e){chosenLanguage=school.default_language||school.preferred_language||school.language||'sw'}setLang(chosenLanguage);
  el('welcome').textContent='Karibu, '+(user.user_metadata?.full_name||user.email);
- const {data:subs,error:subError}=await db.from('subscriptions').select('id,status,trial_ends_at,ends_at').eq('school_id',currentSchoolId).order('created_at',{ascending:false}).limit(1);
+ const {data:subs,error:subError}=await db.from('subscriptions').select('id,plan_id,plan,status,trial_ends_at,ends_at').eq('school_id',currentSchoolId).order('created_at',{ascending:false}).limit(1);
  if(subError)throw subError;
- if(!subs||!subs.length){
+ const subscription=subs?.[0]||null;
+ const now=Date.now();
+ const trialValid=subscription?.status==='trial'&&subscription.trial_ends_at&&new Date(subscription.trial_ends_at).getTime()>now;
+ const premiumValid=subscription?.status==='active'&&(subscription.plan_id||subscription.plan)==='premium'&&subscription.ends_at&&new Date(subscription.ends_at).getTime()>now;
+ const freeValid=subscription?.status==='active'&&(subscription.plan_id||subscription.plan)==='free'&&!subscription.ends_at;
+ if(!trialValid&&!premiumValid&&!freeValid){
   document.querySelector('.tabs').classList.add('hidden');
   document.querySelectorAll('.pane').forEach(x=>x.classList.add('hidden'));
   if(currentRole==='owner'){
    el('planChoicePanel').classList.remove('hidden');
+   const msg=subscription?'Usajili wako umeisha au haujawezeshwa. Chagua kifurushi au wasilisha malipo ili kuendelea.':'Shule yako bado haina subscription. Chagua kifurushi kuanza siku 14 za majaribio.';
+   message('trialPlanMessage',msg,'info');
    await loadTrialPlans();
   }else{
    el('planChoicePanel').classList.add('hidden');
    const note=el('roleDescription');
-   if(note)note.textContent='Your '+(ROLE_DASHBOARDS[currentRole]?.title||'staff')+' account is active, but the school subscription has not been activated. Please ask the School Owner to activate the school plan.';
+   if(note)note.textContent='School subscription is not active. Please ask the School Owner to renew or activate the school plan.';
   }
   return;
  }
@@ -497,7 +504,7 @@ async function loadFees(){
  const err=payRes.error||subRes.error||priceRes.error;if(err){message('paymentMsg','Imeshindwa kupakia malipo/bei: '+err.message,'err');return}
  el('paymentPrice').innerHTML=(priceRes.data||[]).map(p=>{const label=p.billing_period==='multi_year'?((p.duration_months-3)/12)+' years + 3 bonus months':p.billing_period;return `<option value="${esc(p.id)}" data-amount="${esc(p.amount)}" data-currency="${esc(p.currency)}">${esc(p.plan_id)} – ${esc(label)} (${esc(p.amount)} ${esc(p.currency)})</option>`}).join('');
  updatePaymentAmount();
- el('subscriptionTable').innerHTML='<tr><th>Mpango</th><th>Status</th><th>Mwanzo</th><th>Mwisho</th></tr>'+(subRes.data||[]).map(s=>`<tr><td>${esc(s.plan_id||s.plan||'')}</td><td>${esc(s.status||'')}</td><td>${esc((s.starts_at||'').slice(0,10))}</td><td>${esc((s.ends_at||s.trial_ends_at||'').slice(0,10)||'—')}</td></tr>`).join('');
+ el('subscriptionTable').innerHTML='<tr><th>Mpango</th><th>Status</th><th>Mwanzo</th><th>Mwisho</th><th>Muda uliobaki</th></tr>'+(subRes.data||[]).map(s=>{const expiry=s.status==='trial'?s.trial_ends_at:s.ends_at;const left=expiry?Math.max(0,Math.ceil((new Date(expiry).getTime()-Date.now())/86400000)):null;const label=s.status==='trial'?'Trial':s.status==='active'?'Active':s.status;return `<tr><td>${esc(s.plan_id||s.plan||'')}</td><td>${esc(label||'')}</td><td>${esc((s.starts_at||'').slice(0,10))}</td><td>${esc((expiry||'').slice(0,10)||'—')}</td><td>${left===null?'—':left+' days'}</td></tr>`}).join('');
  el('feesTable').innerHTML='<tr><th>Tarehe</th><th>Kiasi</th><th>TxID</th><th>Njia</th><th>Status</th></tr>'+(payRes.data||[]).map(p=>`<tr><td>${esc((p.created_at||'').slice(0,10))}</td><td>${esc(p.amount??'')} ${esc(p.currency||'')}</td><td>${esc(p.transaction_id||'')}</td><td>${esc(p.payment_method||p.provider||'')}</td><td>${esc(p.status||'')}</td></tr>`).join('');
 }
 function updatePaymentAmount(){const opt=el('paymentPrice')?.selectedOptions?.[0];if(el('paymentAmount'))el('paymentAmount').value=opt?opt.dataset.amount+' '+opt.dataset.currency:''}
