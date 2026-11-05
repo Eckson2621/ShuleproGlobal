@@ -109,7 +109,7 @@ var s=document.createElement('style');s.id='spWorkspaceStyles';s.textContent=
 '.sp-records{display:grid;gap:8px}.sp-record{display:flex;justify-content:space-between;gap:10px;align-items:center;background:#fff;border:1px solid #e4eaf3;border-radius:11px;padding:11px 13px}.sp-record strong{font-size:12px;color:#17233d}.sp-record small{display:block;font-size:10px;color:#64748b;margin-top:4px}.sp-notice{border-radius:11px;padding:12px 14px;background:#fff8e7;border:1px solid #f5e1a9;color:#77530b;font-size:11px;line-height:1.6;margin:11px 0}.sp-connection{background:linear-gradient(135deg,#f5f7ff,#f0edff);border:1px solid #dedafa;border-radius:14px;padding:16px;margin-top:13px}.sp-connection strong{color:#45358b}.sp-muted{font-size:10px;color:#64748b}.sp-back{background:transparent;border:0;color:#2454b5;font-weight:800;padding:6px 0;cursor:pointer}'+
 '@media(max-width:900px){#spGlobalHub{grid-template-columns:1fr}.sp-side{position:relative;top:0;max-height:none}.sp-side nav{display:flex;flex-wrap:wrap;gap:3px}.sp-nav-label{width:100%;margin:9px 5px 3px}.sp-nav-btn{width:auto}.sp-card-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}'+
 '@media(max-width:560px){.sp-kpis{grid-template-columns:repeat(2,minmax(0,1fr))}.sp-card-grid{grid-template-columns:1fr}.sp-form{grid-template-columns:1fr}.sp-title{font-size:20px}.sp-topline{padding:11px}}';
-s.textContent += '.spa-shell{background:#fff;border:1px solid #e4eaf3;border-radius:16px;padding:16px;margin:14px 0}.spa-nav{display:flex;gap:7px;flex-wrap:wrap;margin-bottom:14px}.spa-nav button{border:0;border-radius:9px;background:#edf2fb;color:#234a8f;padding:9px 12px;font-size:11px;font-weight:800}.spa-nav button.active{background:#173d82;color:#fff}.spa-table{width:100%;border-collapse:collapse;min-width:620px}.spa-table th,.spa-table td{padding:9px;border-bottom:1px solid #e7edf5;text-align:left;font-size:11px}.spa-table th{background:#f5f8fc;color:#475569}.spa-status{border-radius:20px;padding:4px 7px;font-size:9px;font-weight:800;background:#e8f8ef;color:#167345}.spa-status.off{background:#fff0f0;color:#a52a2a}.spa-content{overflow:auto}.spa-kpis{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}.spa-kpi{padding:13px;border:1px solid #e5eaf2;border-radius:12px}.spa-kpi strong{display:block;font-size:22px;color:#14213d}.spa-kpi small{color:#64748b;font-size:10px}';
+s.textContent += '.sp-journey{background:#fff;border:1px solid #e3eaf4;border-radius:16px;padding:16px;margin:14px 0}.sp-journey-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:9px}.sp-journey-step{border:1px solid #e5eaf2;border-radius:12px;padding:11px;background:#fbfcff}.sp-journey-step strong{display:block;font-size:11px;color:#1d2b45}.sp-journey-step small{display:block;font-size:10px;color:#64748b;margin-top:5px;line-height:1.5}.sp-step-state{font-size:9px;font-weight:800;color:#166534;margin-top:7px}.sp-step-state.pending{color:#9a6700}.sp-setup-form{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px;margin-top:13px}.sp-setup-form label{display:block;font-size:10px;color:#475569;font-weight:750}.sp-setup-form input,.sp-setup-form select{width:100%;margin-top:4px;padding:9px;border:1px solid #d8e0ec;border-radius:8px;font:inherit;font-size:11px}.sp-journey-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}@media(max-width:650px){.sp-journey-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.sp-setup-form{grid-template-columns:1fr}}';+'.spa-shell{background:#fff;border:1px solid #e4eaf3;border-radius:16px;padding:16px;margin:14px 0}.spa-nav{display:flex;gap:7px;flex-wrap:wrap;margin-bottom:14px}.spa-nav button{border:0;border-radius:9px;background:#edf2fb;color:#234a8f;padding:9px 12px;font-size:11px;font-weight:800}.spa-nav button.active{background:#173d82;color:#fff}.spa-table{width:100%;border-collapse:collapse;min-width:620px}.spa-table th,.spa-table td{padding:9px;border-bottom:1px solid #e7edf5;text-align:left;font-size:11px}.spa-table th{background:#f5f8fc;color:#475569}.spa-status{border-radius:20px;padding:4px 7px;font-size:9px;font-weight:800;background:#e8f8ef;color:#167345}.spa-status.off{background:#fff0f0;color:#a52a2a}.spa-content{overflow:auto}.spa-kpis{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}.spa-kpi{padding:13px;border:1px solid #e5eaf2;border-radius:12px}.spa-kpi strong{display:block;font-size:22px;color:#14213d}.spa-kpi small{color:#64748b;font-size:10px}';
 document.head.appendChild(s);
 }
 function createHub(){
@@ -133,6 +133,47 @@ function setActive(b){document.querySelectorAll('.sp-nav-btn').forEach(function(
 function filterNav(q){q=q.trim().toLowerCase();document.querySelectorAll('#spSideNav .sp-nav-btn').forEach(function(b){b.classList.toggle('hidden',!!q&&b.textContent.toLowerCase().indexOf(q)<0);});}
 function setTitle(t,s){$('spPageTitle').textContent=t;$('spPageSubtitle').textContent=s||'';}
 function count(table){return db.from(table).select('*',{count:'exact',head:true}).eq('school_id',currentSchoolId).then(function(r){if(r.error)throw r.error;return r.count==null?'—':r.count;}).catch(function(){return '—';});}
+
+async function renderJourney(){
+var host=$('spJourney');if(!host||!currentSchoolId)return;
+host.innerHTML='<div class="sp-notice">Loading school setup and workflow status…</div>';
+var results=await Promise.all([
+ db.from('settings').select('settings_data').eq('school_id',currentSchoolId).maybeSingle(),
+ db.from('subscriptions').select('status,trial_ends_at,ends_at,plan_id,price_id').eq('school_id',currentSchoolId).order('created_at',{ascending:false}).limit(1).maybeSingle(),
+ count('students'),count('teachers'),count('classes'),count('marks'),count('attendance'),count('timetable')
+]);
+var settings=results[0].data&&results[0].data.settings_data||{},sub=results[1].data||null;
+var profile=settings.school_profile||{},academic=settings.academic_calendar||{};
+var students=results[2],teachers=results[3],classes=results[4],marks=results[5],attendance=results[6],timetable=results[7];
+var activeSub=!!sub&&['active','trial'].includes(sub.status)&&(!sub.ends_at||new Date(sub.ends_at)>new Date())&&(!sub.trial_ends_at||new Date(sub.trial_ends_at)>new Date());
+var steps=[
+['1','Registration & email verification','Account is signed in and the school membership exists',true],
+['2','Subscription / 14-day trial',activeSub?'Plan status: '+sub.status+' · '+(sub.plan_id||'premium'):'Choose a plan or contact support',activeSub],
+['3','School profile & academic year','Complete the school details below',!!(profile.address&&academic.year)],
+['4','Students, teachers & classes',students!=='—'&&Number(students)>0&&teachers!=='—'&&Number(teachers)>0&&classes!=='—'&&Number(classes)>0],
+['5','Daily operations','Marks, attendance and timetable records',Number(marks)>0&&Number(attendance)>0&&Number(timetable)>0],
+['6','Reports & report cards','Open Reports & Report Cards and print / save as PDF',Number(students)>0],
+['7','AI decision support','Workspace is prepared; AI provider/API is not connected',false],
+['8','Global Super Admin','Separate privileged account controls platform-wide administration',false]
+];
+var done=steps.filter(function(s){return s[2]===true;}).length;
+var html='<section class="sp-journey"><div class="sp-section-head"><div><h3>School journey · from registration to daily operations</h3><p>'+done+' of '+steps.length+' workflow checkpoints currently confirmed by database records</p></div></div><div class="sp-journey-grid">';
+steps.forEach(function(s){html+='<article class="sp-journey-step"><strong>'+s[0]+'. '+s[1]+'</strong><small>'+s[2]+'</small><div class="sp-step-state '+(s[2]?'':'pending')+'">'+(s[2]?'✓ CONFIRMED':'○ NOT YET CONFIRMED / INTEGRATION PENDING')+'</div></article>';});
+html+='</div><div class="sp-section-head"><div><h3>School setup</h3><p>Save core school details and the current academic period. These values are stored in the school settings record.</p></div></div><form id="spSetupForm" class="sp-setup-form"><label>School address<input name="address" maxlength="240" value="'+esc(profile.address||'')+'" placeholder="School physical address"></label><label>School phone<input name="phone" maxlength="40" value="'+esc(profile.phone||'')+'" placeholder="+255..."></label><label>Official school email<input name="email" type="email" maxlength="160" value="'+esc(profile.email||'')+'" placeholder="school@example.com"></label><label>Website<input name="website" maxlength="180" value="'+esc(profile.website||'')+'" placeholder="https://..."></label><label>Academic year<input name="year" type="number" min="2000" max="2100" value="'+esc(academic.year||new Date().getFullYear())+'" required></label><label>Current term / semester<input name="term" maxlength="80" value="'+esc(academic.term||'Term 1')+'" required></label><label>Currency code<input name="currency" maxlength="3" value="'+esc(profile.currency||currentSchool&&currentSchool.currency_code||'USD')+'" required></label><label>Timezone<input name="timezone" maxlength="80" value="'+esc(profile.timezone||currentSchool&&currentSchool.timezone||'UTC')+'" required></label><div class="sp-wide sp-journey-actions"><button class="sp-btn" type="submit">Save school setup</button><span id="spSetupMessage" class="sp-muted"></span></div></form><div class="sp-notice">Truthful status: the 48 department workspaces are currently data registers built on the protected school workspace table. Their specialised workflows (such as full payroll processing, transport routing, library circulation and curriculum-specific grading) still require dedicated development and testing. AI and automated payment/SMS providers are not connected.</div></section>';
+host.innerHTML=html;
+$('spSetupForm').onsubmit=async function(e){
+ e.preventDefault();var fd=new FormData(e.currentTarget);
+ var existing=await db.from('settings').select('settings_data').eq('school_id',currentSchoolId).maybeSingle();
+ if(existing.error){$('spSetupMessage').textContent='Could not read settings: '+existing.error.message;return;}
+ var merged=Object.assign({},existing.data&&existing.data.settings_data||{});
+ merged.school_profile={address:String(fd.get('address')||'').trim(),phone:String(fd.get('phone')||'').trim(),email:String(fd.get('email')||'').trim(),website:String(fd.get('website')||'').trim(),currency:String(fd.get('currency')||'USD').trim().toUpperCase(),timezone:String(fd.get('timezone')||'UTC').trim()};
+ merged.academic_calendar={year:Number(fd.get('year')),term:String(fd.get('term')||'').trim()};
+ var saved=await db.from('settings').upsert({school_id:currentSchoolId,settings_data:merged,updated_at:new Date().toISOString()},{onConflict:'school_id'});
+ if(saved.error){$('spSetupMessage').textContent='Could not save: '+saved.error.message;return;}
+ $('spSetupMessage').textContent='School setup saved successfully.';
+ await renderJourney();
+};
+}
 function renderHome(){
 if(!$('spPage'))return;setTitle('School Dashboard','Your school operations, academic activity and administration in one workspace.');
 Promise.all([count('students'),count('teachers'),count('classes'),count('school_module_records')]).then(function(nums){
@@ -143,8 +184,9 @@ html+='</div><div class="sp-section-head"><div><h3>Quick access</h3><p>Open a co
 legacy.forEach(function(m){html+='<button class="sp-module-card" data-quick="'+m.id+'"><span class="sp-card-icon" style="background:#edf3ff">'+m.icon+'</span><strong>'+m.name+'</strong><small>'+m.desc+'</small><span class="sp-chip">Open module →</span></button>';});
 html+='</div><div class="sp-section-head"><div><h3>All school departments</h3><p>Structured workspaces for the full ShuleProGlobal vision.</p></div></div><div class="sp-card-grid">';
 groups.forEach(function(g){html+='<button class="sp-module-card" data-group="'+g.id+'"><span class="sp-card-icon" style="background:#edf3ff">'+g.icon+'</span><strong>'+g.name+'</strong><small>'+g.items.length+' workspaces · '+g.items.slice(0,2).map(function(x){return x[1];}).join(', ')+'...</small><span class="sp-chip">Explore department →</span></button>';});
-html+='</div><div class="sp-connection"><strong>🔌 Paid services and external connections</strong><p class="sp-muted">DPO/card settlement, SMS delivery, AI API, custom domain and premium storage are connection-ready placeholders. No paid service is activated or charged from this workspace.</p></div>';
+html+='</div><div id="spJourney"></div><div class="sp-connection"><strong>🔌 Paid services and external connections</strong><p class="sp-muted">DPO/card settlement, SMS delivery, AI API, custom domain and premium storage are connection-ready placeholders. No paid service is activated or charged from this workspace.</p></div>';
 $('spPage').innerHTML=html;
+renderJourney();
 $('spPage').querySelectorAll('[data-quick]').forEach(function(b){b.onclick=function(){openLegacy(b.dataset.quick);};});
 $('spPage').querySelectorAll('[data-group]').forEach(function(b){b.onclick=function(){renderGroup(b.dataset.group);};});
 });
