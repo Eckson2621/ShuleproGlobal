@@ -164,7 +164,7 @@ async function completePendingRegistration(){
  const raw=localStorage.getItem('shulepro_pending_registration');
  const p=raw?JSON.parse(raw):userData.user?.user_metadata?.shulepro_registration;
  if(!p)return null;
- const {data,error}=await db.rpc('register_school',{p_school_name:p.school_name,p_school_code:p.school_code,p_full_name:p.full_name,p_country_code:p.country_code});
+ const {data,error}=await db.rpc('register_school',{p_school_name:p.school_name,p_school_code:p.school_code,p_full_name:p.full_name,p_country_code:p.country_code,p_language:p.language});
  if(error)throw error;
  localStorage.removeItem('shulepro_pending_registration');
  const {error:metaError}=await db.auth.updateUser({data:{shulepro_registration:null}});
