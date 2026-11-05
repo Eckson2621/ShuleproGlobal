@@ -284,7 +284,9 @@ async function startApp(user){
  const trialValid=subscription?.status==='trial'&&subscription.trial_ends_at&&new Date(subscription.trial_ends_at).getTime()>now;
  const premiumValid=subscription?.status==='active'&&(subscription.plan_id||subscription.plan)==='premium'&&subscription.ends_at&&new Date(subscription.ends_at).getTime()>now;
  const freeValid=subscription?.status==='active'&&(subscription.plan_id||subscription.plan)==='free'&&!subscription.ends_at;
- if(!trialValid&&!premiumValid&&!freeValid){
+ const expiredToFree=(subscription?.status==='trial'&&subscription.trial_ends_at&&new Date(subscription.trial_ends_at).getTime()<=now)
+  ||(subscription?.status==='active'&&(subscription.plan_id||subscription.plan)==='premium'&&subscription.ends_at&&new Date(subscription.ends_at).getTime()<=now);
+ if(!trialValid&&!premiumValid&&!freeValid&&!expiredToFree){
   document.querySelector('.tabs').classList.add('hidden');
   document.querySelectorAll('.pane').forEach(x=>x.classList.add('hidden'));
   if(currentRole==='owner'){
