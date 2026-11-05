@@ -37,8 +37,8 @@ html[dir="rtl"] body{text-align:right}html[dir="rtl"] th,html[dir="rtl"] td{text
 <div class="wrap">
 <section id="auth" class="card auth">
  <div class="authhead">
-  <button id="regTabBtn" type="button">Register School</button>
-  <button id="loginTabBtn" class="secondary" type="button">Sign In</button>
+  <button id="regTabBtn" type="button" onclick="showAuth('reg')">Register School</button>
+  <button id="loginTabBtn" class="secondary" type="button" onclick="showAuth('login')">Sign In</button>
  </div>
  <div id="regPane" style="padding:18px">
   <h2>Register Your School</h2>
@@ -157,10 +157,17 @@ function el(id){return document.getElementById(id)}
 function message(id,text,type='info'){el(id).innerHTML='';const d=document.createElement('div');d.className='msg '+type;d.textContent=text;el(id).appendChild(d)}
 function showAuth(which){
   const target=which==='reg'?'reg':'login';
-  el('regPane').classList.toggle('hidden',target!=='reg');
-  el('loginPane').classList.toggle('hidden',target!=='login');
-  el('regTabBtn').classList.toggle('secondary',target!=='reg');
-  el('loginTabBtn').classList.toggle('secondary',target!=='login');
+  const reg=el('regPane'),login=el('loginPane');
+  const regBtn=el('regTabBtn'),loginBtn=el('loginTabBtn');
+  if(!reg||!login||!regBtn||!loginBtn)return;
+  reg.classList.toggle('hidden',target!=='reg');
+  login.classList.toggle('hidden',target!=='login');
+  reg.style.display=target==='reg'?'block':'none';
+  login.style.display=target==='login'?'block':'none';
+  regBtn.classList.toggle('secondary',target!=='reg');
+  loginBtn.classList.toggle('secondary',target!=='login');
+  regBtn.setAttribute('aria-pressed',String(target==='reg'));
+  loginBtn.setAttribute('aria-pressed',String(target==='login'));
 }
 window.showAuth=showAuth;
 function schoolCode(){const a=new Uint8Array(6);crypto.getRandomValues(a);return 'SP'+Array.from(a,x=>x.toString(36).padStart(2,'0')).join('').toUpperCase().slice(0,10)}
