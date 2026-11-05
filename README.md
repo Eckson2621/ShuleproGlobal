@@ -1,45 +1,58 @@
-# SHULEPRO GLOBAL V30.0
+# SHULEPRO GLOBAL V31.0
 
 Global school-management platform by EAM VENTURES LTD (company registration pending).
 
 ## Current application structure
 
-- `index.html`: registration, authentication, existing school dashboard, core student/marks/attendance/timetable/subscription/report/backup flows and Supabase client.
-- `modules.js`: global school workspace, 48 structured module workspaces, Super Admin control center, teacher and class registers, and the yearly-plan-gated student fee ledger.
-- `_headers`: security headers and Content Security Policy for Netlify.
+- `index.html`: school registration, Supabase Auth, school membership resolution, subscription selection, core student/marks/attendance/timetable/payment/report/backup flows.
+- `modules.js`: school workspace, 48 structured department workspaces, School Journey dashboard, school setup form, Super Admin control center, teacher/class registers and the yearly-plan-gated student fee ledger.
+- `_headers`: Netlify security headers and Content Security Policy.
 - Supabase project: `Shulepro-v22`.
+
+## Verified core database structures
+
+The connected Supabase schema currently contains schools, school memberships, students, teachers, classes, subjects, exams, marks, results, attendance, timetable, reports, settings, subscriptions, plans, plan prices, payments, audit logs, super admins, fees and school module records. Existing data was not deleted by this code update.
 
 ## Existing core flows retained
 
-- School registration and login through Supabase Auth.
+- School registration and email-confirmed login through Supabase Auth.
 - School membership and school-scoped RLS.
-- Student registration and list.
+- Student registration, editing, searching and listing.
 - Marks, attendance and timetable.
-- ShulePro subscription plans and manual payment-reference submission.
-- Super Admin payment review.
-- School report printing and JSON backup.
-- Existing language selector.
+- 14-day trial selection and subscription pricing.
+- Manual payment-reference submission and Super Admin payment review.
+- School reports and print-to-PDF.
+- JSON student backup and restore.
+- Language selector.
 
-## Added workspaces
+## V31.0 changes
 
-School administration; admissions and guardians; student movement and welfare; staff directory, workload and leave; curriculum and lesson plans; examinations and interventions; attendance follow-ups and scheduling; student fees; finance and procurement; parent/student portal workspaces; announcements and communication log; library; hostel; transport; inventory; events and counselling; settings and audit references; ShulePro AI workspaces.
+- Added a School Journey dashboard that shows registration, subscription, setup, student/staff/class, operations, reports, AI and Super Admin checkpoints.
+- Added a guided School Setup form for address, phone, official email, website, academic year, term, currency and timezone. These values are saved in the existing `settings.settings_data` JSON record for that school.
+- Preserved the existing school data and core modules.
+- JavaScript syntax checks passed for the inline application script and `modules.js`.
+- Confirmed that `index.html` loads `./modules.js` and that the repository contains `_headers`.
 
-The new generic workspaces store school-scoped records in `public.school_module_records`. This provides a common first-stage data workspace. Modules requiring specialised workflows, dedicated relational tables, approvals, reporting logic or integrations still need their next implementation stage; they are not represented as fully finished enterprise workflows.
+## Scope honesty: what is and is not complete
+
+The 48 department workspaces currently provide school-scoped structured record registers on `public.school_module_records`. They are not all complete enterprise workflows. Specialised functions such as payroll calculations, parent/student self-service authentication, full library circulation, transport routing, country-specific curriculum engines, advanced report-card generation and detailed financial accounting still need dedicated implementation and end-to-end tests.
+
+The current application code has passed static JavaScript syntax checks, but a full browser-based end-to-end test of registration, email confirmation, every role, every module and every payment path has not yet been completed. Do not describe the whole platform as production-ready until those tests pass.
 
 ## Security and data
 
 - `school_module_records` has RLS and role-aware read/write policies.
-- Sensitive workspace records are restricted to leadership roles.
-- Student fee access is restricted at the database-policy level to an active `premium_yearly` subscription (`$100 USD/year`) and owner/headmaster/accountant roles.
-- Super Admin school activation status is enforced by school membership helper functions; inactive schools are denied normal school access.
-- Existing SECURITY DEFINER functions and password-protection settings still require a separate security review in Supabase Auth.
+- Sensitive workspace records have role restrictions.
+- Student fee access is restricted at database-policy level to owner/headmaster/accountant roles and the active `premium_yearly` subscription.
+- School membership helpers deny access to inactive schools.
+- Supabase Security Advisor currently reports six SECURITY DEFINER function warnings and leaked-password protection disabled. The functions inspected include checks for authenticated ownership or Super Admin membership; these warnings still need a deliberate security review and Auth password-protection configuration.
 
 ## Paid integrations intentionally not activated
 
-DPO/payment gateway settlement, card processing, SMS/WhatsApp delivery, AI API usage, custom domain and any paid storage/service remain unconnected until the relevant accounts, contracts or subscriptions are purchased and configured. Manual payment-reference review remains the existing payment workflow.
+DPO/card settlement, SMS/WhatsApp delivery, AI API usage, custom domain and paid storage remain disconnected until the necessary accounts, credentials, contracts or subscriptions are supplied. Manual payment-reference review remains the current payment workflow. A TxID alone is not proof that funds have arrived.
 
 ## Netlify deployment
 
-Keep `index.html`, `modules.js` and `_headers` together in the site root. The page loads `./modules.js`; uploading only `index.html` will leave the new workspace unavailable.
+Keep `index.html`, `modules.js` and `_headers` together in the site root. The page loads `./modules.js`; uploading only `index.html` will leave the additional workspace unavailable.
 
-If Netlify is connected to this GitHub repository, the commits can trigger its normal deployment. If the Netlify site was created using manual Drop upload, download the three root files and upload them together as one site folder. Confirm the live deployment after upload.
+If Netlify is connected to this GitHub repository, these commits may trigger its configured deployment. The Netlify dashboard and live deployment have not been verified from this repository connection. Confirm the published deployment before relying on the new version.
