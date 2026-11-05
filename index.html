@@ -60,6 +60,15 @@ html[dir="rtl"] body{text-align:right}html[dir="rtl"] th,html[dir="rtl"] td{text
  </div>
 </section>
 
+<section id="inviteSetup" class="card auth hidden" style="padding:20px">
+ <h2>Complete your staff account</h2>
+ <p class="muted">Your school invited you to ShuleProGlobal. Create a password to activate your account.</p>
+ <label>New password</label><input id="invitePassword" type="password" minlength="8" autocomplete="new-password" placeholder="At least 8 characters">
+ <label>Confirm password</label><input id="invitePasswordConfirm" type="password" minlength="8" autocomplete="new-password" placeholder="Repeat your password">
+ <button id="invitePasswordBtn" type="button" onclick="completeStaffInvitation()">Activate account</button>
+ <div id="inviteSetupMsg" aria-live="polite"></div>
+</section>
+
 <section id="app" class="hidden">
  <div class="card">
   <div><strong id="welcome">Dashboard</strong><div class="muted">Your workspace is determined by your school role and protected by Supabase permissions.</div><div id="roleDescription" class="msg info" style="margin-top:10px">Loading your role workspace...</div></div>
@@ -152,6 +161,7 @@ const db = window.supabase?.createClient ? window.supabase.createClient(SUPABASE
   auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true}
 }) : null;
 let currentUser=null, currentSchoolId=null, currentSchool=null, currentRole=null, studentsCache=[];
+let inviteFlowDetected=/type=(invite|recovery)/i.test(window.location.hash||'');
 
 function el(id){return document.getElementById(id)}
 function message(id,text,type='info'){el(id).innerHTML='';const d=document.createElement('div');d.className='msg '+type;d.textContent=text;el(id).appendChild(d)}
@@ -877,12 +887,35 @@ async function reviewPayment(id,decision){
  message('adminMsg',decision==='approve'?'Malipo yamethibitishwa; subscription imewashwa.':'Malipo yamekataliwa.','ok');await loadSuperAdmin();
 }
 async function loadAll(){await loadRoleData()}
-async function boot(){
- if(!window.supabase?.createClient){message('regMsg','Maktaba ya Supabase haijapakia. Hakikisha intaneti ipo kisha refresh.','err');return}
- const {data:{session}}=await db.auth.getSession();
- if(session){try{await completePendingRegistration();await startApp(session.user)}catch(e){message('loginMsg','Imeshindwa kukamilisha usajili au kufungua shule: '+e.message,'err')}}
+async function completeStaffInvitation(){
+ const password=el('invitePassword').value,confirmPassword=el('invitePasswordConfirm').value,button=el('invitePasswordBtn');
+ if(password.length<8){message('inviteSetupMsg','Password must contain at least 8 characters.','err');return;}
+ if(password!==confirmPassword){message('inviteSetupMsg','The passwords do not match.','err');return;}
+ button.disabled=true;message('inviteSetupMsg','Activating your account...','info');
+ try{
+  const {data,error}=await db.auth.updateUser({password});
+  if(error)throw error;
+  inviteFlowDetected=false;el('inviteSetup').classList.add('hidden');
+  await startApp(data.user);
+ }catch(e){message('inviteSetupMsg','Could not activate account: '+e.message,'err');}
+ finally{button.disabled=false;}
 }
-if(db)db.auth.onAuthStateChange((_event,session)=>{if(!session){el('app').classList.add('hidden');el('logoutBtn').classList.add('hidden');el('auth').classList.remove('hidden')}});
+function showInvitePasswordSetup(){
+ el('auth').classList.add('hidden');el('app').classList.add('hidden');
+ el('inviteSetup').classList.remove('hidden');el('logoutBtn').classList.add('hidden');
+}
+async function boot(){
+ if(!window.supabase?.createClient){message('regMsg','Supabase library did not load. Check your connection and refresh.','err');return}
+ const {data:{session}}=await db.auth.getSession();
+ if(session){
+  if(inviteFlowDetected){showInvitePasswordSetup();return;}
+  try{await completePendingRegistration();await startApp(session.user)}catch(e){message('loginMsg','Could not complete registration or open school: '+e.message,'err')}
+ }
+}
+if(db)db.auth.onAuthStateChange((event,session)=>{
+ if(session&&(event==='PASSWORD_RECOVERY'||inviteFlowDetected)){showInvitePasswordSetup();return;}
+ if(!session){el('app').classList.add('hidden');el('inviteSetup').classList.add('hidden');el('logoutBtn').classList.add('hidden');el('auth').classList.remove('hidden');}
+});
 // Wire authentication controls directly; do not rely on inline HTML handlers.
 el('regTabBtn').addEventListener('click',()=>showAuth('reg'));
 el('loginTabBtn').addEventListener('click',()=>showAuth('login'));
