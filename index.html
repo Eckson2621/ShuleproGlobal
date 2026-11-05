@@ -273,7 +273,7 @@ async function startApp(user){
  currentSchoolId=membership.school_id;currentRole=membership.role||'teacher';
  applyRoleDashboard(currentRole);
  const {data:school,error:schoolError}=await db.from('schools').select('*').eq('id',currentSchoolId).single();
- if(schoolError||!school){el('auth').classList.remove('hidden');el('app').classList.add('hidden');message('loginMsg','Akaunti ya shule haipatikani au imesimamishwa na Super Admin. Wasiliana na msimamizi wa ShuleProGlobal.','err');return;}currentSchool=school;
+ if(schoolError||!school||school.is_active===false){el('auth').classList.remove('hidden');el('app').classList.add('hidden');message('loginMsg','Akaunti ya shule haipatikani au imesimamishwa na Super Admin. Wasiliana na msimamizi wa ShuleProGlobal.','err');return;}currentSchool=school;
  el('schoolName').textContent=school.school_name||'Shule';el('schoolCode').textContent=school.school_code||'';
  let chosenLanguage='sw';try{chosenLanguage=localStorage.getItem('shulepro_language_v2')||school.default_language||school.preferred_language||school.language||'sw'}catch(e){chosenLanguage=school.default_language||school.preferred_language||school.language||'sw'}setLang(chosenLanguage);
  el('welcome').textContent='Karibu, '+(user.user_metadata?.full_name||user.email);
