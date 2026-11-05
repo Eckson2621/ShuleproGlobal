@@ -6,7 +6,8 @@
 <meta name="theme-color" content="#0f172a">
 <meta name="description" content="ShuleProGlobal — unified global school management platform by EAM VENTURES LTD.">
 <title>SHULEPRO GLOBAL V31.0 | EAM VENTURES LTD (Registration Pending)</title>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" onerror="this.onerror=null;this.src='https://unpkg.com/@supabase/supabase-js@2'"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>if(!window.supabase?.createClient){document.write('<script src="https://unpkg.com/@supabase/supabase-js@2"><\\/script>')}</script>
 <style>
 :root{--blue:#1e40af;--navy:#0f172a;--bg:#f3f6fb;--line:#e5e7eb;--muted:#64748b}
 *{box-sizing:border-box}body{font-family:Inter,system-ui,Arial,sans-serif;background:var(--bg);margin:0;color:#172033}
@@ -147,9 +148,9 @@ html[dir="rtl"] body{text-align:right}html[dir="rtl"] th,html[dir="rtl"] td{text
 // Supabase project configuration
 const SUPABASE_URL = "https://btrxhcfhnriekwsazvnc.supabase.co";
 const SUPABASE_ANON_KEY = "sb_publishable_bom_7JYZ54SJy869vpnT8g_EZhcHZDg";
-const db = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+const db = window.supabase?.createClient ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
   auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true}
-});
+}) : null;
 let currentUser=null, currentSchoolId=null, currentSchool=null, studentsCache=[];
 
 function el(id){return document.getElementById(id)}
@@ -764,7 +765,7 @@ async function boot(){
  const {data:{session}}=await db.auth.getSession();
  if(session){try{await startApp(session.user)}catch(e){message('loginMsg','Imeshindwa kufungua shule: '+e.message,'err')}}
 }
-db.auth.onAuthStateChange((_event,session)=>{if(!session){el('app').classList.add('hidden');el('logoutBtn').classList.add('hidden');el('auth').classList.remove('hidden')}});
+if(db)db.auth.onAuthStateChange((_event,session)=>{if(!session){el('app').classList.add('hidden');el('logoutBtn').classList.add('hidden');el('auth').classList.remove('hidden')}});
 window.addEventListener('DOMContentLoaded',boot);
 </script>
 <script src="./modules.js" defer></script>
