@@ -38,6 +38,7 @@ var groups=[
 ['substitution','Teacher Substitution','Cover lessons and teacher substitutions.',['Absent teacher','Cover teacher','Class','Subject','Date','Period']]
 ]},
 {id:'finance',name:'Finance & Accounts',icon:'💳',items:[
+['student_fees','Student Fees & Debt Reports','Student fee records, outstanding balances and printable debt summaries.',['Student','Fee type','Amount','Currency','Payment status']],
 ['fee_structures','Fee Structures & Invoices','Fee categories, schedules, invoices and balances.',['Fee item','Academic year','Class','Amount','Due date']],
 ['receipts','Receipts & Other Income','Receipts and other income references.',['Receipt number','Payer','Income type','Amount','Date']],
 ['expenses','Expenses & Procurement','Expenses, purchase requests and approvals.',['Expense title','Category','Supplier','Amount','Date','Approval status']],
@@ -162,9 +163,37 @@ var back=$('spReturnHub');if(!back){back=document.createElement('button');back.i
 back.onclick=function(){document.querySelectorAll('.pane').forEach(function(p){p.classList.add('hidden');});if(nav)nav.classList.add('hidden');$('spGlobalHub').classList.remove('hidden');back.remove();renderHome();};
 }
 function findModule(key){for(var i=0;i<groups.length;i++){var m=groups[i].items.find(function(x){return x[0]===key;});if(m)return {group:groups[i],module:m};}return null;}
+async function openStudentFees(){
+setTitle('Student Fees & Debt Reports','Manage student fee items and outstanding balances. This is separate from ShulePro subscription payments.');
+var subResult=await db.from('subscriptions').select('status,price_id,ends_at').eq('school_id',currentSchoolId).order('created_at',{ascending:false}).limit(1).maybeSingle();
+if(subResult.error){$('spPage').innerHTML='<div class="sp-notice">Could not verify your subscription: '+esc(subResult.error.message)+'</div>';return;}
+var sub=subResult.data,enabled=!!sub&&sub.status==='active'&&sub.price_id==='premium_yearly'&&(!sub.ends_at||new Date(sub.ends_at)>new Date());
+if(!enabled){
+$('spPage').innerHTML='<div class="sp-hero" style="background:linear-gradient(120deg,#7b4b16,#b7791f,#d69e2e)"><div class="sp-eyebrow" style="color:#fff1cf">PREMIUM FEATURE</div><h2>Student Fees & Debt Reports</h2><p>Fee reports and student debt management are reserved for the $100 yearly plan.</p></div><div class="sp-notice" style="margin-top:14px">This feature is locked for the current subscription. No student fee data has been changed. The subscription must be active on the premium_yearly plan before this module opens.</div><button class="sp-btn alt" id="spBackFinance">← Back to Finance</button>';
+$('spBackFinance').onclick=function(){renderGroup('finance');};return;
+}
+var [studentsRes,feesRes]=await Promise.all([
+db.from('students').select('id,full_name,admission_number,class_name').eq('school_id',currentSchoolId).order('full_name'),
+db.from('fees').select('id,student_id,fee_type,amount,currency_code,is_paid,created_at').eq('school_id',currentSchoolId).order('created_at',{ascending:false}).limit(500)
+]);
+if(studentsRes.error||feesRes.error){$('spPage').innerHTML='<div class="sp-notice">Could not load student fee data: '+esc((studentsRes.error||feesRes.error).message)+'</div>';return;}
+var students=studentsRes.data||[],fees=feesRes.data||[],studentMap={};students.forEach(function(s){studentMap[s.id]=s;});
+var unpaid=fees.filter(function(f){return !f.is_paid;}),total=unpaid.reduce(function(a,f){return a+Number(f.amount||0);},0);
+var html='<button class="sp-back" id="spBackFinance">← Back to Finance</button><div class="sp-kpis"><div class="sp-kpi"><div class="sp-kpi-label">Students</div><div class="sp-kpi-value">'+students.length+'</div></div><div class="sp-kpi"><div class="sp-kpi-label">Fee records</div><div class="sp-kpi-value">'+fees.length+'</div></div><div class="sp-kpi"><div class="sp-kpi-label">Unpaid records</div><div class="sp-kpi-value">'+unpaid.length+'</div></div><div class="sp-kpi"><div class="sp-kpi-label">Outstanding total</div><div class="sp-kpi-value">'+esc(total.toLocaleString())+'</div></div></div>';
+html+='<form id="spFeeForm" class="sp-form"><div class="sp-wide"><label>Student<select name="student_id" required><option value="">Select student</option>'+students.map(function(s){return '<option value="'+s.id+'">'+esc(s.full_name)+' · '+esc(s.admission_number||s.class_name||'')+'</option>';}).join('')+'</select></label></div><div><label>Fee type<select name="fee_type"><option>Ada</option><option>Visiting</option><option>Mtahi</option><option>Sare</option><option>Michezo</option><option>Other</option></select></label></div><div><label>Amount<input name="amount" type="number" min="0.01" step="0.01" required></label></div><div><label>Currency<input name="currency_code" value="'+esc(currentSchool&&currentSchool.currency_code||'USD')+'" maxlength="3" required></label></div><div><label>Payment status<select name="is_paid"><option value="false">Unpaid</option><option value="true">Paid</option></select></label></div><div class="sp-wide"><button class="sp-btn" type="submit">＋ Save student fee</button></div></form>';
+html+='<div class="sp-section-head"><div><h3>Student fee ledger</h3><p>Mark a fee as paid only after confirming the payment.</p></div><button class="sp-btn alt" id="spPrintDebt">Print debt report</button></div><div class="sp-records" id="spFeeRows">';
+fees.forEach(function(f){var student=studentMap[f.student_id]||{};html+='<article class="sp-record"><div><strong>'+esc(student.full_name||'Unknown student')+' · '+esc(f.fee_type)+'</strong><small>'+esc(student.admission_number||student.class_name||'')+' · '+esc(Number(f.amount).toLocaleString())+' '+esc(f.currency_code||'')+' · '+(f.is_paid?'PAID':'UNPAID')+'</small></div>'+(f.is_paid?'':'<button class="sp-btn" data-paid="'+f.id+'">Mark paid</button>')+'</article>';});
+if(!fees.length)html+='<div class="sp-notice">No student fee records have been entered yet.</div>';
+html+='</div><div class="sp-connection"><strong>Debt reminder delivery</strong><p class="sp-muted">The debt ledger and printable report are available. Automated SMS, WhatsApp or email delivery is not connected; those services require a paid provider and approval before activation.</p></div>';
+$('spPage').innerHTML=html;
+$('spBackFinance').onclick=function(){renderGroup('finance');};
+$('spPrintDebt').onclick=function(){window.print();};
+$('spFeeForm').onsubmit=async function(e){e.preventDefault();var fd=new FormData(e.currentTarget);var result=await db.from('fees').insert({school_id:currentSchoolId,student_id:String(fd.get('student_id')),fee_type:String(fd.get('fee_type')),amount:Number(fd.get('amount')),currency_code:String(fd.get('currency_code')).toUpperCase(),is_paid:String(fd.get('is_paid'))==='true'});if(result.error){alert('Could not save fee: '+result.error.message);return;}openStudentFees();};
+$('spFeeRows').querySelectorAll('[data-paid]').forEach(function(b){b.onclick=async function(){if(!confirm('Confirm that this student fee has been paid?'))return;var result=await db.from('fees').update({is_paid:true}).eq('id',b.dataset.paid).eq('school_id',currentSchoolId);if(result.error){alert('Could not update payment status: '+result.error.message);return;}openStudentFees();};});
+}
 function openModule(key,button){
 var found=findModule(key);if(!found)return;setActive(button||document.querySelector('[data-module="'+key+'"]'));
-var m=found.module,fields=m[3];setTitle(m[1],m[2]);
+var m=found.module,fields=m[3];setTitle(m[1],m[2]);if(key==='student_fees'){openStudentFees();return;}
 var html='<button class="sp-back" id="spBackGroup">← Back to '+found.group.name+'</button><div class="sp-notice">This workspace stores school-scoped records in the protected ShulePro module workspace. Dedicated approvals, country-specific rules and specialised workflows can be expanded without changing your existing student, marks, attendance, timetable or subscription data.</div><form id="spRecordForm" class="sp-form">';
 fields.forEach(function(f,i){html+='<div class="'+(i===fields.length-1&&fields.length%2?'sp-wide':'')+'"><label>'+esc(f)+'<input name="field'+i+'" placeholder="'+esc(f)+'" '+(/date/i.test(f)?'type="date"':'type="text"')+' '+(i===0?'required':'')+'></label></div>';});
 html+='<div class="sp-wide"><button class="sp-btn" type="submit">＋ Save record</button> <button class="sp-btn alt" type="reset">Clear form</button></div></form><div class="sp-section-head"><div><h3>Saved records</h3><p>Records are scoped to the signed-in school.</p></div><button class="sp-btn alt" id="spRefresh">↻ Refresh</button></div><div id="spRecords" class="sp-records">Loading records…</div>';
