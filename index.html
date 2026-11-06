@@ -56,7 +56,14 @@ html[dir="rtl"] body{text-align:right}html[dir="rtl"] th,html[dir="rtl"] td{text
   <label>Email Address</label><input id="loginEmail" type="email" placeholder="Enter your email">
   <label>Password</label><input id="loginPass" type="password" placeholder="Enter your password">
   <button id="loginBtn" type="button" style="width:100%;margin-top:10px">Sign In</button>
+  <p style="margin:10px 0 0"><a href="#" id="forgotPasswordLink">Forgot Password?</a></p>
   <div id="loginMsg"></div>
+  <div id="forgotPasswordPane" class="hidden" style="margin-top:14px">
+   <label>Email Address</label><input id="resetEmail" type="email" placeholder="Enter your account email">
+   <button id="sendResetBtn" type="button">Send Password Reset Link</button>
+   <button id="cancelResetBtn" type="button" class="secondary">Back to Sign In</button>
+   <div id="resetMsg" aria-live="polite"></div>
+  </div>
  </div>
 </section>
 
@@ -922,23 +929,40 @@ async function reviewPayment(id,decision){
  message('adminMsg',decision==='approve'?'Malipo yamethibitishwa; subscription imewashwa.':'Malipo yamekataliwa.','ok');await loadSuperAdmin();
 }
 async function loadAll(){await loadRoleData()}
+let passwordRecoveryFlow=false;
+async function sendPasswordReset(){
+ const email=el('resetEmail').value.trim().toLowerCase(),button=el('sendResetBtn');
+ if(!email){message('resetMsg','Enter your account email address.','err');return;}
+ button.disabled=true;message('resetMsg','Sending password reset link...','info');
+ try{
+  const {error}=await db.auth.resetPasswordForEmail(email,{redirectTo:window.location.origin+'/'});
+  if(error)throw error;
+  message('resetMsg','If this email has a ShulePro account, a password reset link has been sent. Check your inbox and spam folder.','ok');
+ }catch(e){message('resetMsg','Could not send reset link: '+e.message,'err');}
+ finally{button.disabled=false;}
+}
 async function completeStaffInvitation(){
  const password=el('invitePassword').value,confirmPassword=el('invitePasswordConfirm').value,button=el('invitePasswordBtn');
  if(password.length<8){message('inviteSetupMsg','Password must contain at least 8 characters.','err');return;}
  if(password!==confirmPassword){message('inviteSetupMsg','The passwords do not match.','err');return;}
- button.disabled=true;message('inviteSetupMsg','Activating your account...','info');
+ button.disabled=true;message('inviteSetupMsg','Updating your password...','info');
  try{
   const {data:current}=await db.auth.getUser();
-  const {data,error}=await db.auth.updateUser({password,data:{...(current.user?.user_metadata||{}),invitation_completed:true}});
-  if(error)throw error;
-  inviteFlowDetected=false;el('inviteSetup').classList.add('hidden');
-  await startApp(data.user);
- }catch(e){message('inviteSetupMsg','Could not activate account: '+e.message,'err');}
+  const update=passwordRecoveryFlow
+   ? await db.auth.updateUser({password})
+   : await db.auth.updateUser({password,data:{...(current.user?.user_metadata||{}),invitation_completed:true}});
+  if(update.error)throw update.error;
+  passwordRecoveryFlow=false;inviteFlowDetected=false;el('inviteSetup').classList.add('hidden');
+  await startApp(update.data.user);
+ }catch(e){message('inviteSetupMsg','Could not update password: '+e.message,'err');}
  finally{button.disabled=false;}
 }
 function showInvitePasswordSetup(){
  el('auth').classList.add('hidden');el('app').classList.add('hidden');
  el('inviteSetup').classList.remove('hidden');el('logoutBtn').classList.add('hidden');
+ el('inviteSetup').querySelector('h2').textContent=passwordRecoveryFlow?'Reset your password':'Complete your staff account';
+ el('inviteSetup').querySelector('p').textContent=passwordRecoveryFlow?'Choose a new password for your ShulePro account.':'Your school invited you to ShuleProGlobal. Create a password to activate your account.';
+ el('invitePasswordBtn').textContent=passwordRecoveryFlow?'Save New Password':'Activate account';
 }
 async function boot(){
  if(!window.supabase?.createClient){message('regMsg','Supabase library did not load. Check your connection and refresh.','err');return}
@@ -950,7 +974,8 @@ async function boot(){
  }
 }
 if(db)db.auth.onAuthStateChange((event,session)=>{
- if(session&&(event==='PASSWORD_RECOVERY'||inviteFlowDetected)){showInvitePasswordSetup();return;}
+ if(session&&event==='PASSWORD_RECOVERY'){passwordRecoveryFlow=true;showInvitePasswordSetup();return;}
+ if(session&&inviteFlowDetected){passwordRecoveryFlow=false;showInvitePasswordSetup();return;}
  if(!session){el('app').classList.add('hidden');el('inviteSetup').classList.add('hidden');el('logoutBtn').classList.add('hidden');el('auth').classList.remove('hidden');}
 });
 // Wire authentication controls directly; do not rely on inline HTML handlers.
@@ -958,6 +983,9 @@ el('regTabBtn').addEventListener('click',()=>showAuth('reg'));
 el('loginTabBtn').addEventListener('click',()=>showAuth('login'));
 el('registerBtn').addEventListener('click',()=>{if(typeof register==='function')register();else message('regMsg','Registration script failed to load. Reload the page and contact support.','err')});
 el('loginBtn').addEventListener('click',()=>{if(typeof login==='function')login();else message('loginMsg','Sign-in script failed to load. Reload the page and contact support.','err')});
+el('forgotPasswordLink').addEventListener('click',e=>{e.preventDefault();el('resetEmail').value=el('loginEmail').value.trim();el('forgotPasswordPane').classList.remove('hidden');el('resetMsg').innerHTML='';});
+el('cancelResetBtn').addEventListener('click',()=>el('forgotPasswordPane').classList.add('hidden'));
+el('sendResetBtn').addEventListener('click',sendPasswordReset);
 window.addEventListener('DOMContentLoaded',boot);
 </script>
 <script src="./modules.js" defer></script>
