@@ -1,0 +1,402 @@
+/* SHULEPRO GLOBAL V31.1 — unified module workspace.
+   Existing academic/payment modules remain intact. Additional records use a
+   school-scoped table protected by Supabase RLS. Paid integrations are placeholders. */
+(function(){
+'use strict';
+var $=function(id){return document.getElementById(id);};
+var esc=function(v){return String(v==null?'':v).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});};
+var groups=[
+{id:'school',name:'School Administration',icon:'🏫',items:[
+['school_profile','School Profile','Identity, contacts and school information.',['School name','School address','Phone','Email','Website']],
+['academic_calendar','Academic Years & Terms','Academic years, terms, semesters and calendars.',['Academic year','Term or semester','Start date','End date']],
+['departments_subjects','Departments & Subjects','Departments, subjects and subject codes.',['Department','Subject name','Subject code','Education level']],
+['classes_streams','Classes & Streams','Classes, streams, class teachers and capacity.',['Class name','Stream','Academic year','Class teacher']],
+['school_policies','Policies & Documents','Policies, notices and document references.',['Document title','Document type','File reference or URL','Notes']]
+]},
+{id:'students',name:'Students & Admissions',icon:'🎓',items:[
+['admissions','Admissions & Enrolment','Admission records and enrolment decisions.',['Student name','Admission number','Class','Admission date','Admission status']],
+['guardians','Parents & Guardians','Parent details and guardian relationships.',['Parent or guardian name','Relationship','Phone','Email','Student admission number']],
+['student_movement','Transfers, Promotion & Graduation','Student transfers, promotions, graduation and withdrawal.',['Student name or admission number','Action','From class','To class','Effective date']],
+['student_welfare','Student Welfare & Discipline','Counselling, discipline, awards and welfare follow-ups.',['Student name or admission number','Record type','Date','Description','Action taken']],
+['student_documents','Student Documents & ID Cards','Identity cards, certificates and student documents.',['Student name or admission number','Document type','Document number','Issue date','Expiry date']]
+]},
+{id:'staff',name:'Teachers & Human Resources',icon:'👩‍🏫',items:[
+['staff_directory','Staff Directory & Roles','Staff directory, role assignments and contacts.',['Staff full name','Job title','Department','Phone','Email']],
+['staff_workload','Teacher Workload & Appraisal','Teaching load, performance reviews and development.',['Teacher name','Review period','Workload','Performance notes','Next action']],
+['staff_leave','Leave & Staff Requests','Leave applications and staff requests.',['Staff name','Leave type','Start date','End date','Status']],
+['payroll_records','Payroll & Benefits','Payroll summaries and benefit references.',['Staff name or payroll reference','Pay period','Gross amount','Deductions','Status']]
+]},
+{id:'academic',name:'Academic Management',icon:'📚',items:[
+['curriculum','Curriculum & Education Levels','Curriculum mapping, syllabi and learning standards.',['Curriculum name','Country','Education level','Version','Notes']],
+['lesson_plans','Lesson Plans & Topic Coverage','Lesson preparation, schemes of work and topic coverage.',['Teacher','Class','Subject','Topic','Planned date','Coverage status']],
+['examination_admin','Examination Administration','Exam calendars, invigilation and approvals.',['Examination name','Exam type','Class','Start date','End date','Status']],
+['academic_interventions','Learning Support & Interventions','Learning gaps and student support plans.',['Student or class','Subject','Learning gap','Intervention','Review date']]
+]},
+{id:'attendance',name:'Attendance & Scheduling',icon:'🗓️',items:[
+['attendance_alerts','Attendance Follow-ups','Absence follow-up, lateness and guardian contact logs.',['Student name or admission number','Date','Attendance status','Reason','Follow-up action']],
+['room_schedule','Rooms & Facilities Scheduling','Room allocation, facility bookings and conflicts.',['Room or facility','Date','Start time','End time','Purpose']],
+['substitution','Teacher Substitution','Cover lessons and teacher substitutions.',['Absent teacher','Cover teacher','Class','Subject','Date','Period']]
+]},
+{id:'finance',name:'Finance & Accounts',icon:'💳',items:[
+['student_fees','Student Fees & Debt Reports','Student fee records, outstanding balances and printable debt summaries.',['Student','Fee type','Amount','Currency','Payment status']],
+['fee_structures','Fee Structures & Invoices','Fee categories, schedules, invoices and balances.',['Fee item','Academic year','Class','Amount','Due date']],
+['receipts','Receipts & Other Income','Receipts and other income references.',['Receipt number','Payer','Income type','Amount','Date']],
+['expenses','Expenses & Procurement','Expenses, purchase requests and approvals.',['Expense title','Category','Supplier','Amount','Date','Approval status']],
+['budgets','Budgets & Financial Reports','Budget allocations and variance notes.',['Budget title','Period','Allocated amount','Actual amount','Notes']]
+]},
+{id:'parents',name:'Parent & Student Portals',icon:'👨‍👩‍👧',items:[
+['parent_cases','Parent Communication Cases','Parent requests, meeting notes and follow-ups.',['Parent name','Student','Request type','Date','Resolution']],
+['student_support','Student Portal Content','Learning resources and student announcements.',['Title','Audience','Class','Publish date','Content summary']]
+]},
+{id:'communications',name:'Communication & Notifications',icon:'📣',items:[
+['announcements','Announcements & Notices','School notices and targeted announcements.',['Title','Audience','Publish date','Message','Status']],
+['communication_log','Communication Log','Email, SMS and parent communication activity.',['Recipient','Channel','Subject','Date','Delivery status']]
+]},
+{id:'library',name:'Library Management',icon:'📖',items:[
+['library_catalog','Library Catalogue','Books, authors, ISBNs and copies.',['Book title','Author','ISBN','Category','Number of copies']],
+['library_loans','Book Loans & Returns','Issue, return and overdue records.',['Book title or ISBN','Borrower','Issue date','Due date','Return status']]
+]},
+{id:'boarding',name:'Hostel & Boarding',icon:'🛏️',items:[
+['hostel_rooms','Hostels, Rooms & Beds','Hostel buildings, rooms and bed allocation.',['Hostel name','Room number','Bed capacity','Warden']],
+['boarding_register','Boarding Register','Boarder allocation and roll calls.',['Student name or admission number','Hostel','Room','Bed','Start date']]
+]},
+{id:'transport',name:'Transport Management',icon:'🚌',items:[
+['fleet','Vehicles & Drivers','Vehicle register, driver details and inspections.',['Vehicle registration','Vehicle type','Driver','Capacity','Insurance expiry']],
+['routes','Routes & Stops','Transport routes, stops and student allocation.',['Route name','Stop','Pickup time','Drop-off time','Vehicle']]
+]},
+{id:'inventory',name:'Inventory & Assets',icon:'📦',items:[
+['inventory_items','Stock & Inventory','Stock items, quantities, stores and reorder levels.',['Item name','Category','Quantity','Unit','Reorder level']],
+['assets','School Assets & Maintenance','Asset register and maintenance history.',['Asset name','Asset tag','Location','Condition','Next service date']]
+]},
+{id:'events',name:'Events, Discipline & Welfare',icon:'🏆',items:[
+['school_events','Events & Activities','School events, clubs, sports and activities.',['Event name','Event type','Venue','Event date','Coordinator']],
+['counselling','Counselling & Safeguarding','Confidential case references and follow-up.',['Case reference','Student reference','Assigned officer','Review date','Status']]
+]},
+{id:'settings',name:'Settings, Security & Data',icon:'⚙️',items:[
+['school_users','User Access Register','User role requests and access reviews.',['User email','Requested role','Requested by','Review date','Status']],
+['school_audit','Operational Audit Notes','Operational decisions and audit references.',['Action','Record reference','Responsible person','Date','Notes']],
+['school_backup_log','Backup & Recovery Log','Backup dates, exports and restore checks.',['Backup date','Backup type','File reference','Verified by','Notes']]
+]},
+{id:'ai',name:'ShulePro AI',icon:'✨',items:[
+['ai_insights','AI Insights & Recommendations','Approved AI analysis outputs and follow-up actions. AI API connection is not active yet.',['Insight title','Analysis area','Date','Recommendation','Review status']],
+['ai_reports','AI Report Requests','AI report requests and approved data scope.',['Report request','Class or department','Date','Requested by','Status']]
+]}
+];
+var legacy=[
+{id:'wanafunzi',name:'Students',icon:'🎓',desc:'Student registration and student list.'},
+{id:'alama',name:'Marks & Results',icon:'📊',desc:'Marks entry and result records.'},
+{id:'mahudhurio',name:'Attendance',icon:'✅',desc:'Daily attendance and attendance history.'},
+{id:'ratiba',name:'Timetable',icon:'🗓️',desc:'Class timetable and periods.'},
+{id:'ada',name:'Subscription & Payments',icon:'💳',desc:'Subscription, TxID and payment history.'},
+{id:'report',name:'Reports & Report Cards',icon:'📄',desc:'School reports and print-to-PDF.'},
+{id:'backup',name:'Backup & Language',icon:'🌐',desc:'JSON backup and language settings.'}
+];
+function style(){
+if($('spWorkspaceStyles'))return;
+var s=document.createElement('style');s.id='spWorkspaceStyles';s.textContent=
+'#spGlobalHub{display:grid;grid-template-columns:250px minmax(0,1fr);gap:16px;margin:14px 0 20px;align-items:start}'+
+'.sp-side{background:linear-gradient(165deg,#101d3b,#172d55 70%,#243d70);border-radius:18px;padding:15px;color:#eaf1ff;position:sticky;top:82px;max-height:calc(100vh - 100px);overflow:auto}'+
+'.sp-side-brand{font-weight:900;font-size:18px;padding:8px 9px 14px;border-bottom:1px solid #ffffff20}.sp-side-sub{font-size:10px;color:#a9bddf;margin-top:4px}'+
+'.sp-nav-label{font-size:10px;text-transform:uppercase;letter-spacing:1px;color:#9eb2d5;margin:16px 8px 6px}'+
+'.sp-nav-btn{display:flex;width:100%;align-items:center;gap:9px;text-align:left;background:transparent;color:#dce8ff;border:0;border-radius:9px;padding:9px 10px;font-size:12px;margin:2px 0}.sp-nav-btn:hover,.sp-nav-btn.active{background:#ffffff1b;color:#fff}.sp-ico{width:20px;text-align:center}'+
+'.sp-main{min-width:0}.sp-topline{display:flex;justify-content:space-between;gap:12px;align-items:center;flex-wrap:wrap;background:#fff;border:1px solid #e4eaf3;border-radius:15px;padding:14px 17px;margin-bottom:14px}'+
+'.sp-eyebrow{font-size:10px;text-transform:uppercase;letter-spacing:1.3px;color:#64748b;font-weight:800}.sp-title{font-size:23px;font-weight:850;color:#14213d;margin:4px 0}.sp-subtitle{font-size:12px;color:#64748b}.sp-search{max-width:240px;margin:0}'+
+'.sp-hero{border-radius:17px;padding:23px;color:#fff;background:linear-gradient(120deg,#1746a2,#4169e1 55%,#7656d8)}.sp-hero h2{font-size:24px;margin:0 0 8px}.sp-hero p{color:#e5edff;max-width:650px;font-size:12px;line-height:1.6;margin:0}'+
+'.sp-kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin:13px 0}.sp-kpi{background:#fff;border:1px solid #e5eaf2;border-radius:14px;padding:13px}.sp-kpi-icon{font-size:19px}.sp-kpi-label{font-size:10px;color:#64748b;margin-top:8px}.sp-kpi-value{font-size:24px;font-weight:850;color:#14213d;margin-top:2px}'+
+'.sp-section-head{display:flex;justify-content:space-between;align-items:end;gap:10px;margin:20px 0 10px}.sp-section-head h3{margin:0;color:#17233d;font-size:16px}.sp-section-head p{margin:3px 0 0;color:#64748b;font-size:11px}'+
+'.sp-card-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}.sp-module-card{background:#fff;border:1px solid #e4eaf3;border-radius:14px;padding:14px;text-align:left;cursor:pointer;min-height:128px;color:#1d2a44}.sp-module-card:hover{box-shadow:0 9px 24px #12264b12;border-color:#b9c9e7}.sp-card-icon{width:36px;height:36px;border-radius:11px;display:grid;place-items:center;font-size:19px;margin-bottom:10px}.sp-module-card strong{display:block;font-size:12px;margin-bottom:5px}.sp-module-card small{display:block;color:#64748b;line-height:1.5;font-size:10px}.sp-chip{display:inline-flex;padding:4px 8px;border-radius:20px;background:#edf3ff;color:#2854a6;font-size:9px;font-weight:800;margin-top:8px}'+
+'.sp-form{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px;background:#fff;border:1px solid #e4eaf3;border-radius:15px;padding:15px;margin:12px 0}.sp-form label{display:block;font-size:11px;color:#475569;font-weight:750}.sp-form input{margin:5px 0 0;width:100%;padding:10px;border:1px solid #d8e0ec;border-radius:9px;font:inherit;font-size:12px}.sp-wide{grid-column:1/-1}.sp-btn{border:0;border-radius:9px;padding:10px 13px;background:#2454b5;color:#fff;font-weight:750;font-size:11px;cursor:pointer}.sp-btn.alt{background:#edf2fb;color:#254b91}.sp-btn.danger{background:#fff0f0;color:#a52a2a}'+
+'.sp-records{display:grid;gap:8px}.sp-record{display:flex;justify-content:space-between;gap:10px;align-items:center;background:#fff;border:1px solid #e4eaf3;border-radius:11px;padding:11px 13px}.sp-record strong{font-size:12px;color:#17233d}.sp-record small{display:block;font-size:10px;color:#64748b;margin-top:4px}.sp-notice{border-radius:11px;padding:12px 14px;background:#fff8e7;border:1px solid #f5e1a9;color:#77530b;font-size:11px;line-height:1.6;margin:11px 0}.sp-connection{background:linear-gradient(135deg,#f5f7ff,#f0edff);border:1px solid #dedafa;border-radius:14px;padding:16px;margin-top:13px}.sp-connection strong{color:#45358b}.sp-muted{font-size:10px;color:#64748b}.sp-back{background:transparent;border:0;color:#2454b5;font-weight:800;padding:6px 0;cursor:pointer}'+
+'@media(max-width:900px){#spGlobalHub{grid-template-columns:1fr}.sp-side{position:relative;top:0;max-height:none}.sp-side nav{display:flex;flex-wrap:wrap;gap:3px}.sp-nav-label{width:100%;margin:9px 5px 3px}.sp-nav-btn{width:auto}.sp-card-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}'+
+'@media(max-width:560px){.sp-kpis{grid-template-columns:repeat(2,minmax(0,1fr))}.sp-card-grid{grid-template-columns:1fr}.sp-form{grid-template-columns:1fr}.sp-title{font-size:20px}.sp-topline{padding:11px}}';
+s.textContent += '.sp-journey{background:#fff;border:1px solid #e3eaf4;border-radius:16px;padding:16px;margin:14px 0}.sp-journey-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:9px}.sp-journey-step{border:1px solid #e5eaf2;border-radius:12px;padding:11px;background:#fbfcff}.sp-journey-step strong{display:block;font-size:11px;color:#1d2b45}.sp-journey-step small{display:block;font-size:10px;color:#64748b;margin-top:5px;line-height:1.5}.sp-step-state{font-size:9px;font-weight:800;color:#166534;margin-top:7px}.sp-step-state.pending{color:#9a6700}.sp-setup-form{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px;margin-top:13px}.sp-setup-form label{display:block;font-size:10px;color:#475569;font-weight:750}.sp-setup-form input,.sp-setup-form select{width:100%;margin-top:4px;padding:9px;border:1px solid #d8e0ec;border-radius:8px;font:inherit;font-size:11px}.sp-journey-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}@media(max-width:650px){.sp-journey-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.sp-setup-form{grid-template-columns:1fr}}.spa-shell{background:#fff;border:1px solid #e4eaf3;border-radius:16px;padding:16px;margin:14px 0}.spa-nav{display:flex;gap:7px;flex-wrap:wrap;margin-bottom:14px}.spa-nav button{border:0;border-radius:9px;background:#edf2fb;color:#234a8f;padding:9px 12px;font-size:11px;font-weight:800}.spa-nav button.active{background:#173d82;color:#fff}.spa-table{width:100%;border-collapse:collapse;min-width:620px}.spa-table th,.spa-table td{padding:9px;border-bottom:1px solid #e7edf5;text-align:left;font-size:11px}.spa-table th{background:#f5f8fc;color:#475569}.spa-status{border-radius:20px;padding:4px 7px;font-size:9px;font-weight:800;background:#e8f8ef;color:#167345}.spa-status.off{background:#fff0f0;color:#a52a2a}.spa-content{overflow:auto}.spa-kpis{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}.spa-kpi{padding:13px;border:1px solid #e5eaf2;border-radius:12px}.spa-kpi strong{display:block;font-size:22px;color:#14213d}.spa-kpi small{color:#64748b;font-size:10px}';
+document.head.appendChild(s);
+}
+function createHub(){
+if($('spGlobalHub'))return;
+var hub=document.createElement('section');hub.id='spGlobalHub';
+hub.innerHTML='<aside class="sp-side"><div class="sp-side-brand">SHULEPRO GLOBAL<div class="sp-side-sub">GLOBAL SCHOOL MANAGEMENT</div></div><nav id="spSideNav"></nav><div style="border-top:1px solid #ffffff20;margin-top:13px;padding-top:11px;font-size:9px;color:#a9bddf">Secure school workspace · EAM VENTURES LTD</div></aside><main class="sp-main"><div class="sp-topline"><div><div class="sp-eyebrow">School workspace</div><div class="sp-title" id="spPageTitle">Dashboard</div><div class="sp-subtitle" id="spPageSubtitle">A unified view of your school operations.</div></div><input class="sp-search" id="spSearch" placeholder="Search modules..." aria-label="Search modules"></div><div id="spPage"></div></main>';
+var app=$('app'),nav=app.querySelector('.tabs');app.insertBefore(hub,nav||app.firstChild);if(nav)nav.classList.add('hidden');app.querySelectorAll('.pane').forEach(function(p){p.classList.add('hidden');});
+$('spSearch').addEventListener('input',function(e){filterNav(e.target.value);});renderNav();renderHome();
+}
+function renderNav(){
+var nav=$('spSideNav');if(!nav)return;
+var html='<button class="sp-nav-btn active" data-home="1"><span class="sp-ico">🏠</span>Overview</button><div class="sp-nav-label">Core modules</div>';
+legacy.forEach(function(m){html+='<button class="sp-nav-btn" data-legacy="'+m.id+'"><span class="sp-ico">'+m.icon+'</span>'+m.name+'</button>';});
+groups.forEach(function(g){html+='<div class="sp-nav-label">'+g.icon+' '+g.name+'</div>';g.items.forEach(function(m){html+='<button class="sp-nav-btn" data-module="'+m[0]+'"><span class="sp-ico">•</span>'+m[1]+'</button>';});});
+nav.innerHTML=html;
+nav.querySelector('[data-home]').onclick=function(){setActive(this);renderHome();};
+nav.querySelectorAll('[data-legacy]').forEach(function(b){b.onclick=function(){openLegacy(b.dataset.legacy,b);};});
+nav.querySelectorAll('[data-module]').forEach(function(b){b.onclick=function(){openModule(b.dataset.module,b);};});
+}
+function setActive(b){document.querySelectorAll('.sp-nav-btn').forEach(function(x){x.classList.remove('active');});if(b)b.classList.add('active');}
+function filterNav(q){q=q.trim().toLowerCase();document.querySelectorAll('#spSideNav .sp-nav-btn').forEach(function(b){b.classList.toggle('hidden',!!q&&b.textContent.toLowerCase().indexOf(q)<0);});}
+function setTitle(t,s){$('spPageTitle').textContent=t;$('spPageSubtitle').textContent=s||'';}
+function count(table){return db.from(table).select('*',{count:'exact',head:true}).eq('school_id',currentSchoolId).then(function(r){if(r.error)throw r.error;return r.count==null?'—':r.count;}).catch(function(){return '—';});}
+
+async function renderJourney(){
+var host=$('spJourney');if(!host||!currentSchoolId)return;
+host.innerHTML='<div class="sp-notice">Loading school setup and workflow status…</div>';
+var results=await Promise.all([
+ db.from('settings').select('settings_data').eq('school_id',currentSchoolId).maybeSingle(),
+ db.from('subscriptions').select('status,trial_ends_at,ends_at,plan_id,price_id').eq('school_id',currentSchoolId).order('created_at',{ascending:false}).limit(1).maybeSingle(),
+ count('students'),count('teachers'),count('classes'),count('marks'),count('attendance'),count('timetable')
+]);
+var settings=results[0].data&&results[0].data.settings_data||{},sub=results[1].data||null;
+var profile=settings.school_profile||{},academic=settings.academic_calendar||{};
+var students=results[2],teachers=results[3],classes=results[4],marks=results[5],attendance=results[6],timetable=results[7];
+var activeSub=!!sub&&['active','trial'].includes(sub.status)&&(!sub.ends_at||new Date(sub.ends_at)>new Date())&&(!sub.trial_ends_at||new Date(sub.trial_ends_at)>new Date());
+var steps=[
+['1','Registration & email verification','Account is signed in and the school membership exists',true],
+['2','Subscription / 14-day trial',activeSub?'Plan status: '+sub.status+' · '+(sub.plan_id||'premium'):'Choose a plan or contact support',activeSub],
+['3','School profile & academic year','Complete the school details below',!!(profile.address&&academic.year)],
+['4','Students, teachers & classes',students!=='—'&&Number(students)>0&&teachers!=='—'&&Number(teachers)>0&&classes!=='—'&&Number(classes)>0],
+['5','Daily operations','Marks, attendance and timetable records',Number(marks)>0&&Number(attendance)>0&&Number(timetable)>0],
+['6','Reports & report cards','Open Reports & Report Cards and print / save as PDF',Number(students)>0],
+['7','AI decision support','Workspace is prepared; AI provider/API is not connected',false],
+['8','Global Super Admin','Separate privileged account controls platform-wide administration',false]
+];
+var done=steps.filter(function(s){return s[3]===true;}).length;
+var html='<section class="sp-journey"><div class="sp-section-head"><div><h3>School journey · from registration to daily operations</h3><p>'+done+' of '+steps.length+' workflow checkpoints currently confirmed by database records</p></div></div><div class="sp-journey-grid">';
+steps.forEach(function(s){html+='<article class="sp-journey-step"><strong>'+s[0]+'. '+s[1]+'</strong><small>'+s[2]+'</small><div class="sp-step-state '+(s[3]?'':'pending')+'">'+(s[3]?'✓ CONFIRMED':'○ NOT YET CONFIRMED / INTEGRATION PENDING')+'</div></article>';});
+html+='</div><div class="sp-section-head"><div><h3>School setup</h3><p>Save core school details and the current academic period. These values are stored in the school settings record.</p></div></div><form id="spSetupForm" class="sp-setup-form"><label>School address<input name="address" maxlength="240" value="'+esc(profile.address||'')+'" placeholder="School physical address"></label><label>School phone<input name="phone" maxlength="40" value="'+esc(profile.phone||'')+'" placeholder="+255..."></label><label>Official school email<input name="email" type="email" maxlength="160" value="'+esc(profile.email||'')+'" placeholder="school@example.com"></label><label>Website<input name="website" maxlength="180" value="'+esc(profile.website||'')+'" placeholder="https://..."></label><label>Academic year<input name="year" type="number" min="2000" max="2100" value="'+esc(academic.year||new Date().getFullYear())+'" required></label><label>Current term / semester<input name="term" maxlength="80" value="'+esc(academic.term||'Term 1')+'" required></label><label>Currency code<input name="currency" maxlength="3" value="'+esc(profile.currency||currentSchool&&currentSchool.currency_code||'USD')+'" required></label><label>Timezone<input name="timezone" maxlength="80" value="'+esc(profile.timezone||currentSchool&&currentSchool.timezone||'UTC')+'" required></label><div class="sp-wide sp-journey-actions"><button class="sp-btn" type="submit">Save school setup</button><span id="spSetupMessage" class="sp-muted"></span></div></form><div class="sp-notice">Truthful status: the 48 department workspaces are currently data registers built on the protected school workspace table. Their specialised workflows (such as full payroll processing, transport routing, library circulation and curriculum-specific grading) still require dedicated development and testing. AI and automated payment/SMS providers are not connected.</div></section>';
+host.innerHTML=html;
+$('spSetupForm').onsubmit=async function(e){
+ e.preventDefault();var fd=new FormData(e.currentTarget);
+ var existing=await db.from('settings').select('settings_data').eq('school_id',currentSchoolId).maybeSingle();
+ if(existing.error){$('spSetupMessage').textContent='Could not read settings: '+existing.error.message;return;}
+ var merged=Object.assign({},existing.data&&existing.data.settings_data||{});
+ merged.school_profile={address:String(fd.get('address')||'').trim(),phone:String(fd.get('phone')||'').trim(),email:String(fd.get('email')||'').trim(),website:String(fd.get('website')||'').trim(),currency:String(fd.get('currency')||'USD').trim().toUpperCase(),timezone:String(fd.get('timezone')||'UTC').trim()};
+ merged.academic_calendar={year:Number(fd.get('year')),term:String(fd.get('term')||'').trim()};
+ var saved=await db.from('settings').upsert({school_id:currentSchoolId,settings_data:merged,updated_at:new Date().toISOString()},{onConflict:'school_id'});
+ if(saved.error){$('spSetupMessage').textContent='Could not save: '+saved.error.message;return;}
+ $('spSetupMessage').textContent='School setup saved successfully.';
+ await renderJourney();
+};
+}
+function renderHome(){
+if(!$('spPage'))return;setTitle('School Dashboard','Your school operations, academic activity and administration in one workspace.');
+Promise.all([count('students'),count('teachers'),count('classes'),count('school_module_records')]).then(function(nums){
+if(!$('spPage'))return;
+var html='<div class="sp-hero"><div class="sp-eyebrow" style="color:#d5e2ff">WELCOME TO YOUR SCHOOL</div><h2>'+esc(currentSchool&&currentSchool.school_name||'School Dashboard')+'</h2><p>Manage learners, staff, academic performance, finance and daily operations from one secure workspace. Each school account is isolated by Supabase Row Level Security.</p></div><div class="sp-kpis">';
+[['🎓','Students',nums[0]],['👩‍🏫','Teachers',nums[1]],['🏫','Classes',nums[2]],['🗂️','Workspace records',nums[3]]].forEach(function(k){html+='<div class="sp-kpi"><div class="sp-kpi-icon">'+k[0]+'</div><div class="sp-kpi-label">'+k[1]+'</div><div class="sp-kpi-value">'+k[2]+'</div></div>';});
+html+='</div><div class="sp-section-head"><div><h3>Quick access</h3><p>Open a core ShulePro module.</p></div></div><div class="sp-card-grid">';
+legacy.forEach(function(m){html+='<button class="sp-module-card" data-quick="'+m.id+'"><span class="sp-card-icon" style="background:#edf3ff">'+m.icon+'</span><strong>'+m.name+'</strong><small>'+m.desc+'</small><span class="sp-chip">Open module →</span></button>';});
+html+='</div><div class="sp-section-head"><div><h3>All school departments</h3><p>Structured workspaces for the full ShuleProGlobal vision.</p></div></div><div class="sp-card-grid">';
+groups.forEach(function(g){html+='<button class="sp-module-card" data-group="'+g.id+'"><span class="sp-card-icon" style="background:#edf3ff">'+g.icon+'</span><strong>'+g.name+'</strong><small>'+g.items.length+' workspaces · '+g.items.slice(0,2).map(function(x){return x[1];}).join(', ')+'...</small><span class="sp-chip">Explore department →</span></button>';});
+html+='</div><div id="spJourney"></div><div class="sp-connection"><strong>🔌 Paid services and external connections</strong><p class="sp-muted">DPO/card settlement, SMS delivery, AI API, custom domain and premium storage are connection-ready placeholders. No paid service is activated or charged from this workspace.</p></div>';
+$('spPage').innerHTML=html;
+renderJourney();
+$('spPage').querySelectorAll('[data-quick]').forEach(function(b){b.onclick=function(){openLegacy(b.dataset.quick);};});
+$('spPage').querySelectorAll('[data-group]').forEach(function(b){b.onclick=function(){renderGroup(b.dataset.group);};});
+});
+}
+function renderGroup(id){
+var g=groups.find(function(x){return x.id===id;});if(!g)return;setTitle(g.name,'Select a workspace to open its records and management tools.');
+var html='<button class="sp-back" id="spBackHome">← Back to dashboard</button><div class="sp-hero" style="background:linear-gradient(120deg,#18365f,#2859a8,#6557b8)"><div class="sp-eyebrow" style="color:#d5e2ff">DEPARTMENT</div><h2>'+g.icon+' '+g.name+'</h2><p>'+g.items.length+' workspaces organised for your school.</p></div><div class="sp-card-grid" style="margin-top:13px">';
+g.items.forEach(function(m){html+='<button class="sp-module-card" data-open="'+m[0]+'"><span class="sp-card-icon" style="background:#edf3ff">'+g.icon+'</span><strong>'+m[1]+'</strong><small>'+m[2]+'</small><span class="sp-chip">Open workspace →</span></button>';});
+$('spPage').innerHTML=html+'</div>';$('spBackHome').onclick=renderHome;
+$('spPage').querySelectorAll('[data-open]').forEach(function(b){b.onclick=function(){openModule(b.dataset.open);};});
+}
+function openLegacy(id,button){
+setActive(button||document.querySelector('[data-legacy="'+id+'"]'));$('spGlobalHub').classList.add('hidden');
+var nav=document.querySelector('.tabs');if(nav)nav.classList.remove('hidden');document.querySelectorAll('.pane').forEach(function(p){p.classList.add('hidden');});
+var pane=$(id);if(pane)pane.classList.remove('hidden');if(typeof showTab==='function'){var tab=document.querySelector('.tab[data-tab="'+id+'"]');if(tab)showTab(id,tab);}
+var back=$('spReturnHub');if(!back){back=document.createElement('button');back.id='spReturnHub';back.className='sp-btn alt no-print';back.textContent='← Back to Global Dashboard';if(pane)pane.parentElement.insertBefore(back,pane);}
+back.onclick=function(){document.querySelectorAll('.pane').forEach(function(p){p.classList.add('hidden');});if(nav)nav.classList.add('hidden');$('spGlobalHub').classList.remove('hidden');back.remove();renderHome();};
+}
+function findModule(key){for(var i=0;i<groups.length;i++){var m=groups[i].items.find(function(x){return x[0]===key;});if(m)return {group:groups[i],module:m};}return null;}
+async function openTeachers(){
+setTitle('Staff Directory & Roles','Manage the school teacher register.');
+var result=await db.from('teachers').select('id,full_name,subject,phone,login_email,created_at').eq('school_id',currentSchoolId).order('full_name');
+if(result.error){$('spPage').innerHTML='<div class="sp-notice">Unable to load teachers: '+esc(result.error.message)+'</div>';return;}
+var rows=result.data||[];
+var html='<button class="sp-back" id="spBackStaff">← Back to Human Resources</button><form id="spTeacherForm" class="sp-form"><div><label>Staff full name<input name="full_name" required></label></div><div><label>Staff role<select name="role" required><option value="teacher">Teacher</option><option value="headmaster">Headmaster</option><option value="academic_master">Academic Master</option><option value="accountant">Accountant</option></select></label></div><div><label>Subject (teachers only)<input name="subject"></label></div><div><label>Phone<input name="phone"></label></div><div class="sp-wide"><label>Staff login email<input name="login_email" type="email" required></label></div><div class="sp-wide"><button class="sp-btn" type="submit">＋ Send invitation email</button><small class="sp-muted">An invitation link will be sent. Staff members create their own password from the email link.</small><div id="spInviteMsg" role="status" aria-live="polite"></div></div></form><div class="sp-section-head"><div><h3>Teacher register</h3><p>'+rows.length+' teacher records</p></div></div><div class="sp-records">';
+rows.forEach(function(t){html+='<article class="sp-record"><div><strong>'+esc(t.full_name)+'</strong><small>'+esc(t.subject||'No subject')+' · '+esc(t.phone||'')+' · '+esc(t.login_email||'')+'</small></div><button class="sp-btn danger" data-teacher-delete="'+t.id+'">Delete</button></article>';});
+if(!rows.length)html+='<div class="sp-notice">No teacher records yet.</div>';html+='</div>';$('spPage').innerHTML=html;
+$('spBackStaff').onclick=function(){renderGroup('staff');};
+$('spTeacherForm').onsubmit=async function(e){
+ e.preventDefault();
+ var form=e.currentTarget,button=form.querySelector('button[type="submit"]'),fd=new FormData(form);
+ var payload={school_id:currentSchoolId,full_name:String(fd.get('full_name')||'').trim(),email:String(fd.get('login_email')||'').trim(),role:String(fd.get('role')||'teacher'),subject:String(fd.get('subject')||'').trim(),phone:String(fd.get('phone')||'').trim()};
+ var msg=$('spInviteMsg');button.disabled=true;button.textContent='Sending invitation...';msg.className='sp-notice';msg.textContent='Creating staff account and sending invitation email...';
+ try{
+  var response=await db.functions.invoke('invite-school-staff',{body:payload});
+  if(response.error)throw new Error(response.error.message||'Invitation service failed.');
+  if(response.data&&response.data.error)throw new Error(response.data.error);
+  msg.className='sp-notice success';msg.textContent='Invitation sent to '+payload.email+'. Ask the staff member to check Inbox and Spam, open the invitation and set a password.';
+  form.reset();alert('Invitation sent to '+payload.email+'. Ask the staff member to check Inbox and Spam, open the invitation and set a password.');openTeachers();
+ }catch(err){
+  msg.className='sp-notice error';msg.textContent='Invitation failed: '+(err.message||String(err));
+ }finally{button.disabled=false;button.textContent='＋ Send invitation email';}
+};
+$('spPage').querySelectorAll('[data-teacher-delete]').forEach(function(b){b.onclick=async function(){if(!confirm('Delete this teacher record?'))return;var del=await db.from('teachers').delete().eq('id',b.dataset.teacherDelete).eq('school_id',currentSchoolId);if(del.error){alert('Could not delete teacher: '+del.error.message);return;}openTeachers();};});
+}
+async function openClasses(){
+setTitle('Classes & Streams','Create and manage the classes used by your school.');
+var result=await db.from('classes').select('id,class_name,academic_year,created_at').eq('school_id',currentSchoolId).order('academic_year',{ascending:false});
+if(result.error){$('spPage').innerHTML='<div class="sp-notice">Unable to load classes: '+esc(result.error.message)+'</div>';return;}
+var rows=result.data||[],html='<button class="sp-back" id="spBackClasses">← Back to School Administration</button><form id="spClassForm" class="sp-form"><div><label>Class name<input name="class_name" placeholder="Form I / Grade 1" required></label></div><div><label>Academic year<input name="academic_year" type="number" min="2000" max="2100" value="'+new Date().getFullYear()+'"></label></div><div class="sp-wide"><button class="sp-btn" type="submit">＋ Add class</button></div></form><div class="sp-section-head"><div><h3>Class register</h3><p>'+rows.length+' classes</p></div></div><div class="sp-records">';
+rows.forEach(function(c){html+='<article class="sp-record"><div><strong>'+esc(c.class_name)+'</strong><small>Academic year: '+esc(c.academic_year||'—')+'</small></div><button class="sp-btn danger" data-class-delete="'+c.id+'">Delete</button></article>';});
+if(!rows.length)html+='<div class="sp-notice">No classes created yet.</div>';html+='</div>';$('spPage').innerHTML=html;
+$('spBackClasses').onclick=function(){renderGroup('school');};
+$('spClassForm').onsubmit=async function(e){e.preventDefault();var fd=new FormData(e.currentTarget);var saved=await db.from('classes').insert({school_id:currentSchoolId,class_name:String(fd.get('class_name')).trim(),academic_year:Number(fd.get('academic_year'))||new Date().getFullYear()});if(saved.error){alert('Could not save class: '+saved.error.message);return;}openClasses();};
+$('spPage').querySelectorAll('[data-class-delete]').forEach(function(b){b.onclick=async function(){if(!confirm('Delete this class record?'))return;var del=await db.from('classes').delete().eq('id',b.dataset.classDelete).eq('school_id',currentSchoolId);if(del.error){alert('Could not delete class: '+del.error.message);return;}openClasses();};});
+}
+async function openStudentFees(){
+setTitle('Student Fees & Debt Reports','Create fee invoices, record real collections, calculate balances and print receipts.');
+var subResult=await db.from('subscriptions').select('status,price_id,ends_at').eq('school_id',currentSchoolId).order('created_at',{ascending:false}).limit(1).maybeSingle();
+if(subResult.error){$('spPage').innerHTML='<div class="sp-notice">Could not verify your subscription: '+esc(subResult.error.message)+'</div>';return;}
+var sub=subResult.data,enabled=!!sub&&sub.status==='active'&&sub.price_id==='premium_yearly'&&(!sub.ends_at||new Date(sub.ends_at)>new Date());
+if(!enabled){
+$('spPage').innerHTML='<div class="sp-hero" style="background:linear-gradient(120deg,#7b4b16,#b7791f,#d69e2e)"><div class="sp-eyebrow" style="color:#fff1cf">PREMIUM FEATURE</div><h2>Student Fees & Debt Reports</h2><p>Fee reports and student debt management are reserved for the $100 yearly plan.</p></div><div class="sp-notice" style="margin-top:14px">This feature is locked for the current subscription. No student fee data has been changed. An active $100 yearly subscription is required.</div><button class="sp-btn alt" id="spBackFinance">← Back to Finance</button>';
+$('spBackFinance').onclick=function(){renderGroup('finance');};return;
+}
+var [studentsRes,feesRes,paymentsRes]=await Promise.all([
+db.from('students').select('id,full_name,admission_number,class_name').eq('school_id',currentSchoolId).order('full_name'),
+db.from('fees').select('id,student_id,fee_type,amount,currency_code,is_paid,created_at').eq('school_id',currentSchoolId).order('created_at',{ascending:false}).limit(1000),
+db.from('student_fee_payments').select('id,student_id,fee_id,amount,currency_code,payment_method,transaction_reference,received_at,notes').eq('school_id',currentSchoolId).order('received_at',{ascending:false}).limit(1000)
+]);
+var loadError=studentsRes.error||feesRes.error||paymentsRes.error;
+if(loadError){$('spPage').innerHTML='<div class="sp-notice">Could not load student fee data: '+esc(loadError.message)+'</div>';return;}
+var students=studentsRes.data||[],fees=feesRes.data||[],payments=paymentsRes.data||[],studentMap={},feeMap={},paidByFee={};
+students.forEach(function(s){studentMap[s.id]=s;});
+fees.forEach(function(f){feeMap[f.id]=f;});
+payments.forEach(function(p){if(p.fee_id)paidByFee[p.fee_id]=(paidByFee[p.fee_id]||0)+Number(p.amount||0);});
+function paidAmount(f){var recorded=Number(paidByFee[f.id]||0);return Math.max(recorded,f.is_paid?Number(f.amount||0):0);}
+function balance(f){return Math.max(0,Number(f.amount||0)-paidAmount(f));}
+var outstanding=fees.reduce(function(sum,f){return sum+balance(f);},0);
+var collected=payments.reduce(function(sum,p){return sum+Number(p.amount||0);},0);
+fees.forEach(function(f){if(f.is_paid&&!paidByFee[f.id])collected+=Number(f.amount||0);});
+var currency=(currentSchool&&currentSchool.currency_code)||'TZS';
+var html='<button class="sp-back" id="spBackFinance">← Back to Finance</button><div class="sp-kpis"><div class="sp-kpi"><div class="sp-kpi-label">Students</div><div class="sp-kpi-value">'+students.length+'</div></div><div class="sp-kpi"><div class="sp-kpi-label">Fee invoices</div><div class="sp-kpi-value">'+fees.length+'</div></div><div class="sp-kpi"><div class="sp-kpi-label">Collected</div><div class="sp-kpi-value">'+esc(collected.toLocaleString())+' '+esc(currency)+'</div></div><div class="sp-kpi"><div class="sp-kpi-label">Outstanding balance</div><div class="sp-kpi-value">'+esc(outstanding.toLocaleString())+' '+esc(currency)+'</div></div></div>';
+html+='<div class="sp-section-head"><div><h3>Create student fee invoice</h3><p>New fee items start unpaid. Record a payment separately after confirming receipt of funds.</p></div></div>';
+html+='<form id="spFeeForm" class="sp-form"><div class="sp-wide"><label>Student<select name="student_id" required><option value="">Select student</option>'+students.map(function(s){return '<option value="'+s.id+'">'+esc(s.full_name)+' · '+esc(s.admission_number||s.class_name||'')+'</option>';}).join('')+'</select></label></div><div><label>Fee type<select name="fee_type"><option>Ada</option><option>Visiting</option><option>Mtahi</option><option>Sare</option><option>Michezo</option><option>Other</option></select></label></div><div><label>Amount<input name="amount" type="number" min="0.01" step="0.01" required></label></div><div><label>Currency<input name="currency_code" value="'+esc(currency)+'" maxlength="3" required></label></div><div class="sp-wide"><button class="sp-btn" type="submit">＋ Create fee invoice</button></div></form>';
+html+='<div class="sp-section-head"><div><h3>Record student payment</h3><p>Partial payments are supported. Do not enter a payment until the money has actually been received.</p></div></div>';
+html+='<form id="spFeePaymentForm" class="sp-form"><div class="sp-wide"><label>Unpaid fee invoice<select name="fee_id" id="spPayFeeSelect" required><option value="">Select an unpaid fee</option>'+fees.filter(function(f){return balance(f)>0;}).map(function(f){var st=studentMap[f.student_id]||{};return '<option value="'+f.id+'" data-balance="'+balance(f)+'" data-currency="'+esc(f.currency_code||currency)+'">'+esc(st.full_name||'Student')+' · '+esc(f.fee_type)+' · balance '+esc(balance(f).toLocaleString())+' '+esc(f.currency_code||currency)+'</option>';}).join('')+'</select></label></div><div><label>Amount received<input name="amount" id="spPayAmount" type="number" min="0.01" step="0.01" required></label></div><div><label>Payment method<select name="payment_method"><option>Cash</option><option>Bank</option><option>M-Pesa</option><option>Tigo Pesa</option><option>Airtel Money</option><option>Card</option><option>Other</option></select></label></div><div><label>Transaction / receipt reference<input name="transaction_reference" maxlength="120"></label></div><div><label>Notes<input name="notes" maxlength="250"></label></div><div class="sp-wide"><button class="sp-btn" type="submit">Record payment & issue receipt</button></div></form>';
+html+='<div class="sp-section-head"><div><h3>Student fee ledger</h3><p>Outstanding balance is calculated from invoices minus recorded collections.</p></div><button class="sp-btn alt" id="spPrintDebt">Print debt report</button></div><div class="sp-records" id="spFeeRows">';
+fees.forEach(function(f){var student=studentMap[f.student_id]||{},paid=paidAmount(f),due=balance(f);html+='<article class="sp-record"><div><strong>'+esc(student.full_name||'Unknown student')+' · '+esc(f.fee_type)+'</strong><small>'+esc(student.admission_number||student.class_name||'')+' · Invoice '+esc(Number(f.amount).toLocaleString())+' '+esc(f.currency_code||currency)+' · Paid '+esc(paid.toLocaleString())+' · Balance '+esc(due.toLocaleString())+' · '+(due===0?'PAID':'UNPAID')+'</small></div>'+(due>0?'<button class="sp-btn" data-pay-fee="'+f.id+'">Record payment</button>':'<span class="sp-chip">PAID</span>')+'</article>';});
+if(!fees.length)html+='<div class="sp-notice">No student fee invoices have been entered yet.</div>';
+html+='</div><div class="sp-section-head"><div><h3>Payment history & receipts</h3><p>'+payments.length+' recorded payment(s). Select a receipt to print it.</p></div></div><div class="sp-records" id="spPaymentRows">';
+payments.forEach(function(p){var st=studentMap[p.student_id]||{},fee=feeMap[p.fee_id]||{};html+='<article class="sp-record"><div><strong>'+esc(st.full_name||'Student')+' · '+esc(Number(p.amount).toLocaleString())+' '+esc(p.currency_code||currency)+'</strong><small>'+esc(p.payment_method||'')+' · '+esc(p.transaction_reference||'No reference')+' · '+esc(new Date(p.received_at).toLocaleString())+'</small></div><button class="sp-btn alt" data-receipt="'+p.id+'">Print receipt</button></article>';});
+if(!payments.length)html+='<div class="sp-notice">No student fee payments have been recorded yet.</div>';
+html+='</div><div class="sp-connection"><strong>Debt reminder delivery</strong><p class="sp-muted">Debt reports and receipts can be printed. SMS, WhatsApp and email delivery are not connected and will not send messages until an approved provider is integrated.</p></div>';
+$('spPage').innerHTML=html;
+$('spBackFinance').onclick=function(){renderGroup('finance');};
+$('spPrintDebt').onclick=function(){window.print();};
+var feeSelect=$('spPayFeeSelect'),payAmount=$('spPayAmount');
+feeSelect.onchange=function(){var option=feeSelect.options[feeSelect.selectedIndex];if(option&&option.dataset.balance)payAmount.value=option.dataset.balance;};
+$('spPage').querySelectorAll('[data-pay-fee]').forEach(function(b){b.onclick=function(){feeSelect.value=b.dataset.payFee;feeSelect.dispatchEvent(new Event('change'));$('spFeePaymentForm').scrollIntoView({behavior:'smooth',block:'center'});};});
+$('spFeeForm').onsubmit=async function(e){e.preventDefault();var fd=new FormData(e.currentTarget),amount=Number(fd.get('amount'));if(!Number.isFinite(amount)||amount<=0){alert('Enter a valid fee amount.');return;}var result=await db.from('fees').insert({school_id:currentSchoolId,student_id:String(fd.get('student_id')),fee_type:String(fd.get('fee_type')),amount:amount,currency_code:String(fd.get('currency_code')).toUpperCase(),is_paid:false});if(result.error){alert('Could not save fee: '+result.error.message);return;}openStudentFees();};
+$('spFeePaymentForm').onsubmit=async function(e){e.preventDefault();var fd=new FormData(e.currentTarget),feeId=String(fd.get('fee_id')),fee=feeMap[feeId],amount=Number(fd.get('amount'));if(!fee){alert('Select a valid unpaid fee.');return;}if(!Number.isFinite(amount)||amount<=0||amount>balance(fee)+0.0001){alert('Payment amount must be greater than zero and cannot exceed the outstanding balance.');return;}var reference=String(fd.get('transaction_reference')||'').trim();var result=await db.from('student_fee_payments').insert({school_id:currentSchoolId,student_id:fee.student_id,fee_id:fee.id,amount:amount,currency_code:String(fee.currency_code||currency).toUpperCase(),payment_method:String(fd.get('payment_method')||'Cash'),transaction_reference:reference||null,received_by:currentUser&&currentUser.id,notes:String(fd.get('notes')||'').trim()}).select('id').single();if(result.error){alert('Could not record payment: '+result.error.message);return;}var newPaid=paidAmount(fee)+amount;if(newPaid>=Number(fee.amount)){var upd=await db.from('fees').update({is_paid:true}).eq('id',fee.id).eq('school_id',currentSchoolId);if(upd.error){alert('Payment was recorded, but invoice status could not be updated: '+upd.error.message);openStudentFees();return;}}openStudentFees();};
+function printReceipt(id){var p=payments.find(function(x){return x.id===id;});if(!p)return;var st=studentMap[p.student_id]||{},fee=feeMap[p.fee_id]||{},win=window.open('','_blank','width=720,height=720');if(!win){alert('Allow pop-ups to print the receipt.');return;}var html='<!doctype html><html><head><meta charset="utf-8"><title>Fee receipt</title><style>body{font:15px Arial,sans-serif;padding:32px;color:#172033}h1{margin:0 0 5px}small{color:#64748b}.line{border-bottom:1px solid #ddd;padding:12px 0;display:flex;justify-content:space-between}.total{font-size:22px;font-weight:bold;margin-top:20px}</style></head><body><h1>'+esc(currentSchool&&currentSchool.school_name||'School')+'</h1><small>OFFICIAL STUDENT FEE RECEIPT</small><div class="line"><span>Receipt ID</span><strong>'+esc(p.id)+'</strong></div><div class="line"><span>Student</span><strong>'+esc(st.full_name||'Student')+'</strong></div><div class="line"><span>Admission No.</span><strong>'+esc(st.admission_number||'—')+'</strong></div><div class="line"><span>Fee item</span><strong>'+esc(fee.fee_type||'Fee payment')+'</strong></div><div class="line"><span>Payment date</span><strong>'+esc(new Date(p.received_at).toLocaleString())+'</strong></div><div class="line"><span>Method / reference</span><strong>'+esc(p.payment_method||'')+' / '+esc(p.transaction_reference||'—')+'</strong></div><div class="total">Received: '+esc(Number(p.amount).toLocaleString())+' '+esc(p.currency_code||currency)+'</div><p>Received by: '+esc(currentUser&&currentUser.email||'School office')+'</p><p>Thank you.</p><script>window.onload=function(){window.print();};<\/script></body></html>';win.document.open();win.document.write(html);win.document.close();}
+$('spPage').querySelectorAll('[data-receipt]').forEach(function(b){b.onclick=function(){printReceipt(b.dataset.receipt);};});
+}
+
+function openModule(key,button){
+var found=findModule(key);if(!found)return;setActive(button||document.querySelector('[data-module="'+key+'"]'));
+var m=found.module,fields=m[3];setTitle(m[1],m[2]);if(key==='student_fees'){openStudentFees();return;}if(key==='staff_directory'){openTeachers();return;}if(key==='classes_streams'){openClasses();return;}
+var html='<button class="sp-back" id="spBackGroup">← Back to '+found.group.name+'</button><div class="sp-notice">This workspace stores school-scoped records in the protected ShulePro module workspace. Dedicated approvals, country-specific rules and specialised workflows can be expanded without changing your existing student, marks, attendance, timetable or subscription data.</div><form id="spRecordForm" class="sp-form">';
+fields.forEach(function(f,i){html+='<div class="'+(i===fields.length-1&&fields.length%2?'sp-wide':'')+'"><label>'+esc(f)+'<input name="field'+i+'" placeholder="'+esc(f)+'" '+(/date/i.test(f)?'type="date"':'type="text"')+' '+(i===0?'required':'')+'></label></div>';});
+html+='<input type="hidden" name="record_id" id="spRecordId" value=""><div class="sp-wide"><button class="sp-btn" id="spRecordSave" type="submit">＋ Save record</button> <button class="sp-btn alt" type="reset">Clear form</button></div></form><div class="sp-section-head"><div><h3>Saved records</h3><p>Records are scoped to the signed-in school.</p></div><button class="sp-btn alt" id="spRefresh">↻ Refresh</button></div><div id="spRecords" class="sp-records">Loading records…</div>';
+$('spPage').innerHTML=html;$('spBackGroup').onclick=function(){renderGroup(found.group.id);};$('spRefresh').onclick=function(){loadRecords(key);};
+$('spRecordForm').addEventListener('reset',function(){$('spRecordId').value='';$('spRecordSave').textContent='＋ Save record';});
+$('spRecordForm').onsubmit=async function(e){e.preventDefault();var form=new FormData(e.currentTarget),payload={};fields.forEach(function(f,i){payload[f]=String(form.get('field'+i)||'').trim();});var title=String(Object.values(payload)[0]||m[1]).slice(0,200);
+var recordId=String(form.get('record_id')||''),result=recordId?await db.from('school_module_records').update({title:title,payload:payload,updated_at:new Date().toISOString()}).eq('id',recordId).eq('school_id',currentSchoolId):await db.from('school_module_records').insert({school_id:currentSchoolId,module_key:key,record_type:'record',title:title,payload:payload,created_by:currentUser&&currentUser.id});
+if(result.error){$('spRecords').innerHTML='<div class="sp-notice">Could not save record: '+esc(result.error.message)+'. Your account may have view-only access for this module.</div>';return;}e.currentTarget.reset();$('spRecordId').value='';$('spRecordSave').textContent='＋ Save record';loadRecords(key);};
+loadRecords(key);
+}
+async function loadRecords(key){
+var box=$('spRecords');if(!box)return;box.textContent='Loading records…';
+var result=await db.from('school_module_records').select('id,title,payload,status,created_at').eq('school_id',currentSchoolId).eq('module_key',key).order('created_at',{ascending:false}).limit(100);
+if(result.error){box.innerHTML='<div class="sp-notice">Unable to load records: '+esc(result.error.message)+'</div>';return;}
+var rows=result.data||[];if(!rows.length){box.innerHTML='<div class="sp-notice" style="background:#f4f7fb;border-color:#e2e8f0;color:#53647d">No records have been added to this workspace yet.</div>';return;}
+box.innerHTML=rows.map(function(r){var extra=Object.entries(r.payload||{}).filter(function(x){return x[1];}).slice(1,4).map(function(x){return x[0]+': '+x[1];}).join(' · ');return '<article class="sp-record"><div><strong>'+esc(r.title)+'</strong><small>'+esc(extra||r.status)+' · '+esc(new Date(r.created_at).toLocaleDateString())+'</small></div><div><button class="sp-btn alt" data-edit="'+r.id+'">Edit</button> <button class="sp-btn danger" data-delete="'+r.id+'">Delete</button></div></article>';}).join('');
+box.querySelectorAll('[data-edit]').forEach(function(b){b.onclick=function(){var record=rows.find(function(x){return x.id===b.dataset.edit;});if(!record)return;var form=$('spRecordForm');Object.keys(record.payload||{}).forEach(function(label,i){var input=form.elements['field'+i];if(input)input.value=record.payload[label]||'';});$('spRecordId').value=record.id;$('spRecordSave').textContent='Save changes';form.scrollIntoView({behavior:'smooth',block:'center'});};});
+box.querySelectorAll('[data-delete]').forEach(function(b){b.onclick=async function(){if(!confirm('Delete this record?'))return;var del=await db.from('school_module_records').delete().eq('id',b.dataset.delete).eq('school_id',currentSchoolId);if(del.error){alert('Delete failed: '+del.error.message);return;}loadRecords(key);};});
+}
+function createAdminHub(){
+var panel=$('superAdminPanel');if(!panel||$('spAdminHub'))return;
+var hub=document.createElement('section');hub.id='spAdminHub';hub.className='spa-shell';
+hub.innerHTML='<div class="sp-eyebrow">GLOBAL CONTROL CENTER</div><div class="sp-title">ShuleProGlobal Super Admin</div><div class="sp-subtitle">Manage schools, memberships, subscriptions, payments and system activity across the platform.</div><nav class="spa-nav" id="spaNav"><button data-section="overview" class="active">Overview</button><button data-section="schools">Schools</button><button data-section="users">Users & Roles</button><button data-section="payments">Payments</button><button data-section="subscriptions">Subscriptions</button><button data-section="academic">Academic Data</button><button data-section="audit">Audit Logs</button><button data-section="plans">Plans & Pricing</button></nav><div class="spa-content" id="spaContent">Loading global data…</div>';
+panel.parentElement.insertBefore(hub,panel);panel.classList.add('hidden');
+hub.querySelectorAll('[data-section]').forEach(function(b){b.onclick=function(){hub.querySelectorAll('[data-section]').forEach(function(x){x.classList.remove('active');});b.classList.add('active');renderAdminSection(b.dataset.section);};});
+renderAdminSection('overview');
+}
+async function adminCount(table){
+var r=await db.from(table).select('*',{count:'exact',head:true});if(r.error)return '—';return r.count==null?'—':r.count;
+}
+async function renderAdminSection(section){
+var box=$('spaContent');if(!box)return;box.textContent='Loading…';
+if(section==='overview'){
+var names=['schools','school_memberships','students','teachers','classes','payments','subscriptions'];
+var labels=['Schools','User memberships','Students','Teachers','Classes','Payment records','Subscriptions'];
+var counts=await Promise.all(names.map(adminCount));
+box.innerHTML='<div class="spa-kpis">'+labels.map(function(n,i){return '<div class="spa-kpi"><small>'+n+'</small><strong>'+counts[i]+'</strong></div>';}).join('')+'</div><div class="sp-connection"><strong>Platform status</strong><p class="sp-muted">Super Admin access is verified through the is_super_admin() database function. All school data queries remain subject to database policies and the authenticated session.</p></div>';
+return;
+}
+if(section==='schools'){
+var r=await db.from('schools').select('id,school_name,school_code,country_code,is_active,created_at').order('created_at',{ascending:false}).limit(300);
+if(r.error){box.textContent='Unable to load schools: '+r.error.message;return;}
+box.innerHTML='<h3>School directory</h3><table class="spa-table"><tr><th>School</th><th>Code</th><th>Country</th><th>Created</th><th>Status</th><th>Action</th></tr>'+ (r.data||[]).map(function(x){return '<tr><td>'+esc(x.school_name)+'</td><td>'+esc(x.school_code)+'</td><td>'+esc(x.country_code)+'</td><td>'+esc((x.created_at||'').slice(0,10))+'</td><td><span class="spa-status '+(x.is_active?'':'off')+'">'+(x.is_active?'ACTIVE':'INACTIVE')+'</span></td><td><button class="sp-btn alt" data-school="'+x.id+'" data-active="'+x.is_active+'">'+(x.is_active?'Suspend':'Activate')+'</button></td></tr>';}).join('')+'</table>';
+box.querySelectorAll('[data-school]').forEach(function(b){b.onclick=async function(){var next=b.dataset.active!=='true';if(!confirm((next?'Activate':'Suspend')+' this school?'))return;var u=await db.from('schools').update({is_active:next}).eq('id',b.dataset.school);if(u.error){alert(u.error.message);return;}renderAdminSection('schools');};});return;
+}
+if(section==='users'){
+var r=await db.from('school_memberships').select('id,school_id,user_id,full_name,role,created_at').order('created_at',{ascending:false}).limit(500);
+if(r.error){box.textContent='Unable to load memberships: '+r.error.message;return;}
+var roles=['owner','headmaster','academic_master','teacher','accountant','parent','student'];
+box.innerHTML='<h3>School users & role assignments</h3><table class="spa-table"><tr><th>Full name</th><th>User ID</th><th>School ID</th><th>Role</th><th>Change role</th></tr>'+(r.data||[]).map(function(x){return '<tr><td>'+esc(x.full_name||'—')+'</td><td>'+esc(x.user_id)+'</td><td>'+esc(x.school_id)+'</td><td>'+esc(x.role)+'</td><td><select data-role="'+x.id+'" style="min-width:130px">'+roles.map(function(role){return '<option '+(role===x.role?'selected':'')+'>'+role+'</option>';}).join('')+'</select></td></tr>';}).join('')+'</table>';
+box.querySelectorAll('[data-role]').forEach(function(sel){sel.onchange=async function(){var u=await db.from('school_memberships').update({role:sel.value}).eq('id',sel.dataset.role);if(u.error){alert('Role update failed: '+u.error.message);renderAdminSection('users');return;}alert('User role updated.');};});return;
+}
+if(section==='payments'){
+var r=await db.from('payments').select('id,school_id,amount,currency,transaction_id,payment_method,status,created_at').order('created_at',{ascending:false}).limit(300);
+if(r.error){box.textContent='Unable to load payments: '+r.error.message;return;}
+box.innerHTML='<h3>Payment verification queue and history</h3><table class="spa-table"><tr><th>Date</th><th>School</th><th>Amount</th><th>Reference</th><th>Method</th><th>Status</th><th>Action</th></tr>'+(r.data||[]).map(function(x){return '<tr><td>'+esc((x.created_at||'').slice(0,10))+'</td><td>'+esc(x.school_id)+'</td><td>'+esc(x.amount)+' '+esc(x.currency)+'</td><td>'+esc(x.transaction_id||'—')+'</td><td>'+esc(x.payment_method||'—')+'</td><td>'+esc(x.status)+'</td><td>'+(x.status==='pending'?'<button class="sp-btn" data-review-approve="'+x.id+'">Approve</button> <button class="sp-btn alt" data-review-reject="'+x.id+'">Reject</button>':'—')+'</td></tr>';}).join('')+'</table>';
+box.querySelectorAll('[data-review-approve]').forEach(function(b){b.onclick=function(){if(typeof reviewPayment==='function')Promise.resolve(reviewPayment(b.dataset.reviewApprove,'approve')).then(function(){renderAdminSection('payments');});};});
+box.querySelectorAll('[data-review-reject]').forEach(function(b){b.onclick=function(){if(typeof reviewPayment==='function')Promise.resolve(reviewPayment(b.dataset.reviewReject,'reject')).then(function(){renderAdminSection('payments');});};});return;
+}
+if(section==='subscriptions'){
+var r=await db.from('subscriptions').select('school_id,plan_id,status,starts_at,ends_at,trial_ends_at,amount,currency,price_id').order('created_at',{ascending:false}).limit(500);
+if(r.error){box.textContent='Unable to load subscriptions: '+r.error.message;return;}
+box.innerHTML='<h3>Subscription register</h3><table class="spa-table"><tr><th>School</th><th>Plan</th><th>Price ID</th><th>Status</th><th>Starts</th><th>Ends</th><th>Amount</th></tr>'+(r.data||[]).map(function(x){return '<tr><td>'+esc(x.school_id)+'</td><td>'+esc(x.plan_id)+'</td><td>'+esc(x.price_id||'—')+'</td><td>'+esc(x.status)+'</td><td>'+esc((x.starts_at||'').slice(0,10))+'</td><td>'+esc((x.ends_at||x.trial_ends_at||'').slice(0,10))+'</td><td>'+esc(x.amount||'—')+' '+esc(x.currency||'')+'</td></tr>';}).join('')+'</table>';return;
+}
+if(section==='academic'){
+var tables=['students','teachers','classes','marks','results','attendance','timetable','reports'];
+var vals=await Promise.all(tables.map(adminCount));
+box.innerHTML='<h3>Academic data oversight</h3><div class="spa-kpis">'+tables.map(function(t,i){return '<div class="spa-kpi"><small>'+t.replace(/_/g,' ')+'</small><strong>'+vals[i]+'</strong></div>';}).join('')+'</div><div class="sp-notice">Counts are global platform totals visible to the authenticated Super Admin. Detailed student and school operations remain managed inside each school workspace.</div>';return;
+}
+if(section==='audit'){
+var r=await db.from('audit_logs').select('school_id,actor_id,action,record_type,record_id,created_at').order('created_at',{ascending:false}).limit(300);
+if(r.error){box.textContent='Unable to load audit logs: '+r.error.message;return;}
+box.innerHTML='<h3>Global audit log</h3><table class="spa-table"><tr><th>Date</th><th>School</th><th>Actor</th><th>Action</th><th>Record type</th><th>Record ID</th></tr>'+(r.data||[]).map(function(x){return '<tr><td>'+esc((x.created_at||'').slice(0,19).replace('T',' '))+'</td><td>'+esc(x.school_id||'—')+'</td><td>'+esc(x.actor_id||'—')+'</td><td>'+esc(x.action)+'</td><td>'+esc(x.record_type||'—')+'</td><td>'+esc(x.record_id||'—')+'</td></tr>';}).join('')+'</table>';return;
+}
+if(section==='plans'){
+var [plans,prices]=await Promise.all([db.from('plans').select('*').order('id'),db.from('plan_prices').select('*').order('amount')]);
+if(plans.error||prices.error){box.textContent='Unable to load plan pricing: '+(plans.error||prices.error).message;return;}
+box.innerHTML='<h3>Plans</h3><table class="spa-table"><tr><th>Plan</th><th>Name</th><th>Max students</th><th>Max teachers</th><th>Max classes</th></tr>'+(plans.data||[]).map(function(x){return '<tr><td>'+esc(x.id)+'</td><td>'+esc(x.plan_name)+'</td><td>'+esc(x.max_students||'Unlimited')+'</td><td>'+esc(x.max_teachers||'Unlimited')+'</td><td>'+esc(x.max_classes||'Unlimited')+'</td></tr>';}).join('')+'</table><h3 style="margin-top:20px">Prices</h3><table class="spa-table"><tr><th>Price ID</th><th>Billing</th><th>Duration</th><th>Amount</th><th>Currency</th><th>Active</th></tr>'+(prices.data||[]).map(function(x){return '<tr><td>'+esc(x.id)+'</td><td>'+esc(x.billing_period)+'</td><td>'+esc(x.duration_months)+' months</td><td>'+esc(x.amount)+'</td><td>'+esc(x.currency)+'</td><td>'+esc(x.is_active?'Yes':'No')+'</td></tr>';}).join('')+'</table>';return;
+}
+box.textContent='Unknown admin section.';
+}
+function init(){
+style();
+var original=window.startApp;
+if(typeof original==='function'&&!original.__spWrapped){
+  var wrapped=async function(user){await original(user);if(currentSchoolId&&$('app')&&!$('app').classList.contains('hidden'))createHub();};
+  wrapped.__spWrapped=true;window.startApp=wrapped;
+}
+var app=$('app');
+if(app&&window.MutationObserver){
+  var observer=new MutationObserver(function(){
+    if(currentSchoolId&&!app.classList.contains('hidden'))createHub();
+    var adminPanel=$('superAdminPanel');
+    if(!currentSchoolId&&adminPanel&&!adminPanel.classList.contains('hidden'))createAdminHub();
+  });
+  observer.observe(app,{attributes:true,childList:true,subtree:true});
+}
+setTimeout(function(){if(currentSchoolId&&app&&!app.classList.contains('hidden'))createHub();},1500);
+if(currentSchoolId&&app&&!app.classList.contains('hidden'))createHub();
+var adminPanel=$('superAdminPanel');
+if(!currentSchoolId&&adminPanel&&!adminPanel.classList.contains('hidden'))createAdminHub();
+}
+if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init);else init();
+})();
