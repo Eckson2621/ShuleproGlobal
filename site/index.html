@@ -1,0 +1,993 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#0f172a">
+<meta name="description" content="ShuleProGlobal — unified global school management platform by EAM VENTURES LTD.">
+<title>SHULEPRO GLOBAL V31.0 | EAM VENTURES LTD (Registration Pending)</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>if(!window.supabase?.createClient){document.write('<script src="https://unpkg.com/@supabase/supabase-js@2"><\\/script>')}</script>
+<style>
+:root{--blue:#1e40af;--navy:#0f172a;--bg:#f3f6fb;--line:#e5e7eb;--muted:#64748b}
+*{box-sizing:border-box}body{font-family:Inter,system-ui,Arial,sans-serif;background:var(--bg);margin:0;color:#172033}
+header{background:white;padding:14px 18px;display:flex;gap:12px;justify-content:space-between;align-items:center;box-shadow:0 2px 10px #0000000b;position:sticky;top:0;z-index:5}
+.brand{font-weight:900;color:var(--navy);letter-spacing:.3px}.muted{color:var(--muted);font-size:13px}.company-credit{font-size:11px;color:#64748b;margin-top:3px}.site-footer{max-width:1200px;margin:18px auto 0;padding:16px 20px;text-align:center;color:#64748b;font-size:12px;border-top:1px solid var(--line)}.site-footer strong{color:#334155}
+.wrap{max-width:1200px;margin:auto;padding:12px}.card{background:#fff;border:1px solid var(--line);border-radius:15px;padding:18px;margin:12px 0;box-shadow:0 4px 18px #0f172a08}
+.auth{max-width:460px;margin:35px auto;padding:0;overflow:hidden}.authhead{display:grid;grid-template-columns:1fr 1fr}
+button{background:var(--blue);color:#fff;border:0;padding:10px 15px;border-radius:9px;font-weight:650;cursor:pointer}
+button.secondary{background:#e8eefc;color:#1e40af}button.dark{background:#111827}button:disabled{opacity:.55;cursor:not-allowed}
+input,select{font:inherit;padding:11px;border:1px solid #d6dce7;border-radius:9px;width:100%;margin:5px 0;background:white}
+label{font-size:13px;font-weight:650;color:#475569}.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.tabs{display:flex;gap:7px;flex-wrap:wrap;margin:10px 0}.tab{background:#e8eefc;color:#1e40af;border-radius:20px;padding:9px 13px;cursor:pointer;font-size:14px}.tab.active{background:var(--blue);color:white}
+.pane{display:none}.pane.active{display:block}.tablewrap{overflow:auto}table{border-collapse:collapse;width:100%;min-width:480px;margin-top:12px}th,td{border-bottom:1px solid var(--line);padding:9px;text-align:left;font-size:14px}th{background:#f8fafc}
+.msg{padding:10px;border-radius:8px;margin:10px 0;font-size:14px;white-space:pre-wrap}.ok{background:#ecfdf5;color:#166534}.err{background:#fef2f2;color:#991b1b}.info{background:#eff6ff;color:#1e40af}
+.actions{display:flex;gap:8px;flex-wrap:wrap}.hidden{display:none!important}
+@media(max-width:650px){.grid{grid-template-columns:1fr}header{align-items:flex-start}.card{padding:14px}}
+@media print{header,.tabs,.no-print,button{display:none!important}body{background:#fff}.card{box-shadow:none;border:0}}
+html[dir="rtl"] body{text-align:right}html[dir="rtl"] th,html[dir="rtl"] td{text-align:right}html[dir="rtl"] header{direction:rtl}html[dir="rtl"] .tabs{direction:rtl}\n</style>
+</head>
+<body>
+<header>
+ <div><div class="brand">SHULEPRO GLOBAL</div><div class="muted">School Management System</div><div class="company-credit">Developed and operated by EAM VENTURES LTD <span>(company registration pending)</span></div></div>
+ <div style="text-align:right"><strong id="schoolName"></strong><div class="muted" id="schoolCode"></div></div>
+ <button id="logoutBtn" class="dark hidden" onclick="logout()">Toka</button>
+</header>
+
+<div class="wrap">
+<section id="auth" class="card auth">
+ <div class="authhead">
+  <button id="regTabBtn" type="button" onclick="showAuth('reg')">Register School</button>
+  <button id="loginTabBtn" class="secondary" type="button" onclick="showAuth('login')">Sign In</button>
+ </div>
+ <div id="regPane" style="padding:18px">
+  <h2>Register Your School</h2>
+  <label>School Name</label><input id="regName" placeholder="Enter school name">
+  <label>Administrator Full Name</label><input id="regFullName" placeholder="Enter full name">
+  <label>Administrator Email</label><input id="regEmail" type="email" placeholder="name@example.com">
+  <label>Phone Number (Optional)</label><input id="regPhone" placeholder="+255...">
+  <label>Password (At least 6 characters)</label><input id="regPass" type="password" placeholder="Enter password">
+  <label>Country</label><select id="regCountry" required><option value="">Select your country</option><option value="AX">Åland Islands</option><option value="AF">Afghanistan</option><option value="AL">Albania</option><option value="DZ">Algeria</option><option value="AS">American Samoa</option><option value="AD">Andorra</option><option value="AO">Angola</option><option value="AI">Anguilla</option><option value="AQ">Antarctica</option><option value="AG">Antigua and Barbuda</option><option value="AR">Argentina</option><option value="AM">Armenia</option><option value="AW">Aruba</option><option value="AU">Australia</option><option value="AT">Austria</option><option value="AZ">Azerbaijan</option><option value="BS">Bahamas</option><option value="BH">Bahrain</option><option value="BD">Bangladesh</option><option value="BB">Barbados</option><option value="BY">Belarus</option><option value="BE">Belgium</option><option value="BZ">Belize</option><option value="BJ">Benin</option><option value="BM">Bermuda</option><option value="BT">Bhutan</option><option value="BO">Bolivia</option><option value="BQ">Bonaire, Sint Eustatius and Saba</option><option value="BA">Bosnia and Herzegovina</option><option value="BW">Botswana</option><option value="BV">Bouvet Island</option><option value="BR">Brazil</option><option value="IO">British Indian Ocean Territory</option><option value="BN">Brunei</option><option value="BG">Bulgaria</option><option value="BF">Burkina Faso</option><option value="BI">Burundi</option><option value="CV">Cabo Verde</option><option value="KH">Cambodia</option><option value="CM">Cameroon</option><option value="CA">Canada</option><option value="KY">Cayman Islands</option><option value="CF">Central African Republic</option><option value="TD">Chad</option><option value="CL">Chile</option><option value="CN">China</option><option value="CX">Christmas Island</option><option value="CC">Cocos (Keeling) Islands</option><option value="CO">Colombia</option><option value="KM">Comoros</option><option value="CG">Congo</option><option value="CD">Congo, Democratic Republic of the</option><option value="CK">Cook Islands</option><option value="CR">Costa Rica</option><option value="CI">Côte d’Ivoire</option><option value="HR">Croatia</option><option value="CU">Cuba</option><option value="CW">Curaçao</option><option value="CY">Cyprus</option><option value="CZ">Czechia</option><option value="DK">Denmark</option><option value="DJ">Djibouti</option><option value="DM">Dominica</option><option value="DO">Dominican Republic</option><option value="EC">Ecuador</option><option value="EG">Egypt</option><option value="SV">El Salvador</option><option value="GQ">Equatorial Guinea</option><option value="ER">Eritrea</option><option value="EE">Estonia</option><option value="SZ">Eswatini</option><option value="ET">Ethiopia</option><option value="FK">Falkland Islands</option><option value="FO">Faroe Islands</option><option value="FJ">Fiji</option><option value="FI">Finland</option><option value="FR">France</option><option value="GF">French Guiana</option><option value="PF">French Polynesia</option><option value="TF">French Southern Territories</option><option value="GA">Gabon</option><option value="GM">Gambia</option><option value="GE">Georgia</option><option value="DE">Germany</option><option value="GH">Ghana</option><option value="GI">Gibraltar</option><option value="GR">Greece</option><option value="GL">Greenland</option><option value="GD">Grenada</option><option value="GP">Guadeloupe</option><option value="GU">Guam</option><option value="GT">Guatemala</option><option value="GG">Guernsey</option><option value="GN">Guinea</option><option value="GW">Guinea-Bissau</option><option value="GY">Guyana</option><option value="HT">Haiti</option><option value="HM">Heard Island and McDonald Islands</option><option value="VA">Holy See</option><option value="HN">Honduras</option><option value="HK">Hong Kong</option><option value="HU">Hungary</option><option value="IS">Iceland</option><option value="IN">India</option><option value="ID">Indonesia</option><option value="IR">Iran</option><option value="IQ">Iraq</option><option value="IE">Ireland</option><option value="IM">Isle of Man</option><option value="IL">Israel</option><option value="IT">Italy</option><option value="JM">Jamaica</option><option value="JP">Japan</option><option value="JE">Jersey</option><option value="JO">Jordan</option><option value="KZ">Kazakhstan</option><option value="KE">Kenya</option><option value="KI">Kiribati</option><option value="KP">North Korea</option><option value="KR">South Korea</option><option value="KW">Kuwait</option><option value="KG">Kyrgyzstan</option><option value="LA">Laos</option><option value="LV">Latvia</option><option value="LB">Lebanon</option><option value="LS">Lesotho</option><option value="LR">Liberia</option><option value="LY">Libya</option><option value="LI">Liechtenstein</option><option value="LT">Lithuania</option><option value="LU">Luxembourg</option><option value="MO">Macao</option><option value="MG">Madagascar</option><option value="MW">Malawi</option><option value="MY">Malaysia</option><option value="MV">Maldives</option><option value="ML">Mali</option><option value="MT">Malta</option><option value="MH">Marshall Islands</option><option value="MQ">Martinique</option><option value="MR">Mauritania</option><option value="MU">Mauritius</option><option value="YT">Mayotte</option><option value="MX">Mexico</option><option value="FM">Micronesia</option><option value="MD">Moldova</option><option value="MC">Monaco</option><option value="MN">Mongolia</option><option value="ME">Montenegro</option><option value="MS">Montserrat</option><option value="MA">Morocco</option><option value="MZ">Mozambique</option><option value="MM">Myanmar</option><option value="NA">Namibia</option><option value="NR">Nauru</option><option value="NP">Nepal</option><option value="NL">Netherlands</option><option value="NC">New Caledonia</option><option value="NZ">New Zealand</option><option value="NI">Nicaragua</option><option value="NE">Niger</option><option value="NG">Nigeria</option><option value="NU">Niue</option><option value="NF">Norfolk Island</option><option value="MK">North Macedonia</option><option value="MP">Northern Mariana Islands</option><option value="NO">Norway</option><option value="OM">Oman</option><option value="PK">Pakistan</option><option value="PW">Palau</option><option value="PS">Palestine</option><option value="PA">Panama</option><option value="PG">Papua New Guinea</option><option value="PY">Paraguay</option><option value="PE">Peru</option><option value="PH">Philippines</option><option value="PN">Pitcairn Islands</option><option value="PL">Poland</option><option value="PT">Portugal</option><option value="PR">Puerto Rico</option><option value="QA">Qatar</option><option value="RE">Réunion</option><option value="RO">Romania</option><option value="RU">Russia</option><option value="RW">Rwanda</option><option value="BL">Saint Barthélemy</option><option value="SH">Saint Helena</option><option value="KN">Saint Kitts and Nevis</option><option value="LC">Saint Lucia</option><option value="MF">Saint Martin</option><option value="PM">Saint Pierre and Miquelon</option><option value="VC">Saint Vincent and the Grenadines</option><option value="WS">Samoa</option><option value="SM">San Marino</option><option value="ST">Sao Tome and Principe</option><option value="SA">Saudi Arabia</option><option value="SN">Senegal</option><option value="RS">Serbia</option><option value="SC">Seychelles</option><option value="SL">Sierra Leone</option><option value="SG">Singapore</option><option value="SX">Sint Maarten</option><option value="SK">Slovakia</option><option value="SI">Slovenia</option><option value="SB">Solomon Islands</option><option value="SO">Somalia</option><option value="ZA">South Africa</option><option value="GS">South Georgia and the South Sandwich Islands</option><option value="SS">South Sudan</option><option value="ES">Spain</option><option value="LK">Sri Lanka</option><option value="SD">Sudan</option><option value="SR">Suriname</option><option value="SJ">Svalbard and Jan Mayen</option><option value="SE">Sweden</option><option value="CH">Switzerland</option><option value="SY">Syria</option><option value="TW">Taiwan</option><option value="TJ">Tajikistan</option><option value="TZ" selected>Tanzania</option><option value="TH">Thailand</option><option value="TL">Timor-Leste</option><option value="TG">Togo</option><option value="TK">Tokelau</option><option value="TO">Tonga</option><option value="TT">Trinidad and Tobago</option><option value="TN">Tunisia</option><option value="TR">Türkiye</option><option value="TM">Turkmenistan</option><option value="TC">Turks and Caicos Islands</option><option value="TV">Tuvalu</option><option value="UG">Uganda</option><option value="UA">Ukraine</option><option value="AE">United Arab Emirates</option><option value="GB">United Kingdom</option><option value="US">United States</option><option value="UM">United States Minor Outlying Islands</option><option value="UY">Uruguay</option><option value="UZ">Uzbekistan</option><option value="VU">Vanuatu</option><option value="VE">Venezuela</option><option value="VN">Vietnam</option><option value="VG">British Virgin Islands</option><option value="VI">U.S. Virgin Islands</option><option value="WF">Wallis and Futuna</option><option value="EH">Western Sahara</option><option value="YE">Yemen</option><option value="ZM">Zambia</option><option value="ZW">Zimbabwe</option></select>
+  <button id="registerBtn" type="button" style="width:100%;margin-top:10px">Create School Account</button>
+  <div id="regMsg"></div>
+ </div>
+ <div id="loginPane" class="hidden" style="padding:18px">
+  <h2>Sign In to Your Account</h2>
+  <label>Email Address</label><input id="loginEmail" type="email" placeholder="Enter your email">
+  <label>Password</label><input id="loginPass" type="password" placeholder="Enter your password">
+  <button id="loginBtn" type="button" style="width:100%;margin-top:10px">Sign In</button>
+  <p style="margin:10px 0 0"><a href="#" id="forgotPasswordLink">Forgot Password?</a></p>
+  <div id="loginMsg"></div>
+  <div id="forgotPasswordPane" class="hidden" style="margin-top:14px">
+   <label>Email Address</label><input id="resetEmail" type="email" placeholder="Enter your account email">
+   <button id="sendResetBtn" type="button">Send Password Reset Link</button>
+   <button id="cancelResetBtn" type="button" class="secondary">Back to Sign In</button>
+   <div id="resetMsg" aria-live="polite"></div>
+  </div>
+ </div>
+</section>
+
+<section id="inviteSetup" class="card auth hidden" style="padding:20px">
+ <h2>Complete your staff account</h2>
+ <p class="muted">Your school invited you to ShuleProGlobal. Create a password to activate your account.</p>
+ <label>New password</label><input id="invitePassword" type="password" minlength="8" autocomplete="new-password" placeholder="At least 8 characters">
+ <label>Confirm password</label><input id="invitePasswordConfirm" type="password" minlength="8" autocomplete="new-password" placeholder="Repeat your password">
+ <button id="invitePasswordBtn" type="button" onclick="completeStaffInvitation()">Activate account</button>
+ <div id="inviteSetupMsg" aria-live="polite"></div>
+</section>
+
+<section id="app" class="hidden">
+ <div class="card">
+  <div><strong id="welcome">Dashboard</strong><div class="muted">Your workspace is determined by your school role and protected by Supabase permissions.</div><div id="roleDescription" class="msg info" style="margin-top:10px">Loading your role workspace...</div></div>
+ </div>
+ <section id="planChoicePanel" class="card hidden">
+  <h2>Chagua kifurushi cha ShulePro</h2>
+  <p class="muted">Chagua kifurushi unachopanga kutumia. Utapata siku 14 za majaribio bila malipo kabla ya kuhitaji kufanya malipo. Hakuna fedha zitakazokatwa kwa kuchagua kifurushi.</p>
+  <div id="trialPlanMessage"></div>
+  <div id="trialPlans" class="grid"></div>
+ </section>
+ <section id="superAdminPanel" class="card hidden">
+  <h3>SHULEPRO – Super Admin</h3><p class="muted">Muhtasari wa mfumo mzima. Thibitisha malipo baada ya kuhakiki fedha kwenye chanzo husika.</p>
+  <div id="adminSummary" class="grid"></div><h4>Shule zote</h4><div class="tablewrap"><table id="adminSchoolsTable"></table></div>
+  <h4>Malipo yanayosubiri uthibitisho</h4><div class="tablewrap"><table id="adminPaymentsTable"></table></div>
+  <h4>Subscriptions</h4><div class="tablewrap"><table id="adminSubscriptionsTable"></table></div><div id="adminMsg"></div>
+ </section>
+ <nav class="tabs no-print">
+  <div class="tab active" data-tab="wanafunzi" onclick="showTab('wanafunzi',this)">Wanafunzi</div>
+  <div class="tab" data-tab="alama" onclick="showTab('alama',this)">Alama</div>
+  <div class="tab" data-tab="mahudhurio" onclick="showTab('mahudhurio',this)">Mahudhurio</div>
+  <div class="tab" data-tab="ratiba" onclick="showTab('ratiba',this)">Ratiba</div>
+  <div class="tab" data-tab="ada" onclick="showTab('ada',this)">Ada & TxID</div>
+  <div class="tab" data-tab="report" onclick="showTab('report',this)">Ripoti</div>
+  <div class="tab" data-tab="backup" onclick="showTab('backup',this)">Backup</div>
+ </nav>
+
+ <div id="wanafunzi" class="card pane active">
+  <h3>Usimamizi wa Wanafunzi</h3>
+  <p class="muted">Sajili, tafuta, hariri na futa taarifa za wanafunzi wa shule hii.</p>
+  <div class="grid">
+   <div><label>Jina kamili la mwanafunzi *</label><input id="stuName" placeholder="Jina kamili" maxlength="160" required></div>
+   <div><label>Darasa *</label><input id="stuClass" placeholder="Mfano: Form I" maxlength="80" required></div>
+   <div><label>Namba ya usajili</label><input id="stuAdmission" placeholder="Mfano: SSS/2026/001" maxlength="60"></div>
+   <div><label>Jinsia</label><select id="stuGender"><option value="">Haijatajwa</option><option value="Male">Mwanaume</option><option value="Female">Mwanamke</option><option value="Other">Nyingine</option></select></div>
+  </div>
+  <button id="stuSaveBtn" onclick="addStudent()">Hifadhi mwanafunzi</button>
+  <button id="stuCancelEdit" class="secondary hidden" onclick="cancelStudentEdit()">Ghairi uhariri</button>
+  <div id="stuMsg"></div>
+  <div class="grid" style="margin-top:14px"><div><label>Tafuta mwanafunzi</label><input id="stuSearch" placeholder="Jina, namba ya usajili au darasa" oninput="renderStudentsTable()"></div></div>
+  <div id="studentCount" class="muted"></div>
+  <div class="tablewrap"><table id="studentsTable"></table></div>
+ </div>
+
+ <div id="alama" class="card pane">
+  <h3>Alama na Mitihani</h3><div class="grid"><div><label>Mwanafunzi</label><select id="markStudent"></select></div><div><label>Jina la mtihani</label><input id="markExam" placeholder="Mtihani wa Muhula wa Kwanza"></div><div><label>Somo</label><input id="markSubject" placeholder="Hisabati"></div><div><label>Alama (0–100)</label><input id="markScore" type="number" min="0" max="100" placeholder="0 - 100"></div></div><p class="muted">Kiwango cha awali cha grade: A 75–100, B 65–74, C 45–64, D 30–44, F 0–29.</p>
+  <button onclick="addMark()">Hifadhi alama</button><div id="markMsg"></div><div class="tablewrap"><table id="marksTable"></table></div>
+ </div>
+
+ <div id="mahudhurio" class="card pane">
+  <h3>Mahudhurio</h3><p class="muted">Kitendo hiki kitaweka present kwa wanafunzi wote wa shule kwa tarehe ya leo. Hakihakikishi mahudhurio ya mtu bila mwalimu kuyathibitisha.</p>
+  <p class="muted">Chagua hali ya kila mwanafunzi. Unaweza kurekebisha mahudhurio ya siku hiyo kabla ya kuhifadhi.</p><button onclick="saveAttendance()">Hifadhi mahudhurio ya leo</button><div id="attMsg"></div><div class="tablewrap"><table id="attEntryTable"></table></div><h4>Historia ya mahudhurio</h4><div class="tablewrap"><table id="attTable"></table></div>
+ </div>
+
+ <div id="ratiba" class="card pane">
+  <h3>Ratiba ya vipindi</h3><div class="grid"><select id="ttDay"><option value="">Chagua siku</option><option value="Mon">Jumatatu</option><option value="Tue">Jumanne</option><option value="Wed">Jumatano</option><option value="Thu">Alhamisi</option><option value="Fri">Ijumaa</option><option value="Sat">Jumamosi</option></select><input id="ttTime" placeholder="08:00-09:00"><input id="ttSubject" placeholder="Somo"><input id="ttClass" placeholder="Darasa"></div>
+  <button onclick="addTimetable()">Ongeza kipindi</button><div id="ttMsg"></div><div class="tablewrap"><table id="ttTable"></table></div>
+ </div>
+
+ <div id="ada" class="card pane">
+  <h3>Ada ya ShulePro na taarifa za malipo</h3>
+  <div class="msg info">Tuma TxID baada ya kulipa. Malipo yatabaki PENDING mpaka Super Admin ayahakiki kwenye akaunti ya mtoa huduma. TxID pekee si uthibitisho wa kupokea fedha.</div>
+  <div class="grid"><div><label>Mpango</label><select id="paymentPrice" onchange="updatePaymentAmount()"></select></div><div><label>Kiasi</label><input id="paymentAmount" readonly></div><div><label>TxID / Reference</label><input id="paymentTx" placeholder="Transaction reference"></div><div><label>Njia ya malipo</label><select id="paymentMethod"><option>M-Pesa</option><option>Tigo Pesa</option><option>Airtel Money</option><option>Bank</option><option>Other</option></select></div></div>
+  <button onclick="submitPayment()">Tuma taarifa ya malipo</button><div id="paymentMsg"></div>
+  <h4>Subscription ya shule</h4><div class="tablewrap"><table id="subscriptionTable"></table></div>
+  <h4>Historia ya malipo</h4><div class="tablewrap"><table id="feesTable"></table></div>
+ </div>
+
+ <div id="report" class="card pane">
+  <h3>Ripoti ya shule</h3><p class="muted">Chapisha ukurasa huu na uchague Save as PDF kwenye kifaa chako.</p><button class="no-print" onclick="window.print()">Chapisha / Hifadhi PDF</button>
+  <div id="reportArea"></div>
+ </div>
+
+ <div id="backup" class="card pane">
+  <h3>Backup & Lugha</h3><p class="muted">Backup inajumuisha data ambayo akaunti yako inaruhusiwa kusoma. Hifadhi faili kwa usalama.</p>
+  <div class="actions"><button onclick="exportBackup()">Pakua Backup JSON</button><button class="secondary" onclick="document.getElementById('importFile').click()">Rejesha wanafunzi kutoka JSON</button></div>
+  <input type="file" id="importFile" accept=".json,application/json" class="hidden" onchange="importBackup(event)">
+  <p class="muted">Professional modules are displayed in English. Parent-facing reports automatically use the language associated with the school's selected country.</p>
+  <div id="backupMsg"></div>
+ </div>
+</section>
+</div>
+<footer class="site-footer"><strong>SHULEPRO GLOBAL</strong> · Developed and operated by <strong>EAM VENTURES LTD</strong> <span>(company registration pending)</span><br>© 2026 SHULEPRO GLOBAL. All rights reserved.</footer>
+
+<script>
+'use strict';
+// Supabase project configuration
+const SUPABASE_URL = "https://btrxhcfhnriekwsazvnc.supabase.co";
+const SUPABASE_ANON_KEY = "sb_publishable_bom_7JYZ54SJy869vpnT8g_EZhcHZDg";
+const db = window.supabase?.createClient ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+  auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true}
+}) : null;
+let currentUser=null, currentSchoolId=null, currentSchool=null, currentRole=null, studentsCache=[];
+let inviteFlowDetected=/type=(invite|recovery)/i.test(window.location.hash||'');
+
+function el(id){return document.getElementById(id)}
+function message(id,text,type='info'){el(id).innerHTML='';const d=document.createElement('div');d.className='msg '+type;d.textContent=text;el(id).appendChild(d)}
+function showAuth(which){
+  const target=which==='reg'?'reg':'login';
+  const reg=el('regPane'),login=el('loginPane');
+  const regBtn=el('regTabBtn'),loginBtn=el('loginTabBtn');
+  if(!reg||!login||!regBtn||!loginBtn)return false;
+  const showRegistration=target==='reg';
+  // Native hidden state plus an important inline display rule avoids CSS conflicts.
+  reg.hidden=!showRegistration;
+  login.hidden=showRegistration;
+  reg.classList.toggle('hidden',!showRegistration);
+  login.classList.toggle('hidden',showRegistration);
+  reg.style.setProperty('display',showRegistration?'block':'none','important');
+  login.style.setProperty('display',showRegistration?'none':'block','important');
+  reg.setAttribute('aria-hidden',String(!showRegistration));
+  login.setAttribute('aria-hidden',String(showRegistration));
+  regBtn.classList.toggle('secondary',!showRegistration);
+  loginBtn.classList.toggle('secondary',showRegistration);
+  regBtn.setAttribute('aria-pressed',String(showRegistration));
+  loginBtn.setAttribute('aria-pressed',String(!showRegistration));
+  return true;
+}
+window.showAuth=showAuth;
+function schoolCode(){const a=new Uint8Array(6);crypto.getRandomValues(a);return 'SP'+Array.from(a,x=>x.toString(36).padStart(2,'0')).join('').toUpperCase().slice(0,10)}
+function languageForCountry(){return 'en';}
+async function register(){
+ if(!db){message('regMsg','Supabase haijapakia. Hakikisha intaneti ipo kisha refresh ukurasa.','err');return}
+ const name=el('regName').value.trim(),full=el('regFullName').value.trim(),email=el('regEmail').value.trim().toLowerCase(),pass=el('regPass').value,phone=el('regPhone').value.trim(),country=el('regCountry').value,lang=languageForCountry(country);
+ const button=el('registerBtn');if(button)button.disabled=true;
+ const emailOk=email.includes('@')&&email.includes('.')&&email.indexOf('@')>0&&email.lastIndexOf('.')>email.indexOf('@')+1&&email.lastIndexOf('.')<email.length-1;
+ if(!name||name.length<2||!full||full.length<2||!emailOk||pass.length<6||!country){
+  message('regMsg','Complete all required fields: school name, administrator name, valid email, password (at least 6 characters), and country.','err');if(button)button.disabled=false;return;
+ }
+ message('regMsg','Creating your account...','info');
+ try{
+  const pending={school_name:name,full_name:full,email,country_code:country,language:lang,school_code:schoolCode()};
+  try{localStorage.setItem('shulepro_language_v2',lang)}catch(e){}
+  const {data,error}=await db.auth.signUp({email,password:pass,options:{data:{full_name:full,phone,school_name:name,shulepro_registration:pending}}});
+  if(error)throw error;
+  if(data.user&&Array.isArray(data.user.identities)&&data.user.identities.length===0){
+   showAuth('login');el('loginEmail').value=email;el('loginPass').value='';
+   message('loginMsg','An account with this email already exists. Sign in instead, or use a different email address to register a new school.','err');return;
+  }
+  localStorage.setItem('shulepro_pending_registration',JSON.stringify(pending));
+  if(data.session){
+   try{await completePendingRegistration();}catch(setupError){
+    showAuth('login');el('loginEmail').value=email;el('loginPass').value='';
+    message('loginMsg','Your account was created, but school setup is not complete yet. Sign in again to finish setup: '+setupError.message,'err');
+    await db.auth.signOut();return;
+   }
+   await db.auth.signOut();
+  }
+  el('auth').classList.remove('hidden');el('app').classList.add('hidden');el('logoutBtn').classList.add('hidden');
+  showAuth('login');el('loginEmail').value=email;el('loginPass').value='';
+  message('loginMsg',data.session?'School registration is complete. Sign in with your email and password.':'Your account has been created. Check your email and confirm your address, then sign in here to complete school registration.','ok');
+ }catch(e){
+  try{await db.auth.signOut()}catch(_){}
+  const detail=/failed to fetch|networkerror|load failed/i.test(e.message)?'Cannot reach the registration server. Check your internet connection and try again.':e.message;
+  showAuth('reg');message('regMsg','Registration failed: '+detail,'err');
+ }finally{if(button)button.disabled=false}
+}
+async function completePendingRegistration(){
+ const {data:userData,error:userError}=await db.auth.getUser();if(userError)throw userError;
+ const raw=localStorage.getItem('shulepro_pending_registration');
+ let stored=null;try{stored=raw?JSON.parse(raw):null}catch(e){stored=null;}
+ const metadata=userData.user?.user_metadata?.shulepro_registration||null;
+ const storedMatchesUser=stored&&stored.email&&String(stored.email).toLowerCase()===String(userData.user?.email||'').toLowerCase();
+ const p=metadata||(storedMatchesUser?stored:null);
+ if(!p)return null;
+ const {data,error}=await db.rpc('register_school',{p_school_name:p.school_name,p_school_code:p.school_code,p_full_name:p.full_name,p_country_code:p.country_code});
+ if(error)throw error;
+ localStorage.removeItem('shulepro_pending_registration');
+ const {error:metaError}=await db.auth.updateUser({data:{shulepro_registration:null}});
+ if(metaError)console.warn('Registration metadata cleanup:',metaError.message);
+ return data;
+}
+async function login(){
+ if(!db){message('loginMsg','Supabase haijapakia. Hakikisha intaneti ipo kisha refresh ukurasa.','err');return}
+ const email=el('loginEmail').value.trim().toLowerCase(),password=el('loginPass').value;
+ if(!email||!password){message('loginMsg','Enter your email address and password.','err');return}
+ message('loginMsg','Signing in...','info');
+ try{
+  const {data,error}=await db.auth.signInWithPassword({email,password});if(error)throw error;
+  try{await completePendingRegistration()}catch(e){
+   await db.auth.signOut();
+   throw new Error('Email sign-in succeeded, but school registration could not be completed: '+e.message+'. Check your email confirmation and try signing in again.');
+  }
+  await startApp(data.user);
+ }catch(e){message('loginMsg','Sign-in failed: '+e.message,'err')}
+}
+async function startApp(user){
+ currentUser=user;
+ const {data:isAdmin,error:adminError}=await db.rpc('is_super_admin');if(adminError)throw adminError;
+ el('auth').classList.add('hidden');el('app').classList.remove('hidden');el('logoutBtn').classList.remove('hidden');
+ el('planChoicePanel').classList.add('hidden');
+ if(isAdmin){
+  currentSchoolId=null;currentSchool=null;el('schoolName').textContent='SYSTEM ADMIN';el('schoolCode').textContent='GLOBAL';
+  el('welcome').textContent='Super Admin: '+(user.user_metadata?.full_name||user.email);
+  el('superAdminPanel').classList.remove('hidden');document.querySelector('.tabs').classList.add('hidden');
+  document.querySelectorAll('.pane').forEach(x=>x.classList.add('hidden'));await loadSuperAdmin();return;
+ }
+ el('superAdminPanel').classList.add('hidden');
+ const {data:members,error}=await db.from('school_memberships').select('school_id,role').eq('user_id',user.id);
+ if(error)throw error;
+ if(!members||!members.length){el('auth').classList.remove('hidden');el('app').classList.add('hidden');message('loginMsg','Akaunti haina uanachama wa shule. Hakikisha usajili wa shule umekamilika.','err');return}
+ const membership=members.slice().sort((a,b)=>(a.role==='owner'?-1:0)-(b.role==='owner'?-1:0))[0];
+ currentSchoolId=membership.school_id;currentRole=membership.role||'teacher';
+ applyRoleDashboard(currentRole);
+ const {data:school,error:schoolError}=await db.from('schools').select('*').eq('id',currentSchoolId).single();
+ if(schoolError||!school||school.is_active===false){el('auth').classList.remove('hidden');el('app').classList.add('hidden');message('loginMsg','Akaunti ya shule haipatikani au imesimamishwa na Super Admin. Wasiliana na msimamizi wa ShuleProGlobal.','err');return;}currentSchool=school;
+ el('schoolName').textContent=school.school_name||'Shule';el('schoolCode').textContent=school.school_code||'';
+ let chosenLanguage='sw';try{chosenLanguage=localStorage.getItem('shulepro_language_v2')||school.default_language||school.preferred_language||school.language||'sw'}catch(e){chosenLanguage=school.default_language||school.preferred_language||school.language||'sw'}setLang(chosenLanguage);
+ el('welcome').textContent='Karibu, '+(user.user_metadata?.full_name||user.email);
+ const {data:subs,error:subError}=await db.from('subscriptions').select('id,plan_id,plan,status,trial_ends_at,ends_at').eq('school_id',currentSchoolId).order('created_at',{ascending:false}).limit(1);
+ if(subError)throw subError;
+ const subscription=subs?.[0]||null;
+ const now=Date.now();
+ const trialValid=subscription?.status==='trial'&&subscription.trial_ends_at&&new Date(subscription.trial_ends_at).getTime()>now;
+ const premiumValid=subscription?.status==='active'&&(subscription.plan_id||subscription.plan)==='premium'&&subscription.ends_at&&new Date(subscription.ends_at).getTime()>now;
+ const freeValid=subscription?.status==='active'&&(subscription.plan_id||subscription.plan)==='free'&&!subscription.ends_at;
+ const expiredToFree=(subscription?.status==='trial'&&subscription.trial_ends_at&&new Date(subscription.trial_ends_at).getTime()<=now)
+  ||(subscription?.status==='active'&&(subscription.plan_id||subscription.plan)==='premium'&&subscription.ends_at&&new Date(subscription.ends_at).getTime()<=now);
+ if(!trialValid&&!premiumValid&&!freeValid&&!expiredToFree){
+  document.querySelector('.tabs').classList.add('hidden');
+  document.querySelectorAll('.pane').forEach(x=>x.classList.add('hidden'));
+  if(currentRole==='owner'){
+   el('planChoicePanel').classList.remove('hidden');
+   const msg=subscription?'Usajili wako umeisha au haujawezeshwa. Chagua kifurushi au wasilisha malipo ili kuendelea.':'Shule yako bado haina subscription. Chagua kifurushi kuanza siku 14 za majaribio.';
+   message('trialPlanMessage',msg,'info');
+   await loadTrialPlans();
+  }else{
+   el('planChoicePanel').classList.add('hidden');
+   const note=el('roleDescription');
+   if(note)note.textContent='School subscription is not active. Please ask the School Owner to renew or activate the school plan.';
+  }
+  return;
+ }
+ el('planChoicePanel').classList.add('hidden');
+ document.querySelector('.tabs').classList.remove('hidden');
+ document.querySelectorAll('.pane').forEach(x=>x.classList.remove('hidden'));
+ await loadRoleData();
+}
+async function loadTrialPlans(){
+ const {data:prices,error}=await db.from('plan_prices').select('id,plan_id,billing_period,duration_months,amount,currency').eq('is_active',true).eq('plan_id','premium').order('amount');
+ if(error){message('trialPlanMessage','Imeshindwa kupakia vifurushi: '+error.message,'err');return}
+ if(!prices||!prices.length){message('trialPlanMessage','Hakuna vifurushi vinavyopatikana kwa sasa.','err');return}
+ el('trialPlans').innerHTML=prices.map(p=>{
+  const label=p.billing_period==='multi_year'?((p.duration_months-3)/12)+' years + 3 bonus months':p.billing_period==='monthly'?'Monthly':p.billing_period==='quarterly'?'3 Months':'Yearly';
+  return '<div class="card"><h3>'+esc(label)+'</h3><h2>'+esc(p.amount)+' '+esc(p.currency)+'</h2><p class="muted">Siku 14 za majaribio bila malipo</p><button style="width:100%" onclick="startSchoolTrial(\''+esc(p.id)+'\')">Chagua kifurushi hiki</button></div>';
+ }).join('');
+}
+async function startSchoolTrial(priceId){
+ const buttons=el('trialPlans').querySelectorAll('button');buttons.forEach(b=>b.disabled=true);
+ message('trialPlanMessage','Tunawasha siku 14 za majaribio...','info');
+ try{
+  const {data,error}=await db.rpc('start_school_trial',{p_price_id:priceId});
+  if(error)throw error;
+  el('planChoicePanel').classList.add('hidden');
+  document.querySelector('.tabs').classList.remove('hidden');
+  document.querySelectorAll('.pane').forEach(x=>x.classList.remove('hidden'));
+  message('paymentMsg','Hongera! Siku 14 za majaribio zimeanza. Hakuna malipo yaliyokatwa. Mwisho wa majaribio: '+new Date(data.trial_ends_at).toLocaleString(),'ok');
+  await loadAll();
+  showTab('wanafunzi',document.querySelector('.tab[data-tab="wanafunzi"]'));
+ }catch(e){
+  message('trialPlanMessage','Imeshindikana kuanzisha majaribio: '+e.message,'err');
+  buttons.forEach(b=>b.disabled=false);
+ }
+}
+async function logout(){await db.auth.signOut();currentUser=null;currentSchoolId=null;currentSchool=null;location.reload()}
+const ROLE_DASHBOARDS={
+ owner:{title:'School Owner Dashboard',description:'Full school administration, staff oversight, academics, finance and school settings.',tabs:['wanafunzi','alama','mahudhurio','ratiba','ada','report','backup']},
+ headmaster:{title:'Headmaster Dashboard',description:'School operations, student administration, academics, attendance and timetable. School subscription and ownership controls remain with the Owner.',tabs:['wanafunzi','alama','mahudhurio','ratiba','report']},
+ academic_master:{title:'Academic Master Dashboard',description:'Academic administration: students, examinations, marks, attendance, timetable and academic reports.',tabs:['wanafunzi','alama','mahudhurio','ratiba','report']},
+ teacher:{title:'Teacher Dashboard',description:'Teaching workspace: student directory, academic results, attendance and timetable. Editing rights are restricted by database permissions.',tabs:['wanafunzi','alama','mahudhurio','ratiba','report']},
+ accountant:{title:'Accountant Dashboard',description:'Finance role detected. Student-fees and accounting workspace will be enabled here; platform subscription controls are reserved for the School Owner.',tabs:[]}
+};
+function applyRoleDashboard(role){
+ const cfg=ROLE_DASHBOARDS[role]||ROLE_DASHBOARDS.teacher;
+ const note=el('roleDescription');
+ if(note)note.textContent=cfg.title+' — '+cfg.description;
+ document.querySelectorAll('.tab[data-tab]').forEach(tab=>{
+  const allowed=cfg.tabs.includes(tab.dataset.tab);
+  tab.classList.toggle('hidden',!allowed);
+  tab.setAttribute('aria-hidden',String(!allowed));
+ });
+ document.querySelectorAll('.pane').forEach(pane=>{
+  const allowed=cfg.tabs.includes(pane.id);
+  pane.classList.toggle('hidden',!allowed);
+  pane.classList.toggle('active',false);
+ });
+ const first=cfg.tabs[0];
+ if(first){
+  const tab=document.querySelector('.tab[data-tab="'+first+'"]');
+  const pane=el(first);if(tab)tab.classList.add('active');if(pane)pane.classList.add('active');
+ }
+ // Teacher is a read-only role in the current database policies.
+ if(role==='teacher'){
+  ['stuSaveBtn','stuCancelEdit'].forEach(id=>el(id)?.classList.add('hidden'));
+  document.querySelectorAll('#alama button,#mahudhurio button,#ratiba button').forEach(b=>b.classList.add('hidden'));
+ }
+ if(role==='accountant'){
+  document.querySelector('.tabs')?.classList.add('hidden');
+  const report=el('roleDescription');
+  if(report)report.textContent='Accountant Dashboard — finance role recognized. Student-fees ledger and collection tools must be connected before this account can process financial records. ShulePro subscription administration is reserved for the Owner.';
+ }
+}
+async function loadRoleData(){
+ if(currentRole==='accountant')return;
+ const cfg=ROLE_DASHBOARDS[currentRole]||ROLE_DASHBOARDS.teacher;
+ const tasks=[];
+ if(cfg.tabs.includes('wanafunzi'))tasks.push(loadStudents());
+ if(cfg.tabs.includes('alama'))tasks.push(loadMarks());
+ if(cfg.tabs.includes('mahudhurio'))tasks.push(loadAttendance());
+ if(cfg.tabs.includes('ratiba'))tasks.push(loadTimetable());
+ if(cfg.tabs.includes('ada'))tasks.push(loadFees());
+ if(cfg.tabs.includes('report'))tasks.push(buildReport());
+ await Promise.all(tasks);
+}
+function showTab(id,node){
+ document.querySelectorAll('.pane').forEach(x=>x.classList.remove('active'));
+ document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));
+ el(id).classList.add('active');if(node)node.classList.add('active');
+ if(id==='wanafunzi')loadStudents();if(id==='alama')loadMarks();if(id==='mahudhurio')loadAttendance();if(id==='ratiba')loadTimetable();if(id==='ada')loadFees();if(id==='report')buildReport();
+}
+let editingStudentId=null;
+function resetStudentForm(){
+ editingStudentId=null;
+ ['stuName','stuClass','stuAdmission'].forEach(id=>{if(el(id))el(id).value=''});
+ if(el('stuGender'))el('stuGender').value='';
+ if(el('stuSaveBtn'))el('stuSaveBtn').textContent='Hifadhi mwanafunzi';
+ if(el('stuCancelEdit'))el('stuCancelEdit').classList.add('hidden');
+}
+function cancelStudentEdit(){resetStudentForm();message('stuMsg','Uhariri umeghairiwa.','info')}
+async function addStudent(){
+ const name=el('stuName').value.trim(),cls=el('stuClass').value.trim();
+ const admission=el('stuAdmission').value.trim(),gender=el('stuGender').value;
+ if(!name||!cls){message('stuMsg','Jaza jina kamili na darasa.','err');return}
+ if(name.length>160||cls.length>80||admission.length>60){message('stuMsg','Baadhi ya taarifa zimezidi urefu unaoruhusiwa.','err');return}
+ const wasEditing=!!editingStudentId;
+ const payload={full_name:name,class_name:cls,admission_number:admission||null,gender:gender||null};
+ const result=editingStudentId
+  ?await db.from('students').update(payload).eq('id',editingStudentId).eq('school_id',currentSchoolId).select('id').maybeSingle()
+  :await db.from('students').insert({...payload,school_id:currentSchoolId}).select('id').single();
+ if(result.error){message('stuMsg','Haijahifadhiwa: '+result.error.message,'err');return}
+ if(editingStudentId&&!result.data){message('stuMsg','Hakuna rekodi iliyobadilishwa. Hakikisha ruhusa za shule zinaruhusu uhariri.','err');return}
+ resetStudentForm();message('stuMsg',wasEditing?'Taarifa za mwanafunzi zimebadilishwa.':'Mwanafunzi amesajiliwa kikamilifu.','ok');await loadStudents();
+}
+function renderStudentsTable(){
+ const q=(el('stuSearch')?.value||'').trim().toLowerCase();
+ const rows=studentsCache.filter(s=>[s.full_name,s.admission_number,s.class_name].some(v=>String(v||'').toLowerCase().includes(q)));
+ if(el('studentCount'))el('studentCount').textContent='Wanafunzi '+rows.length+' kati ya '+studentsCache.length;
+ el('studentsTable').innerHTML='<tr><th>Jina</th><th>Namba ya usajili</th><th>Darasa</th><th>Jinsia</th><th>Vitendo</th></tr>'+rows.map(s=>`<tr><td>${esc(s.full_name||'')}</td><td>${esc(s.admission_number||'—')}</td><td>${esc(s.class_name||'')}</td><td>${esc(s.gender||'—')}</td><td><button type="button" class="secondary" data-student-edit="${esc(s.id)}">Hariri</button> <button type="button" class="secondary" data-student-delete="${esc(s.id)}">Futa</button></td></tr>`).join('')||'<tr><td colspan="5">Hakuna mwanafunzi aliyepatikana.</td></tr>';
+ el('studentsTable').querySelectorAll('[data-student-edit]').forEach(b=>b.onclick=()=>editStudent(b.dataset.studentEdit));
+ el('studentsTable').querySelectorAll('[data-student-delete]').forEach(b=>b.onclick=()=>deleteStudent(b.dataset.studentDelete));
+}
+function editStudent(id){
+ const s=studentsCache.find(x=>x.id===id);if(!s)return;
+ editingStudentId=s.id;el('stuName').value=s.full_name||'';el('stuClass').value=s.class_name||'';
+ el('stuAdmission').value=s.admission_number||'';el('stuGender').value=s.gender||'';
+ el('stuSaveBtn').textContent='Hifadhi mabadiliko';el('stuCancelEdit').classList.remove('hidden');
+ message('stuMsg','Unahariri taarifa za '+s.full_name+'.','info');
+ el('stuName').scrollIntoView({behavior:'smooth',block:'center'});
+}
+async function deleteStudent(id){
+ const s=studentsCache.find(x=>x.id===id);if(!s)return;
+ if(!confirm('Una uhakika unataka kufuta '+s.full_name+'? Ikiwa mwanafunzi ana alama, ada au mahudhurio, database inaweza kuzuia ufutaji ili kulinda historia yake.'))return;
+ const {error,count}=await db.from('students').delete({count:'exact'}).eq('id',id).eq('school_id',currentSchoolId);
+ if(error){message('stuMsg','Mwanafunzi hajafutwa: '+error.message,'err');return}
+ if(count===0){message('stuMsg','Hakuna rekodi iliyofutwa. Hakikisha ruhusa za akaunti.','err');return}
+ if(editingStudentId===id)resetStudentForm();
+ message('stuMsg','Rekodi ya mwanafunzi imefutwa.','ok');await loadStudents();
+}
+async function loadStudents(){
+ const {data,error}=await db.from('students').select('id,school_id,full_name,admission_number,class_name,gender,created_at').eq('school_id',currentSchoolId).order('created_at',{ascending:false});
+ if(error){message('stuMsg','Imeshindwa kusoma wanafunzi: '+error.message,'err');return}
+ studentsCache=data||[];renderStudentsTable();
+ const opts=studentsCache.map(s=>`<option value="${esc(s.id)}">${esc(s.full_name||s.id)}</option>`).join('');
+ if(el('markStudent'))el('markStudent').innerHTML=opts;
+}
+function gradeFromScore(score){return score>=75?'A':score>=65?'B':score>=45?'C':score>=30?'D':'F';}
+async function addMark(){
+ const student_id=el('markStudent').value,subject=el('markSubject').value.trim(),exam_name=el('markExam').value.trim()||'Assessment',score=Number(el('markScore').value);
+ if(!student_id||!subject||!Number.isFinite(score)||score<0||score>100){message('markMsg','Chagua mwanafunzi, mtihani, somo na alama 0 hadi 100.','err');return}
+ const grade=gradeFromScore(score);
+ const {error}=await db.from('results').insert({school_id:currentSchoolId,student_id,subject,exam_name,marks:score,grade});
+ if(error){message('markMsg','Alama hazijahifadhiwa: '+error.message,'err');return}
+ el('markScore').value='';message('markMsg','Alama zimehifadhiwa. Grade: '+grade,'ok');await loadMarks();
+}
+async function loadMarks(){
+ const [resultsRes,studentsRes]=await Promise.all([
+  db.from('results').select('id,student_id,subject,exam_name,marks,grade,created_at').eq('school_id',currentSchoolId).order('created_at',{ascending:false}).limit(1000),
+  db.from('students').select('id,full_name').eq('school_id',currentSchoolId)
+ ]);
+ const error=resultsRes.error||studentsRes.error;
+ if(error){el('marksTable').innerHTML='';message('markMsg','Imeshindwa kusoma matokeo: '+error.message,'err');return}
+ const names=new Map((studentsRes.data||[]).map(s=>[s.id,s.full_name]));
+ const rows=resultsRes.data||[];el('marksTable').innerHTML='<tr><th>Mwanafunzi</th><th>Mtihani</th><th>Somo</th><th>Alama</th><th>Grade</th></tr>'+(rows.length?rows.map(m=>'<tr><td>'+esc(names.get(m.student_id)||m.student_id)+'</td><td>'+esc(m.exam_name||'Assessment')+'</td><td>'+esc(m.subject||'')+'</td><td>'+esc(m.marks)+'</td><td><strong>'+esc(m.grade||gradeFromScore(Number(m.marks)))+'</strong></td></tr>').join(''):'<tr><td colspan="5">Hakuna matokeo bado.</td></tr>');
+}
+function localToday(){return new Date(Date.now()-new Date().getTimezoneOffset()*60000).toISOString().slice(0,10)}
+async function saveAttendance(){
+ const {data:students,error}=await db.from('students').select('id').eq('school_id',currentSchoolId);
+ if(error){message('attMsg','Imeshindwa kusoma wanafunzi: '+error.message,'err');return}
+ if(!students?.length){message('attMsg','Hakuna wanafunzi wa kuhifadhi.','err');return}
+ const today=localToday();
+ const rows=students.map(s=>({school_id:currentSchoolId,student_id:s.id,attend_date:today,status:el('attStatus_'+s.id)?.value||'Present'}));
+ const {error:saveError}=await db.from('attendance').upsert(rows,{onConflict:'student_id,attend_date'});
+ if(saveError){message('attMsg','Mahudhurio hayajahifadhiwa: '+saveError.message,'err');return}
+ message('attMsg','Mahudhurio ya leo yamehifadhiwa.','ok');await loadAttendance();
+}
+async function loadAttendance(){
+ const today=localToday();
+ const [studentsRes,todayRes,historyRes]=await Promise.all([
+  db.from('students').select('id,full_name,class_name').eq('school_id',currentSchoolId).order('full_name'),
+  db.from('attendance').select('student_id,status').eq('school_id',currentSchoolId).eq('attend_date',today),
+  db.from('attendance').select('*,students(full_name)').eq('school_id',currentSchoolId).order('attend_date',{ascending:false}).limit(100)
+ ]);
+ const err=studentsRes.error||todayRes.error||historyRes.error;if(err){message('attMsg','Imeshindwa kupakia mahudhurio: '+err.message,'err');return}
+ const current=new Map((todayRes.data||[]).map(x=>[x.student_id,x.status]));
+ el('attEntryTable').innerHTML='<tr><th>Mwanafunzi</th><th>Darasa</th><th>Hali</th></tr>'+(studentsRes.data||[]).map(s=>`<tr><td>${esc(s.full_name)}</td><td>${esc(s.class_name||'')}</td><td><select id="attStatus_${esc(s.id)}"><option value="Present" ${(current.get(s.id)||'Present')==='Present'?'selected':''}>Present</option><option value="Absent" ${current.get(s.id)==='Absent'?'selected':''}>Absent</option><option value="Late" ${current.get(s.id)==='Late'?'selected':''}>Late</option></select></td></tr>`).join('');
+ el('attTable').innerHTML='<tr><th>Tarehe</th><th>Mwanafunzi</th><th>Hali</th></tr>'+(historyRes.data||[]).map(a=>`<tr><td>${esc(a.attend_date||'')}</td><td>${esc(a.students?.full_name||a.student_id)}</td><td>${esc(a.status||'')}</td></tr>`).join('');
+}
+async function addTimetable(){
+ const day=el('ttDay').value,time_slot=el('ttTime').value.trim(),subject=el('ttSubject').value.trim(),class_name=el('ttClass').value.trim();
+ if(!['Mon','Tue','Wed','Thu','Fri','Sat'].includes(day)||!time_slot||!subject||!class_name){message('ttMsg','Chagua siku sahihi na jaza muda, somo na darasa.','err');return}
+ const {error}=await db.from('timetable').insert({school_id:currentSchoolId,day_of_week:day,period_time:time_slot,subject,class_name});
+ if(error){message('ttMsg','Ratiba haijahifadhiwa. Hakikisha jedwali timetable na columns zake zipo: '+error.message,'err');return}
+ message('ttMsg','Kipindi kimeongezwa.','ok');await loadTimetable();
+}
+async function loadTimetable(){
+ const {data,error}=await db.from('timetable').select('*').eq('school_id',currentSchoolId);
+ if(error){el('ttTable').innerHTML='';message('ttMsg','Jedwali la ratiba halipatikani au haliruhusu kusoma: '+error.message,'err');return}
+ el('ttTable').innerHTML='<tr><th>Siku</th><th>Muda</th><th>Somo</th><th>Darasa</th></tr>'+(data||[]).map(t=>`<tr><td>${esc(t.day_of_week||'')}</td><td>${esc(t.period_time||'')}</td><td>${esc(t.subject||'')}</td><td>${esc(t.class_name||'')}</td></tr>`).join('');
+}
+async function loadFees(){
+ const [payRes,subRes,priceRes]=await Promise.all([
+  db.from('payments').select('*').eq('school_id',currentSchoolId).order('created_at',{ascending:false}).limit(100),
+  db.from('subscriptions').select('*').eq('school_id',currentSchoolId).order('created_at',{ascending:false}).limit(5),
+  db.from('plan_prices').select('id,plan_id,billing_period,duration_months,amount,currency').eq('is_active',true).order('amount')
+ ]);
+ const err=payRes.error||subRes.error||priceRes.error;if(err){message('paymentMsg','Imeshindwa kupakia malipo/bei: '+err.message,'err');return}
+ el('paymentPrice').innerHTML=(priceRes.data||[]).map(p=>{const label=p.billing_period==='multi_year'?((p.duration_months-3)/12)+' years + 3 bonus months':p.billing_period;return `<option value="${esc(p.id)}" data-amount="${esc(p.amount)}" data-currency="${esc(p.currency)}">${esc(p.plan_id)} – ${esc(label)} (${esc(p.amount)} ${esc(p.currency)})</option>`}).join('');
+ updatePaymentAmount();
+ el('subscriptionTable').innerHTML='<tr><th>Mpango</th><th>Status</th><th>Mwanzo</th><th>Mwisho</th><th>Muda uliobaki</th></tr>'+(subRes.data||[]).map(s=>{const expiry=s.status==='trial'?s.trial_ends_at:s.ends_at;const left=expiry?Math.max(0,Math.ceil((new Date(expiry).getTime()-Date.now())/86400000)):null;const label=s.status==='trial'?'Trial':s.status==='active'?'Active':s.status;return `<tr><td>${esc(s.plan_id||s.plan||'')}</td><td>${esc(label||'')}</td><td>${esc((s.starts_at||'').slice(0,10))}</td><td>${esc((expiry||'').slice(0,10)||'—')}</td><td>${left===null?'—':left+' days'}</td></tr>`}).join('');
+ el('feesTable').innerHTML='<tr><th>Tarehe</th><th>Kiasi</th><th>TxID</th><th>Njia</th><th>Status</th></tr>'+(payRes.data||[]).map(p=>`<tr><td>${esc((p.created_at||'').slice(0,10))}</td><td>${esc(p.amount??'')} ${esc(p.currency||'')}</td><td>${esc(p.transaction_id||'')}</td><td>${esc(p.payment_method||p.provider||'')}</td><td>${esc(p.status||'')}</td></tr>`).join('');
+}
+function updatePaymentAmount(){const opt=el('paymentPrice')?.selectedOptions?.[0];if(el('paymentAmount'))el('paymentAmount').value=opt?opt.dataset.amount+' '+opt.dataset.currency:''}
+async function submitPayment(){
+ const priceId=el('paymentPrice').value,tx=el('paymentTx').value.trim(),method=el('paymentMethod').value,opt=el('paymentPrice').selectedOptions[0];
+ if(!priceId||!tx){message('paymentMsg','Chagua mpango na weka TxID/reference ya malipo.','err');return}
+ const {error}=await db.from('payments').insert({school_id:currentSchoolId,amount:Number(opt.dataset.amount),currency:opt.dataset.currency,transaction_id:tx,provider:method,payment_method:method,status:'pending',metadata:{price_id:priceId}});
+ if(error){message('paymentMsg','Taarifa haijatumwa: '+error.message,'err');return}
+ el('paymentTx').value='';message('paymentMsg','Taarifa ya malipo imetumwa. Subiri uhakiki wa Super Admin.','ok');await loadFees();
+}
+function getParentReportLanguage(){
+ const code=String(currentSchool?.country_code||'').toUpperCase();
+ const groups={sw:['TZ','KE'],fr:['FR','SN','CI','CD','CG','CM','BJ','BF','BI','CF','TD','KM','DJ','GA','GN','GQ','MG','ML','NE','RW','SC','TG','VU','MC','BE','LU','CH'],ar:['SA','AE','QA','KW','BH','OM','YE','EG','JO','LB','SY','IQ','PS','LY','TN','DZ','MA','SD','MR','SO'],zh:['CN','TW','SG'],es:['ES','MX','AR','BO','CL','CO','CR','CU','DO','EC','SV','GQ','GT','HN','NI','PA','PY','PE','PR','UY','VE']};
+ for(const lang of Object.keys(groups))if(groups[lang].includes(code))return lang;
+ return 'en';
+}
+function parentReportText(lang){
+ const dict={en:{title:'Parent Report',schoolCode:'School Code',date:'Date',summary:'School Summary',students:'Total students registered'},sw:{title:'Ripoti ya Mzazi',schoolCode:'Namba ya Shule',date:'Tarehe',summary:'Muhtasari wa Shule',students:'Jumla ya wanafunzi waliosajiliwa'},fr:{title:'Rapport aux parents',schoolCode:'Code de l’établissement',date:'Date',summary:'Résumé de l’établissement',students:'Nombre total d’élèves inscrits'},ar:{title:'تقرير ولي الأمر',schoolCode:'رمز المدرسة',date:'التاريخ',summary:'ملخص المدرسة',students:'إجمالي الطلاب المسجلين'},zh:{title:'家长报告',schoolCode:'学校代码',date:'日期',summary:'学校概况',students:'注册学生总数'},es:{title:'Informe para padres',schoolCode:'Código de la escuela',date:'Fecha',summary:'Resumen escolar',students:'Total de estudiantes registrados'}};
+ return dict[lang]||dict.en;
+}
+async function buildReport(){
+ const lang=getParentReportLanguage(),t=parentReportText(lang);
+ const locale={sw:'sw-TZ',fr:'fr-FR',ar:'ar',zh:'zh-CN',es:'es-ES',en:'en-US'}[lang]||'en-US';
+ const date=new Intl.DateTimeFormat(locale,{year:'numeric',month:'long',day:'numeric'}).format(new Date());
+ const [studentsRes,resultsRes]=await Promise.all([
+  db.from('students').select('id,full_name,admission_number,class_name').eq('school_id',currentSchoolId).order('class_name').order('full_name'),
+  db.from('results').select('id,student_id,subject,exam_name,marks,grade,created_at').eq('school_id',currentSchoolId).order('created_at',{ascending:false})
+ ]);
+ const err=studentsRes.error||resultsRes.error;
+ if(err){el('reportArea').innerHTML='<div class="msg err">Ripoti haikuweza kupakiwa: '+esc(err.message)+'</div>';return;}
+ const byStudent=new Map();(resultsRes.data||[]).forEach(r=>{if(!byStudent.has(r.student_id))byStudent.set(r.student_id,[]);byStudent.get(r.student_id).push(r);});
+ el('reportArea').setAttribute('lang',lang);el('reportArea').setAttribute('dir',lang==='ar'?'rtl':'ltr');
+ const cards=(studentsRes.data||[]).map(st=>{
+  const rows=byStudent.get(st.id)||[],sum=rows.reduce((a,r)=>a+Number(r.marks||0),0),avg=rows.length?sum/rows.length:0;
+  return '<section class="card" style="break-after:page;page-break-after:always"><h2>'+esc(currentSchool?.school_name||'')+'</h2><h3>STUDENT REPORT CARD</h3><p>'+esc(t.date)+': '+esc(date)+'</p><p><strong>'+esc(st.full_name)+'</strong> · Admission: '+esc(st.admission_number||'—')+' · Class: '+esc(st.class_name||'—')+'</p><div class="tablewrap"><table><tr><th>Examination</th><th>Subject</th><th>Marks</th><th>Grade</th></tr>'+(rows.length?rows.map(r=>'<tr><td>'+esc(r.exam_name||'Assessment')+'</td><td>'+esc(r.subject)+'</td><td>'+esc(r.marks)+'</td><td><strong>'+esc(r.grade||gradeFromScore(Number(r.marks)))+'</strong></td></tr>').join(''):'<tr><td colspan="4">No results recorded.</td></tr>')+'</table></div><p><strong>Average:</strong> '+(rows.length?avg.toFixed(2):'—')+' / 100</p><p class="muted">Grade scale: A 75–100 · B 65–74 · C 45–64 · D 30–44 · F 0–29</p></section>';
+ }).join('');
+ el('reportArea').innerHTML='<div class="card"><h2>'+esc(currentSchool?.school_name||'')+'</h2><h3>'+esc(t.title)+'</h3><p>'+esc(t.schoolCode)+': '+esc(currentSchool?.school_code||'')+'</p><p>'+esc(t.date)+': '+esc(date)+'</p><p>Students: '+(studentsRes.data||[]).length+' · Result entries: '+(resultsRes.data||[]).length+'</p></div>'+(cards||'<div class="msg info">Hakuna wanafunzi wa kuonyesha kwenye ripoti.</div>');
+}
+async function exportBackup(){
+ try{
+  const names=['students','teachers','classes','marks','results','attendance','fees','student_fee_payments','timetable','school_module_records','settings'];
+  const backup={format:'ShuleProBackupV2',school_id:currentSchoolId,exported_at:new Date().toISOString(),tables:{}};
+  for(const table of names){const {data,error}=await db.from(table).select('*').eq('school_id',currentSchoolId);if(error)throw new Error(table+': '+error.message);backup.tables[table]=data||[];}
+  const blob=new Blob([JSON.stringify(backup,null,2)],{type:'application/json'}),url=URL.createObjectURL(blob),a=document.createElement('a');
+  a.href=url;a.download='shulepro-backup-'+currentSchoolId+'.json';a.click();URL.revokeObjectURL(url);message('backupMsg','Backup kamili imepakuliwa.','ok');
+ }catch(e){message('backupMsg','Backup haijakamilika: '+e.message,'err')}
+}
+async function importBackup(event){
+ const file=event.target.files?.[0];if(!file)return;
+ try{
+  const parsed=JSON.parse(await file.text());
+  if(!['ShuleProBackupV1','ShuleProBackupV2'].includes(parsed.format)||!parsed.tables?.students||!Array.isArray(parsed.tables.students))throw new Error('Muundo wa backup si sahihi.');
+  if(!confirm('Rejesha taarifa za shule kutoka backup? Data iliyopo haitafutwa; rekodi zenye ID zinazofanana zitarukwa.'))return;
+  const order=['students','teachers','classes','marks','results','attendance','fees','student_fee_payments','timetable','school_module_records'];
+  const allowed=new Set(order);
+  for(const table of order){
+   const source=parsed.tables[table];if(!Array.isArray(source)||!source.length)continue;
+   const rows=source.map(row=>{
+    const copy={...row,school_id:currentSchoolId};
+    if(table==='school_module_records')copy.created_by=currentUser&&currentUser.id;
+    return copy;
+   });
+   const {error}=await db.from(table).upsert(rows,{onConflict:'id',ignoreDuplicates:true});
+   if(error)throw new Error(table+': '+error.message);
+  }
+  const settingRows=Array.isArray(parsed.tables.settings)?parsed.tables.settings:[];
+  if(settingRows.length){const rows=settingRows.map(x=>({...x,school_id:currentSchoolId}));const {error}=await db.from('settings').upsert(rows,{onConflict:'school_id',ignoreDuplicates:true});if(error)throw new Error('settings: '+error.message);}
+  message('backupMsg','Backup imerejeshwa. Rekodi zilizokuwepo hazijafutwa; zinazofanana kwa ID zimerukwa.','ok');await loadStudents();await loadMarks();
+ }catch(e){message('backupMsg','Imeshindikana kurejesha backup: '+e.message,'err')}
+ finally{event.target.value=''}
+}
+function esc(v){return String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
+
+const LANG_TEXT = {
+  sw: {},
+  en: {
+    "School Management System":"School Management System","Karibu":"Welcome","Taarifa zinachujwa kwa shule uliyoingia kupitia School Membership na sera za Supabase RLS.":"Data is isolated by your school membership and Supabase RLS policies.","Wanafunzi waliopakiwa":"Loaded students","Alama":"Marks","Ratiba ya vipindi":"Lesson timetable","Hifadhi Backup JSON":"Download JSON backup","Rejesha wanafunzi kutoka JSON":"Restore students from JSON","Backup inajumuisha data ambayo akaunti yako inaruhusiwa kusoma. Hifadhi faili kwa usalama.":"Backup includes data your account is allowed to read. Store the file securely.","Tuma TxID baada ya kulipa. Malipo yatabaki PENDING mpaka Super Admin ayahakiki kwenye akaunti ya mtoa huduma. TxID pekee si uthibitisho wa kupokea fedha.":"Submit the TxID after payment. Payments remain PENDING until the Super Admin verifies them with the provider. A TxID alone is not proof of received funds.","Chapisha ukurasa huu na uchague Save as PDF kwenye kifaa chako.":"Print this page and choose Save as PDF on your device.","Kitendo hiki kitaweka present kwa wanafunzi wote wa shule kwa tarehe ya leo. Hakihakikishi mahudhurio ya mtu bila mwalimu kuyathibitisha.":"This marks all students present for today. A teacher must verify each student's actual attendance.","Chagua hali ya kila mwanafunzi. Unaweza kurekebisha mahudhurio ya siku hiyo kabla ya kuhifadhi.":"Choose each student's status and edit today's attendance before saving.","SHULEPRO – Super Admin":"SHULEPRO – Super Admin","Muhtasari wa mfumo mzima. Thibitisha malipo baada ya kuhakiki fedha kwenye chanzo husika.":"System overview. Verify funds with the provider before approving payments.","Shule zote":"All schools","Malipo yanayosubiri uthibitisho":"Payments awaiting verification","Subscriptions":"Subscriptions","Historia ya malipo":"Payment history","Subscription ya shule":"School subscription","Jina la shule":"School name","Jina kamili la msimamizi":"Administrator full name","Email ya msimamizi":"Administrator email","Namba ya simu (si lazima)":"Phone number (optional)","Nenosiri (angalau herufi 6)":"Password (at least 6 characters)","Lugha ya mwanzo":"Initial language","Sajili shule":"Register school","Ingia kwenye akaunti":"Sign in to your account",
+
+    "Toka":"Log out","Sajili Shule":"Register School","Ingia":"Log in","Sajili shule":"Register a school","Jina la shule":"School name","Jina kamili la msimamizi":"Administrator full name","Email ya msimamizi":"Administrator email","Namba ya simu (si lazima)":"Phone number (optional)","Nenosiri (angalau herufi 6)":"Password (at least 6 characters)","Nchi":"Country","Lugha ya mwanzo":"Initial language","Ingia kwenye akaunti":"Sign in","Dashboard":"Dashboard","Wanafunzi":"Students","Alama":"Marks","Mahudhurio":"Attendance","Ratiba":"Timetable","Ada & TxID":"Fees & TxID","Ripoti":"Reports","Backup & Lugha":"Backup & Language","Jina la mwanafunzi":"Student name","Darasa":"Class","Hifadhi mwanafunzi":"Save student","Mwanafunzi":"Student","Somo":"Subject","Hifadhi alama":"Save marks","Hifadhi mahudhurio ya leo":"Save today's attendance","Historia ya mahudhurio":"Attendance history","Tarehe":"Date","Hali":"Status","Chagua siku":"Choose day","Jumatatu":"Monday","Jumanne":"Tuesday","Jumatano":"Wednesday","Alhamisi":"Thursday","Ijumaa":"Friday","Jumamosi":"Saturday","Ongeza kipindi":"Add period","Mpango":"Plan","Kiasi":"Amount","Njia ya malipo":"Payment method","Tuma taarifa ya malipo":"Submit payment details","Subscription ya shule":"School subscription","Historia ya malipo":"Payment history","Chapisha / Hifadhi PDF":"Print / Save PDF","Lugha":"Language","Thibitisha":"Approve","Kataa":"Reject","Shule zote":"All schools","Malipo yanayosubiri uthibitisho":"Payments awaiting verification","Shule":"Schools","School Code":"School Code","Active":"Active","Inactive":"Inactive","Present":"Present","Absent":"Absent","Late":"Late"
+  },
+  fr: {
+    "School Management System":"Système de gestion scolaire","Karibu":"Bienvenue","Ratiba ya vipindi":"Emploi du temps des cours","Hifadhi Backup JSON":"Télécharger la sauvegarde JSON","Rejesha wanafunzi kutoka JSON":"Restaurer les élèves depuis JSON","Tuma TxID baada ya kulipa. Malipo yatabaki PENDING mpaka Super Admin ayahakiki kwenye akaunti ya mtoa huduma. TxID pekee si uthibitisho wa kupokea fedha.":"Envoyez le TxID après paiement. Le paiement reste en attente jusqu’à sa vérification par le Super Admin auprès du prestataire.","Kitendo hiki kitaweka present kwa wanafunzi wote wa shule kwa tarehe ya leo. Hakihakikishi mahudhurio ya mtu bila mwalimu kuyathibitisha.":"Cette action marque les élèves présents aujourd’hui. L’enseignant doit vérifier les présences réelles.","Chagua hali ya kila mwanafunzi. Unaweza kurekebisha mahudhurio ya siku hiyo kabla ya kuhifadhi.":"Choisissez le statut de chaque élève et modifiez les présences avant l’enregistrement.","SHULEPRO – Super Admin":"SHULEPRO – Super Admin","Muhtasari wa mfumo mzima. Thibitisha malipo baada ya kuhakiki fedha kwenye chanzo husika.":"Vue d’ensemble. Vérifiez les fonds auprès du prestataire avant d’approuver les paiements.","Shule zote":"Toutes les écoles","Malipo yanayosubiri uthibitisho":"Paiements en attente de vérification","Subscriptions":"Abonnements","Wanafunzi waliopakiwa":"Élèves chargés","Backup inajumuisha data ambayo akaunti yako inaruhusiwa kusoma. Hifadhi faili kwa usalama.":"La sauvegarde inclut les données accessibles à votre compte. Conservez le fichier en sécurité.","Taarifa zinachujwa kwa shule uliyoingia kupitia School Membership na sera za Supabase RLS.":"Les données sont isolées selon l’adhésion à l’école et les règles RLS de Supabase.",
+
+    "Toka":"Déconnexion","Sajili Shule":"Inscrire une école","Ingia":"Connexion","Sajili shule":"Inscrire une école","Jina la shule":"Nom de l’école","Jina kamili la msimamizi":"Nom complet de l’administrateur","Email ya msimamizi":"E-mail de l’administrateur","Namba ya simu (si lazima)":"Téléphone (facultatif)","Nenosiri (angalau herufi 6)":"Mot de passe (6 caractères minimum)","Nchi":"Pays","Lugha ya mwanzo":"Langue initiale","Ingia kwenye akaunti":"Se connecter","Wanafunzi":"Élèves","Alama":"Notes","Mahudhurio":"Présences","Ratiba":"Emploi du temps","Ada & TxID":"Frais et TxID","Ripoti":"Rapports","Backup & Lugha":"Sauvegarde et langue","Jina la mwanafunzi":"Nom de l’élève","Darasa":"Classe","Hifadhi mwanafunzi":"Enregistrer l’élève","Mwanafunzi":"Élève","Somo":"Matière","Hifadhi alama":"Enregistrer les notes","Hifadhi mahudhurio ya leo":"Enregistrer les présences du jour","Historia ya mahudhurio":"Historique des présences","Tarehe":"Date","Hali":"Statut","Chagua siku":"Choisir le jour","Jumatatu":"Lundi","Jumanne":"Mardi","Jumatano":"Mercredi","Alhamisi":"Jeudi","Ijumaa":"Vendredi","Jumamosi":"Samedi","Ongeza kipindi":"Ajouter un cours","Mpango":"Forfait","Kiasi":"Montant","Njia ya malipo":"Mode de paiement","Tuma taarifa ya malipo":"Envoyer les informations de paiement","Subscription ya shule":"Abonnement de l’école","Historia ya malipo":"Historique des paiements","Chapisha / Hifadhi PDF":"Imprimer / Enregistrer PDF","Lugha":"Langue","Thibitisha":"Approuver","Kataa":"Rejeter"
+  },
+  ar: {
+    "School Management System":"نظام إدارة المدارس","Karibu":"مرحباً","Ratiba ya vipindi":"جدول الحصص","Hifadhi Backup JSON":"تنزيل نسخة JSON احتياطية","Rejesha wanafunzi kutoka JSON":"استعادة الطلاب من JSON","Tuma TxID baada ya kulipa. Malipo yatabaki PENDING mpaka Super Admin ayahakiki kwenye akaunti ya mtoa huduma. TxID pekee si uthibitisho wa kupokea fedha.":"أرسل رقم المعاملة بعد الدفع. تبقى الدفعة معلقة حتى يتحقق المسؤول الأعلى من وصول الأموال لدى مزود الخدمة.","Kitendo hiki kitaweka present kwa wanafunzi wote wa shule kwa tarehe ya leo. Hakihakikishi mahudhurio ya mtu bila mwalimu kuyathibitisha.":"يحدد هذا الإجراء حضور جميع الطلاب لهذا اليوم. يجب على المعلم التحقق من الحضور الفعلي.","Chagua hali ya kila mwanafunzi. Unaweza kurekebisha mahudhurio ya siku hiyo kabla ya kuhifadhi.":"اختر حالة كل طالب ويمكنك تعديل الحضور قبل الحفظ.","SHULEPRO – Super Admin":"SHULEPRO – المسؤول الأعلى","Muhtasari wa mfumo mzima. Thibitisha malipo baada ya kuhakiki fedha kwenye chanzo husika.":"نظرة عامة على النظام. تحقق من وصول الأموال لدى مزود الخدمة قبل اعتماد الدفع.","Shule zote":"كل المدارس","Malipo yanayosubiri uthibitisho":"المدفوعات بانتظار التحقق","Subscriptions":"الاشتراكات","Wanafunzi waliopakiwa":"الطلاب المحملون","Backup inajumuisha data ambayo akaunti yako inaruhusiwa kusoma. Hifadhi faili kwa usalama.":"تتضمن النسخة الاحتياطية البيانات المسموح لحسابك بقراءتها. احتفظ بالملف بأمان.","Taarifa zinachujwa kwa shule uliyoingia kupitia School Membership na sera za Supabase RLS.":"تُعزل البيانات حسب عضوية المدرسة وسياسات Supabase RLS.",
+
+    "Toka":"تسجيل الخروج","Sajili Shule":"تسجيل مدرسة","Ingia":"دخول","Sajili shule":"تسجيل مدرسة","Jina la shule":"اسم المدرسة","Jina kamili la msimamizi":"الاسم الكامل للمسؤول","Email ya msimamizi":"البريد الإلكتروني للمسؤول","Namba ya simu (si lazima)":"رقم الهاتف (اختياري)","Nenosiri (angalau herufi 6)":"كلمة المرور (6 أحرف على الأقل)","Nchi":"الدولة","Lugha ya mwanzo":"اللغة الأولية","Ingia kwenye akaunti":"تسجيل الدخول","Wanafunzi":"الطلاب","Alama":"الدرجات","Mahudhurio":"الحضور","Ratiba":"الجدول","Ada & TxID":"الرسوم ورقم المعاملة","Ripoti":"التقارير","Backup & Lugha":"النسخ الاحتياطي واللغة","Jina la mwanafunzi":"اسم الطالب","Darasa":"الفصل","Hifadhi mwanafunzi":"حفظ الطالب","Mwanafunzi":"الطالب","Somo":"المادة","Hifadhi alama":"حفظ الدرجات","Hifadhi mahudhurio ya leo":"حفظ حضور اليوم","Historia ya mahudhurio":"سجل الحضور","Tarehe":"التاريخ","Hali":"الحالة","Chagua siku":"اختر اليوم","Jumatatu":"الاثنين","Jumanne":"الثلاثاء","Jumatano":"الأربعاء","Alhamisi":"الخميس","Ijumaa":"الجمعة","Jumamosi":"السبت","Ongeza kipindi":"إضافة حصة","Mpango":"الخطة","Kiasi":"المبلغ","Njia ya malipo":"طريقة الدفع","Tuma taarifa ya malipo":"إرسال معلومات الدفع","Subscription ya shule":"اشتراك المدرسة","Historia ya malipo":"سجل المدفوعات","Chapisha / Hifadhi PDF":"طباعة / حفظ PDF","Lugha":"اللغة","Thibitisha":"تأكيد","Kataa":"رفض"
+  },
+  zh: {
+    "School Management System":"学校管理系统","Karibu":"欢迎","Ratiba ya vipindi":"课程时间表","Hifadhi Backup JSON":"下载JSON备份","Rejesha wanafunzi kutoka JSON":"从JSON恢复学生","Tuma TxID baada ya kulipa. Malipo yatabaki PENDING mpaka Super Admin ayahakiki kwenye akaunti ya mtoa huduma. TxID pekee si uthibitisho wa kupokea fedha.":"付款后提交交易编号。超级管理员向支付服务商核实到账前，付款将保持待处理状态。交易编号本身不代表已收款。","Kitendo hiki kitaweka present kwa wanafunzi wote wa shule kwa tarehe ya leo. Hakihakikishi mahudhurio ya mtu bila mwalimu kuyathibitisha.":"此操作会将今天的所有学生标记为出勤，教师仍需核实实际出勤情况。","Chagua hali ya kila mwanafunzi. Unaweza kurekebisha mahudhurio ya siku hiyo kabla ya kuhifadhi.":"选择每位学生的出勤状态，并可在保存前修改。","SHULEPRO – Super Admin":"SHULEPRO – 超级管理员","Muhtasari wa mfumo mzima. Thibitisha malipo baada ya kuhakiki fedha kwenye chanzo husika.":"系统总览。请先向支付服务商核实到账，再批准付款。","Shule zote":"所有学校","Malipo yanayosubiri uthibitisho":"待核实付款","Subscriptions":"订阅","Wanafunzi waliopakiwa":"已加载学生","Backup inajumuisha data ambayo akaunti yako inaruhusiwa kusoma. Hifadhi faili kwa usalama.":"备份仅包含当前账户有权读取的数据，请妥善保存文件。","Taarifa zinachujwa kwa shule uliyoingia kupitia School Membership na sera za Supabase RLS.":"数据根据学校成员关系和 Supabase RLS 策略隔离。",
+
+    "Toka":"退出","Sajili Shule":"注册学校","Ingia":"登录","Sajili shule":"注册学校","Jina la shule":"学校名称","Jina kamili la msimamizi":"管理员全名","Email ya msimamizi":"管理员邮箱","Namba ya simu (si lazima)":"电话号码（可选）","Nenosiri (angalau herufi 6)":"密码（至少6个字符）","Nchi":"国家","Lugha ya mwanzo":"初始语言","Ingia kwenye akaunti":"登录账户","Wanafunzi":"学生","Alama":"成绩","Mahudhurio":"出勤","Ratiba":"课程表","Ada & TxID":"费用与交易编号","Ripoti":"报告","Backup & Lugha":"备份与语言","Jina la mwanafunzi":"学生姓名","Darasa":"班级","Hifadhi mwanafunzi":"保存学生","Mwanafunzi":"学生","Somo":"科目","Hifadhi alama":"保存成绩","Hifadhi mahudhurio ya leo":"保存今日出勤","Historia ya mahudhurio":"出勤记录","Tarehe":"日期","Hali":"状态","Chagua siku":"选择日期","Jumatatu":"星期一","Jumanne":"星期二","Jumatano":"星期三","Alhamisi":"星期四","Ijumaa":"星期五","Jumamosi":"星期六","Ongeza kipindi":"添加课程","Mpango":"套餐","Kiasi":"金额","Njia ya malipo":"付款方式","Tuma taarifa ya malipo":"提交付款信息","Subscription ya shule":"学校订阅","Historia ya malipo":"付款记录","Chapisha / Hifadhi PDF":"打印 / 保存PDF","Lugha":"语言","Thibitisha":"批准","Kataa":"拒绝"
+  },
+  es: {
+    "Toka":"Cerrar sesión","Sajili Shule":"Registrar escuela","Ingia":"Iniciar sesión","Sajili shule":"Registrar escuela","Jina la shule":"Nombre de la escuela","Jina kamili la msimamizi":"Nombre completo del administrador","Email ya msimamizi":"Correo del administrador","Namba ya simu (si lazima)":"Teléfono (opcional)","Nenosiri (angalau herufi 6)":"Contraseña (mínimo 6 caracteres)","Nchi":"País","Lugha ya mwanzo":"Idioma inicial","Ingia kwenye akaunti":"Iniciar sesión","Wanafunzi":"Estudiantes","Alama":"Calificaciones","Mahudhurio":"Asistencia","Ratiba":"Horario","Ada & TxID":"Tarifas y TxID","Ripoti":"Informes","Backup & Lugha":"Copia de seguridad e idioma","Jina la mwanafunzi":"Nombre del estudiante","Darasa":"Clase","Hifadhi mwanafunzi":"Guardar estudiante","Mwanafunzi":"Estudiante","Somo":"Asignatura","Hifadhi alama":"Guardar calificaciones","Hifadhi mahudhurio ya leo":"Guardar asistencia de hoy","Historia ya mahudhurio":"Historial de asistencia","Tarehe":"Fecha","Hali":"Estado","Chagua siku":"Elegir día","Jumatatu":"Lunes","Jumanne":"Martes","Jumatano":"Miércoles","Alhamisi":"Jueves","Ijumaa":"Viernes","Jumamosi":"Sábado","Ongeza kipindi":"Añadir clase","Mpango":"Plan","Kiasi":"Importe","Njia ya malipo":"Método de pago","Tuma taarifa ya malipo":"Enviar datos de pago","Subscription ya shule":"Suscripción escolar","Historia ya malipo":"Historial de pagos","Chapisha / Hifadhi PDF":"Imprimir / Guardar PDF","Lugha":"Idioma","Thibitisha":"Aprobar","Kataa":"Rechazar"
+  }
+};
+
+// Extended language coverage. English is the default interface language.
+Object.assign(LANG_TEXT.en,{"Karibu":"Welcome","Shule":"School","Jina la Shule":"School name","Jina kamili":"Full name","Nenosiri":"Password","Sajili Shule":"Register School","Sajili shule":"Register a school","Ingia":"Log in","Ingia kwenye akaunti":"Sign in to your account","Jina la shule":"School name","Jina kamili la msimamizi":"Administrator full name","Email ya msimamizi":"Administrator email","Namba ya simu (si lazima)":"Phone number (optional)","Nenosiri (angalau herufi 6)":"Password (at least 6 characters)","Nchi":"Country","Lugha ya mwanzo":"Default language","Wanafunzi":"Students","Mahudhurio":"Attendance","Ratiba":"Timetable","Ripoti":"Reports","Backup & Lugha":"Backup & Language","Chagua kifurushi cha ShulePro":"Choose a ShulePro package","Chagua kifurushi unachopanga kutumia. Utapata siku 14 za majaribio bila malipo kabla ya kuhitaji kufanya malipo. Hakuna fedha zitakazokatwa kwa kuchagua kifurushi.":"Choose the package you plan to use. You will get a 14-day free trial before payment is required. Selecting a package will not charge you.","Siku 14 za majaribio bila malipo":"14-day free trial","Chagua kifurushi hiki":"Choose this package","Tunawasha siku 14 za majaribio...":"Starting your 14-day trial...","Jaza jina la shule, jina kamili, email na nenosiri lenye angalau herufi 6.":"Enter the school name, full name, email, and a password of at least 6 characters.","Inatengeneza akaunti...":"Creating account...","Akaunti imetengenezwa. Fungua email yako uthibitishe akaunti, kisha rudi hapa na uingie. Usajili wa shule utakamilika baada ya kuingia.":"Your account has been created. Open your email to verify it, then return here and sign in. School registration will be completed after sign-in.","Usajili umeshindikana:":"Registration failed:","Imeshindikana kufikia seva ya Supabase. Hakikisha intaneti ipo, kisha fungua upya ukurasa.":"Could not reach the Supabase server. Check your internet connection and refresh the page.","Weka email na nenosiri.":"Enter your email and password.","Inakagua akaunti...":"Checking account...","Imeshindikana kuingia:":"Sign-in failed:","Umeingia, lakini usajili wa shule haujakamilika:":"You are signed in, but school registration is incomplete:","Akaunti haina uanachama wa shule. Hakikisha usajili wa shule umekamilika.":"This account is not linked to a school. Make sure school registration is complete.","Imeshindwa kufungua shule:":"Could not open school:","Hifadhi mwanafunzi":"Save student","Mwanafunzi":"Student","Somo":"Subject","Hisabati":"Mathematics","Hifadhi alama":"Save marks","Hifadhi mahudhurio ya leo":"Save today's attendance","Historia ya mahudhurio":"Attendance history","Tarehe":"Date","Hali":"Status","Chagua siku":"Choose a day","Jumatatu":"Monday","Jumanne":"Tuesday","Jumatano":"Wednesday","Alhamisi":"Thursday","Ijumaa":"Friday","Jumamosi":"Saturday","Ongeza kipindi":"Add period","Mpango":"Plan","Kiasi":"Amount","Njia ya malipo":"Payment method","Tuma taarifa ya malipo":"Submit payment details","Ada ya ShulePro na taarifa za malipo":"ShulePro fees and payment information","TxID / Reference":"Transaction ID / Reference","Subscription ya shule":"School subscription","Historia ya malipo":"Payment history","Chapisha / Hifadhi PDF":"Print / Save PDF","Chapisha ukurasa huu na uchague Save as PDF kwenye kifaa chako.":"Print this page and select Save as PDF on your device.","Backup inajumuisha data ambayo akaunti yako inaruhusiwa kusoma. Hifadhi faili kwa usalama.":"The backup contains data your account is authorized to read. Store the file securely.","Pakua Backup JSON":"Download JSON backup","Rejesha wanafunzi kutoka JSON":"Restore students from JSON","Weka jina la mwanafunzi.":"Enter the student's name.","Mwanafunzi amehifadhiwa.":"Student saved.","Haijahifadhiwa:":"Could not save:","Imeshindwa kusoma wanafunzi:":"Could not load students:","Chagua mwanafunzi, weka somo na alama 0 hadi 100.":"Select a student, enter a subject, and enter a score from 0 to 100.","Alama zimehifadhiwa.":"Marks saved.","Alama hazijahifadhiwa:":"Could not save marks:","Hakuna wanafunzi wa kuhifadhi.":"There are no students to save.","Mahudhurio ya leo yamehifadhiwa.":"Today's attendance has been saved.","Mahudhurio hayajahifadhiwa:":"Could not save attendance:","Chagua siku sahihi na jaza muda, somo na darasa.":"Select a valid day and enter the time, subject, and class.","Kipindi kimeongezwa.":"Period added.","Ratiba haijahifadhiwa.":"Could not save timetable.","Imeshindwa kupakia mahudhurio:":"Could not load attendance:","Imeshindwa kupakia malipo/bei:":"Could not load payments/prices:","Chagua mpango na weka TxID/reference ya malipo.":"Choose a plan and enter the payment transaction ID/reference.","Taarifa ya malipo imetumwa. Subiri uhakiki wa Super Admin.":"Payment details submitted. Wait for Super Admin verification.","Taarifa haijatumwa:":"Could not submit payment details:","Backup imepakuliwa.":"Backup downloaded.","Backup haijakamilika:":"Backup failed:","Imeshindikana kurejesha backup:":"Could not restore backup:","Wanafunzi wamerejeshwa. Data ya shule nyingine haijahamishwa.":"Students restored. Data from other schools was not imported.","Thibitisha":"Approve","Kataa":"Reject","Muhtasari":"Summary","Idadi ya wanafunzi waliopakiwa:":"Number of students loaded:","Malipo yamethibitishwa; subscription imewashwa.":"Payment approved; subscription activated.","Malipo yamekataliwa.":"Payment rejected.","Kitendo kimeshindikana:":"Action failed:","Umethibitisha fedha zimeingia kwenye akaunti ya malipo?":"Have you confirmed that the funds have arrived in the payment account?","Sababu ya kukataa:":"Reason for rejection:","Lugha imebadilishwa.":"Language changed."});
+Object.assign(LANG_TEXT.fr,{"Jina la shule":"Nom de l’école","Jina kamili la msimamizi":"Nom complet de l’administrateur","Namba ya simu (si lazima)":"Téléphone (facultatif)","Nenosiri (angalau herufi 6)":"Mot de passe (6 caractères minimum)","Nchi":"Pays","Lugha ya mwanzo":"Langue par défaut","Chagua kifurushi cha ShulePro":"Choisir une offre ShulePro","Wanafunzi":"Élèves","Mahudhurio":"Présences","Ratiba":"Emploi du temps","Ripoti":"Rapports","Backup & Lugha":"Sauvegarde et langue","Hifadhi mwanafunzi":"Enregistrer l’élève","Hifadhi alama":"Enregistrer les notes","Hifadhi mahudhurio ya leo":"Enregistrer les présences du jour","Tuma taarifa ya malipo":"Envoyer les informations de paiement","Chapisha / Hifadhi PDF":"Imprimer / Enregistrer PDF","Thibitisha":"Approuver","Kataa":"Rejeter"});
+Object.assign(LANG_TEXT.ar,{"Jina la shule":"اسم المدرسة","Jina kamili la msimamizi":"الاسم الكامل للمسؤول","Namba ya simu (si lazima)":"رقم الهاتف (اختياري)","Nenosiri (angalau herufi 6)":"كلمة المرور (6 أحرف على الأقل)","Nchi":"الدولة","Lugha ya mwanzo":"اللغة الافتراضية","Chagua kifurushi cha ShulePro":"اختر باقة ShulePro","Wanafunzi":"الطلاب","Mahudhurio":"الحضور","Ratiba":"الجدول","Ripoti":"التقارير","Backup & Lugha":"النسخ الاحتياطي واللغة","Hifadhi mwanafunzi":"حفظ الطالب","Hifadhi alama":"حفظ الدرجات","Hifadhi mahudhurio ya leo":"حفظ حضور اليوم","Tuma taarifa ya malipo":"إرسال معلومات الدفع","Chapisha / Hifadhi PDF":"طباعة / حفظ PDF","Thibitisha":"اعتماد","Kataa":"رفض"});
+Object.assign(LANG_TEXT.zh,{"Jina la shule":"学校名称","Jina kamili la msimamizi":"管理员全名","Namba ya simu (si lazima)":"电话号码（可选）","Nenosiri (angalau herufi 6)":"密码（至少6个字符）","Nchi":"国家","Lugha ya mwanzo":"默认语言","Chagua kifurushi cha ShulePro":"选择 ShulePro 套餐","Wanafunzi":"学生","Mahudhurio":"出勤","Ratiba":"课程表","Ripoti":"报告","Backup & Lugha":"备份与语言","Hifadhi mwanafunzi":"保存学生","Hifadhi alama":"保存成绩","Hifadhi mahudhurio ya leo":"保存今日出勤","Tuma taarifa ya malipo":"提交付款信息","Chapisha / Hifadhi PDF":"打印 / 保存PDF","Thibitisha":"批准","Kataa":"拒绝"});
+Object.assign(LANG_TEXT.es,{"Jina la shule":"Nombre de la escuela","Jina kamili la msimamizi":"Nombre completo del administrador","Namba ya simu (si lazima)":"Teléfono (opcional)","Nenosiri (angalau herufi 6)":"Contraseña (mínimo 6 caracteres)","Nchi":"País","Lugha ya mwanzo":"Idioma predeterminado","Chagua kifurushi cha ShulePro":"Elegir un paquete de ShulePro","Wanafunzi":"Estudiantes","Mahudhurio":"Asistencia","Ratiba":"Horario","Ripoti":"Informes","Backup & Lugha":"Copia de seguridad e idioma","Hifadhi mwanafunzi":"Guardar estudiante","Hifadhi alama":"Guardar calificaciones","Hifadhi mahudhurio ya leo":"Guardar asistencia de hoy","Tuma taarifa ya malipo":"Enviar datos de pago","Chapisha / Hifadhi PDF":"Imprimir / Guardar PDF","Thibitisha":"Aprobar","Kataa":"Rechazar"});
+
+
+/* Global workspace language coverage. The DOM observer also translates dynamically-rendered modules. */
+Object.assign(LANG_TEXT.sw,{
+ "School Management System":"Mfumo wa Usimamizi wa Shule","GLOBAL SCHOOL MANAGEMENT":"USIMAMIZI WA SHULE WA KIMATAIFA","School workspace":"Eneo la kazi la shule","School Dashboard":"Dashibodi ya Shule","Overview":"Muhtasari","Core modules":"Moduli kuu","Search modules...":"Tafuta moduli...","School Administration":"Usimamizi wa shule","Students & Admissions":"Wanafunzi na udahili","Teachers & Human Resources":"Walimu na rasilimali watu","Academic Management":"Usimamizi wa taaluma","Attendance & Scheduling":"Mahudhurio na ratiba","Finance & Accounts":"Fedha na hesabu","Parent & Student Portals":"Milango ya wazazi na wanafunzi","Communication & Notifications":"Mawasiliano na taarifa","Library Management":"Usimamizi wa maktaba","Hostel & Boarding":"Bweni na malazi","Transport Management":"Usimamizi wa usafiri","Inventory & Assets":"Mali na vifaa","Events, Discipline & Welfare":"Matukio, nidhamu na ustawi","Settings, Security & Data":"Mipangilio, usalama na data","School Profile":"Wasifu wa shule","Academic Years & Terms":"Miaka na mihula ya masomo","Departments & Subjects":"Idara na masomo","Classes & Streams":"Madarasa na mikondo","Policies & Documents":"Sera na nyaraka","Students":"Wanafunzi","Teachers":"Walimu","Admissions & Enrolment":"Udahili na uandikishaji","Parents & Guardians":"Wazazi na walezi","Student Welfare & Discipline":"Ustawi na nidhamu ya wanafunzi","Staff Directory & Roles":"Orodha ya wafanyakazi na majukumu","Teacher Workload & Appraisal":"Mzigo wa kazi na tathmini ya walimu","Leave & Staff Requests":"Likizo na maombi ya wafanyakazi","Payroll & Benefits":"Mishahara na marupurupu","Curriculum & Education Levels":"Mitaala na ngazi za elimu","Lesson Plans & Topic Coverage":"Maandalio ya somo na mada zilizofundishwa","Examination Administration":"Usimamizi wa mitihani","Learning Support & Interventions":"Msaada na uimarishaji wa ujifunzaji","Attendance Follow-ups":"Ufuatiliaji wa mahudhurio","Student Fees & Debt Reports":"Ada za wanafunzi na ripoti za madeni","Fee Structures & Invoices":"Miundo ya ada na ankara","Receipts & Other Income":"Risiti na mapato mengine","Expenses & Procurement":"Matumizi na manunuzi","Budgets & Financial Reports":"Bajeti na ripoti za fedha","Announcements & Notices":"Matangazo na taarifa","Library Catalogue":"Orodha ya vitabu vya maktaba","Book Loans & Returns":"Ukopeshaji na urejeshaji wa vitabu","Vehicles & Drivers":"Magari na madereva","Routes & Stops":"Njia na vituo","Stock & Inventory":"Stoo na hesabu ya vifaa","School Assets & Maintenance":"Mali za shule na matengenezo","User Access Register":"Orodha ya ruhusa za watumiaji","Operational Audit Notes":"Kumbukumbu za ukaguzi wa shughuli","Backup & Recovery Log":"Kumbukumbu za nakala rudufu na urejeshaji","AI Insights & Recommendations":"Uchambuzi na mapendekezo ya AI","AI Report Requests":"Maombi ya ripoti za AI","Save school setup":"Hifadhi mipangilio ya shule","School setup saved successfully.":"Mipangilio ya shule imehifadhiwa kikamilifu."
+});
+Object.assign(LANG_TEXT.en,{
+ "GLOBAL SCHOOL MANAGEMENT":"GLOBAL SCHOOL MANAGEMENT","School workspace":"School workspace","School Dashboard":"School Dashboard","Overview":"Overview","Core modules":"Core modules","Search modules...":"Search modules...","School Administration":"School Administration","Students & Admissions":"Students & Admissions","Teachers & Human Resources":"Teachers & Human Resources","Academic Management":"Academic Management","Attendance & Scheduling":"Attendance & Scheduling","Finance & Accounts":"Finance & Accounts","Parent & Student Portals":"Parent & Student Portals","Communication & Notifications":"Communication & Notifications","Library Management":"Library Management","Hostel & Boarding":"Hostel & Boarding","Transport Management":"Transport Management","Inventory & Assets":"Inventory & Assets","Events, Discipline & Welfare":"Events, Discipline & Welfare","Settings, Security & Data":"Settings, Security & Data","School Profile":"School Profile","Academic Years & Terms":"Academic Years & Terms","Departments & Subjects":"Departments & Subjects","Classes & Streams":"Classes & Streams","Policies & Documents":"Policies & Documents","School setup saved successfully.":"School setup saved successfully."
+});
+Object.assign(LANG_TEXT.fr,{
+ "School workspace":"Espace de travail de l’école","School Dashboard":"Tableau de bord de l’école","Overview":"Vue d’ensemble","Core modules":"Modules principaux","Search modules...":"Rechercher des modules...","School Administration":"Administration scolaire","Students & Admissions":"Élèves et admissions","Teachers & Human Resources":"Enseignants et ressources humaines","Academic Management":"Gestion académique","Attendance & Scheduling":"Présences et emplois du temps","Finance & Accounts":"Finances et comptabilité","Parent & Student Portals":"Portails des parents et des élèves","Communication & Notifications":"Communication et notifications","Library Management":"Gestion de la bibliothèque","Hostel & Boarding":"Internat et hébergement","Transport Management":"Gestion du transport","Inventory & Assets":"Stocks et équipements","Events, Discipline & Welfare":"Événements, discipline et bien-être","Settings, Security & Data":"Paramètres, sécurité et données","School Profile":"Profil de l’école","Academic Years & Terms":"Années et périodes scolaires","Departments & Subjects":"Départements et matières","Classes & Streams":"Classes et sections","Policies & Documents":"Politiques et documents","School setup saved successfully.":"Configuration de l’école enregistrée."
+});
+Object.assign(LANG_TEXT.ar,{
+ "School workspace":"مساحة عمل المدرسة","School Dashboard":"لوحة تحكم المدرسة","Overview":"نظرة عامة","Core modules":"الوحدات الأساسية","Search modules...":"البحث في الوحدات...","School Administration":"إدارة المدرسة","Students & Admissions":"الطلاب والقبول","Teachers & Human Resources":"المعلمون والموارد البشرية","Academic Management":"الإدارة الأكاديمية","Attendance & Scheduling":"الحضور والجداول","Finance & Accounts":"المالية والحسابات","Parent & Student Portals":"بوابات أولياء الأمور والطلاب","Communication & Notifications":"الاتصالات والإشعارات","Library Management":"إدارة المكتبة","Hostel & Boarding":"السكن الداخلي والإقامة","Transport Management":"إدارة النقل","Inventory & Assets":"المخزون والأصول","Events, Discipline & Welfare":"الفعاليات والانضباط والرعاية","Settings, Security & Data":"الإعدادات والأمان والبيانات","School Profile":"ملف المدرسة","Academic Years & Terms":"السنوات والفصول الدراسية","Departments & Subjects":"الأقسام والمواد","Classes & Streams":"الفصول والشُعب","Policies & Documents":"السياسات والمستندات","School setup saved successfully.":"تم حفظ إعدادات المدرسة بنجاح."
+});
+Object.assign(LANG_TEXT.zh,{
+ "School workspace":"学校工作区","School Dashboard":"学校仪表板","Overview":"概览","Core modules":"核心模块","Search modules...":"搜索模块...","School Administration":"学校管理","Students & Admissions":"学生与招生","Teachers & Human Resources":"教师与人力资源","Academic Management":"教学管理","Attendance & Scheduling":"考勤与课程安排","Finance & Accounts":"财务与账目","Parent & Student Portals":"家长与学生门户","Communication & Notifications":"沟通与通知","Library Management":"图书馆管理","Hostel & Boarding":"宿舍管理","Transport Management":"交通管理","Inventory & Assets":"库存与资产","Events, Discipline & Welfare":"活动、纪律与学生关怀","Settings, Security & Data":"设置、安全与数据","School Profile":"学校资料","Academic Years & Terms":"学年与学期","Departments & Subjects":"部门与科目","Classes & Streams":"班级与分班","Policies & Documents":"政策与文件","School setup saved successfully.":"学校设置已成功保存。"
+});
+Object.assign(LANG_TEXT.es,{
+ "School workspace":"Espacio de trabajo escolar","School Dashboard":"Panel de la escuela","Overview":"Resumen","Core modules":"Módulos principales","Search modules...":"Buscar módulos...","School Administration":"Administración escolar","Students & Admissions":"Estudiantes y admisiones","Teachers & Human Resources":"Docentes y recursos humanos","Academic Management":"Gestión académica","Attendance & Scheduling":"Asistencia y horarios","Finance & Accounts":"Finanzas y contabilidad","Parent & Student Portals":"Portales de padres y estudiantes","Communication & Notifications":"Comunicación y notificaciones","Library Management":"Gestión de biblioteca","Hostel & Boarding":"Internado y alojamiento","Transport Management":"Gestión del transporte","Inventory & Assets":"Inventario y activos","Events, Discipline & Welfare":"Eventos, disciplina y bienestar","Settings, Security & Data":"Configuración, seguridad y datos","School Profile":"Perfil de la escuela","Academic Years & Terms":"Años y períodos académicos","Departments & Subjects":"Departamentos y asignaturas","Classes & Streams":"Clases y secciones","Policies & Documents":"Políticas y documentos","School setup saved successfully.":"La configuración de la escuela se guardó correctamente."
+});
+
+
+/* Workspace and Super Admin terminology: English source -> Swahili/French/Arabic/Chinese/Spanish. */
+const SP_WORKSPACE_I18N={
+"School workspace":["Eneo la kazi la shule","Espace de travail scolaire","مساحة عمل المدرسة","学校工作区","Espacio de trabajo escolar"],
+"School Dashboard":["Dashibodi ya shule","Tableau de bord de l’école","لوحة تحكم المدرسة","学校仪表板","Panel de la escuela"],
+"A unified view of your school operations.":["Muhtasari wa shughuli za shule yako.","Une vue unifiée des activités de votre école.","عرض موحد لعمليات مدرستك.","学校运营统一视图。","Una vista unificada de las operaciones escolares."],
+"Search modules...":["Tafuta moduli...","Rechercher des modules...","ابحث عن الوحدات...","搜索模块...","Buscar módulos..."],
+"Overview":["Muhtasari","Vue d’ensemble","نظرة عامة","概览","Resumen"],
+"Core modules":["Moduli kuu","Modules principaux","الوحدات الأساسية","核心模块","Módulos principales"],
+"School Administration":["Usimamizi wa shule","Administration scolaire","إدارة المدرسة","学校管理","Administración escolar"],
+"Students & Admissions":["Wanafunzi na udahili","Élèves et admissions","الطلاب والقبول","学生与招生","Estudiantes y admisiones"],
+"Teachers & Human Resources":["Walimu na rasilimali watu","Enseignants et ressources humaines","المعلمون والموارد البشرية","教师与人力资源","Docentes y recursos humanos"],
+"Academic Management":["Usimamizi wa taaluma","Gestion académique","الإدارة الأكاديمية","教学管理","Gestión académica"],
+"Attendance & Scheduling":["Mahudhurio na ratiba","Présences et emplois du temps","الحضور والجداول","考勤与课程安排","Asistencia y horarios"],
+"Finance & Accounts":["Fedha na hesabu","Finances et comptabilité","المالية والحسابات","财务与账目","Finanzas y contabilidad"],
+"Parent & Student Portals":["Milango ya wazazi na wanafunzi","Portails parents et élèves","بوابات أولياء الأمور والطلاب","家长与学生门户","Portales de padres y estudiantes"],
+"Communication & Notifications":["Mawasiliano na taarifa","Communication et notifications","الاتصالات والإشعارات","沟通与通知","Comunicación y notificaciones"],
+"Library Management":["Usimamizi wa maktaba","Gestion de la bibliothèque","إدارة المكتبة","图书馆管理","Gestión de biblioteca"],
+"Hostel & Boarding":["Bweni na malazi","Internat et hébergement","السكن الداخلي والإقامة","宿舍管理","Internado y alojamiento"],
+"Transport Management":["Usimamizi wa usafiri","Gestion du transport","إدارة النقل","交通管理","Gestión del transporte"],
+"Inventory & Assets":["Stoo na mali","Stocks et équipements","المخزون والأصول","库存与资产","Inventario y activos"],
+"Events, Discipline & Welfare":["Matukio, nidhamu na ustawi","Événements, discipline et bien-être","الفعاليات والانضباط والرعاية","活动、纪律与学生关怀","Eventos, disciplina y bienestar"],
+"Settings, Security & Data":["Mipangilio, usalama na data","Paramètres, sécurité et données","الإعدادات والأمان والبيانات","设置、安全与数据","Configuración, seguridad y datos"],
+"School Profile":["Wasifu wa shule","Profil de l’école","ملف المدرسة","学校资料","Perfil de la escuela"],
+"Academic Years & Terms":["Miaka na mihula ya masomo","Années et périodes scolaires","السنوات والفصول الدراسية","学年与学期","Años y períodos académicos"],
+"Departments & Subjects":["Idara na masomo","Départements et matières","الأقسام والمواد","部门与科目","Departamentos y asignaturas"],
+"Classes & Streams":["Madarasa na mikondo","Classes et sections","الفصول والشُعب","班级与分班","Clases y secciones"],
+"Policies & Documents":["Sera na nyaraka","Politiques et documents","السياسات والمستندات","政策与文件","Políticas y documentos"],
+"Admissions & Enrolment":["Udahili na uandikishaji","Admissions et inscriptions","القبول والتسجيل","招生与入学","Admisiones y matrícula"],
+"Parents & Guardians":["Wazazi na walezi","Parents et tuteurs","أولياء الأمور والأوصياء","家长与监护人","Padres y tutores"],
+"Student Welfare & Discipline":["Ustawi na nidhamu ya wanafunzi","Bien-être et discipline des élèves","رعاية الطلاب وانضباطهم","学生关怀与纪律","Bienestar y disciplina estudiantil"],
+"Staff Directory & Roles":["Orodha ya wafanyakazi na majukumu","Annuaire du personnel et fonctions","دليل الموظفين والأدوار","员工名录与职责","Directorio y funciones del personal"],
+"Teacher Workload & Appraisal":["Mzigo wa kazi na tathmini ya walimu","Charge de travail et évaluation des enseignants","عبء عمل المعلمين وتقييمهم","教师工作量与考核","Carga laboral y evaluación docente"],
+"Leave & Staff Requests":["Likizo na maombi ya wafanyakazi","Congés et demandes du personnel","إجازات وطلبات الموظفين","员工请假与申请","Permisos y solicitudes del personal"],
+"Payroll & Benefits":["Mishahara na marupurupu","Paie et avantages","الرواتب والمزايا","工资与福利","Nómina y beneficios"],
+"Curriculum & Education Levels":["Mitaala na ngazi za elimu","Programmes et niveaux d’enseignement","المناهج والمراحل التعليمية","课程与教育阶段","Planes de estudio y niveles educativos"],
+"Lesson Plans & Topic Coverage":["Maandalio ya masomo na mada zilizofundishwa","Plans de cours et progression des thèmes","خطط الدروس وتغطية الموضوعات","教案与教学进度","Planes de clase y cobertura de temas"],
+"Examination Administration":["Usimamizi wa mitihani","Gestion des examens","إدارة الامتحانات","考试管理","Administración de exámenes"],
+"Learning Support & Interventions":["Msaada na uimarishaji wa ujifunzaji","Soutien et interventions pédagogiques","دعم التعلم والتدخلات","学习支持与干预","Apoyo e intervenciones de aprendizaje"],
+"Attendance Follow-ups":["Ufuatiliaji wa mahudhurio","Suivi des présences","متابعة الحضور","考勤跟进","Seguimiento de asistencia"],
+"Student Fees & Debt Reports":["Ada za wanafunzi na ripoti za madeni","Frais des élèves et rapports de dettes","رسوم الطلاب وتقارير الديون","学生费用与欠费报告","Cuotas y reportes de deudas"],
+"Fee Structures & Invoices":["Miundo ya ada na ankara","Structures tarifaires et factures","هياكل الرسوم والفواتير","收费结构与发票","Estructuras de cuotas y facturas"],
+"Receipts & Other Income":["Risiti na mapato mengine","Reçus et autres revenus","الإيصالات والإيرادات الأخرى","收据与其他收入","Recibos y otros ingresos"],
+"Expenses & Procurement":["Matumizi na manunuzi","Dépenses et achats","المصروفات والمشتريات","支出与采购","Gastos y adquisiciones"],
+"Budgets & Financial Reports":["Bajeti na ripoti za fedha","Budgets et rapports financiers","الميزانيات والتقارير المالية","预算与财务报告","Presupuestos e informes financieros"],
+"Announcements & Notices":["Matangazo na taarifa","Annonces et avis","الإعلانات والإشعارات","公告与通知","Anuncios y avisos"],
+"Library Catalogue":["Orodha ya vitabu vya maktaba","Catalogue de la bibliothèque","فهرس المكتبة","图书馆目录","Catálogo de biblioteca"],
+"Book Loans & Returns":["Ukopeshaji na urejeshaji wa vitabu","Prêts et retours de livres","إعارة الكتب وإرجاعها","图书借阅与归还","Préstamos y devoluciones de libros"],
+"Vehicles & Drivers":["Magari na madereva","Véhicules et conducteurs","المركبات والسائقون","车辆与司机","Vehículos y conductores"],
+"Routes & Stops":["Njia na vituo","Itinéraires et arrêts","المسارات والمحطات","路线与站点","Rutas y paradas"],
+"Stock & Inventory":["Stoo na hesabu ya vifaa","Stock et inventaire","المخزون والجرد","库存管理","Existencias e inventario"],
+"School Assets & Maintenance":["Mali za shule na matengenezo","Équipements scolaires et maintenance","أصول المدرسة وصيانتها","学校资产与维护","Activos y mantenimiento escolar"],
+"User Access Register":["Orodha ya ruhusa za watumiaji","Registre des accès utilisateurs","سجل صلاحيات المستخدمين","用户访问登记","Registro de acceso de usuarios"],
+"Operational Audit Notes":["Kumbukumbu za ukaguzi wa shughuli","Notes d’audit opérationnel","ملاحظات التدقيق التشغيلي","运营审计记录","Notas de auditoría operativa"],
+"Backup & Recovery Log":["Kumbukumbu za nakala rudufu na urejeshaji","Journal de sauvegarde et restauration","سجل النسخ الاحتياطي والاستعادة","备份与恢复日志","Registro de copias y recuperación"],
+"AI Insights & Recommendations":["Uchambuzi na mapendekezo ya AI","Analyses et recommandations IA","رؤى وتوصيات الذكاء الاصطناعي","人工智能分析与建议","Análisis y recomendaciones de IA"],
+"AI Report Requests":["Maombi ya ripoti za AI","Demandes de rapports IA","طلبات تقارير الذكاء الاصطناعي","AI报告请求","Solicitudes de informes de IA"],
+"Save school setup":["Hifadhi mipangilio ya shule","Enregistrer la configuration de l’école","حفظ إعدادات المدرسة","保存学校设置","Guardar configuración escolar"],
+"School setup saved successfully.":["Mipangilio ya shule imehifadhiwa kikamilifu.","Configuration de l’école enregistrée.","تم حفظ إعدادات المدرسة بنجاح。","学校设置已成功保存。","La configuración de la escuela se guardó correctamente."],
+"GLOBAL CONTROL CENTER":["KITUO KIKUU CHA USIMAMIZI","CENTRE DE CONTRÔLE GLOBAL","مركز التحكم العام","全球控制中心","CENTRO DE CONTROL GLOBAL"],
+"ShuleProGlobal Super Admin":["Msimamizi Mkuu wa ShuleProGlobal","Super administrateur ShuleProGlobal","المسؤول الأعلى ShuleProGlobal","ShuleProGlobal超级管理员","Superadministrador de ShuleProGlobal"],
+"Manage schools, memberships, subscriptions, payments and system activity across the platform.":["Simamia shule, wanachama, usajili, malipo na shughuli za mfumo mzima.","Gérez les écoles, les membres, les abonnements, les paiements et l’activité de la plateforme.","إدارة المدارس والعضويات والاشتراكات والمدفوعات ونشاط النظام.","管理平台中的学校、成员、订阅、付款和系统活动。","Administre escuelas, membresías, suscripciones, pagos y actividad de la plataforma."],
+"Schools":["Shule","Écoles","المدارس","学校","Escuelas"],
+"Users & Roles":["Watumiaji na majukumu","Utilisateurs et rôles","المستخدمون والأدوار","用户与角色","Usuarios y roles"],
+"Payments":["Malipo","Paiements","المدفوعات","付款","Pagos"],
+"Subscriptions":["Usajili","Abonnements","الاشتراكات","订阅","Suscripciones"],
+"Academic Data":["Taarifa za kitaaluma","Données académiques","البيانات الأكاديمية","学术数据","Datos académicos"],
+"Audit Logs":["Kumbukumbu za ukaguzi","Journaux d’audit","سجلات التدقيق","审计日志","Registros de auditoría"],
+"Plans & Pricing":["Mipango na bei","Offres et tarifs","الخطط والأسعار","套餐与价格","Planes y precios"],
+"Loading global data…":["Inapakia taarifa za mfumo...","Chargement des données globales…","جارٍ تحميل البيانات العامة…","正在加载全局数据…","Cargando datos globales…"],
+"School directory":["Orodha ya shule","Répertoire des écoles","دليل المدارس","学校目录","Directorio de escuelas"],
+"Payment verification queue and history":["Foleni ya uhakiki na historia ya malipo","File de vérification et historique des paiements","قائمة التحقق من المدفوعات وسجلها","付款审核队列与历史记录","Cola de verificación e historial de pagos"],
+"Subscription register":["Orodha ya usajili","Registre des abonnements","سجل الاشتراكات","订阅登记","Registro de suscripciones"],
+"Global audit log":["Kumbukumbu za ukaguzi wa mfumo mzima","Journal d’audit global","سجل التدقيق العام","全局审计日志","Registro de auditoría global"],
+"Platform status":["Hali ya jukwaa","État de la plateforme","حالة المنصة","平台状态","Estado de la plataforma"],
+"Full name":["Jina kamili","Nom complet","الاسم الكامل","全名","Nombre completo"],
+"Role":["Jukumu","Rôle","الدور","角色","Rol"],
+"Change role":["Badilisha jukumu","Modifier le rôle","تغيير الدور","更改角色","Cambiar función"],
+"School name":["Jina la shule","Nom de l’école","اسم المدرسة","学校名称","Nombre de la escuela"],
+"Country":["Nchi","Pays","الدولة","国家","País"],
+"Created":["Tarehe ya kuundwa","Créé le","تاريخ الإنشاء","创建时间","Creado"],
+"Status":["Hali","Statut","الحالة","状态","Estado"],
+"Action":["Kitendo","Action","الإجراء","操作","Acción"],
+"Approve":["Thibitisha","Approuver","اعتماد","批准","Aprobar"],
+"Reject":["Kataa","Rejeter","رفض","拒绝","Rechazar"],
+"Activate":["Washa","Activer","تفعيل","启用","Activar"],
+"Suspend":["Simamisha","Suspendre","تعليق","暂停","Suspender"],
+"ACTIVE":["INAENDELEA","ACTIF","نشط","启用","ACTIVO"],
+"INACTIVE":["HAIFANYI KAZI","INACTIF","غير نشط","停用","INACTIVO"],
+"Unable to load schools:":["Imeshindwa kupakia shule:","Impossible de charger les écoles :","تعذر تحميل المدارس:","无法加载学校：","No se pudieron cargar las escuelas:"],
+"Unable to load memberships:":["Imeshindwa kupakia wanachama:","Impossible de charger les membres :","تعذر تحميل العضويات:","无法加载成员：","No se pudieron cargar las membresías:"],
+"Unable to load payments:":["Imeshindwa kupakia malipo:","Impossible de charger les paiements :","تعذر تحميل المدفوعات:","无法加载付款：","No se pudieron cargar los pagos:"],
+"Unable to load subscriptions:":["Imeshindwa kupakia usajili:","Impossible de charger les abonnements :","تعذر charger les abonnements :","无法加载订阅：","No se pudieron cargar las suscripciones:"],
+"Role update failed:":["Imeshindikana kubadilisha jukumu:","Échec de la mise à jour du rôle :","فشل تحديث الدور:","角色更新失败：","Error al actualizar el rol:"],
+"User role updated.":["Jukumu la mtumiaji limebadilishwa.","Rôle utilisateur mis à jour.","تم تحديث دور المستخدم。","用户角色已更新。","Función de usuario actualizada."],
+"Payment approved; subscription activated.":["Malipo yamethibitishwa; usajili umewezeshwa.","Paiement approuvé ; abonnement activé.","تمت الموافقة على الدفع وتفعيل الاشتراك。","付款已批准；订阅已激活。","Pago aprobado; suscripción activada."],
+"Payment details submitted. Wait for Super Admin verification.":["Taarifa za malipo zimetumwa. Subiri uhakiki wa Msimamizi Mkuu.","Informations de paiement envoyées. Attendez la vérification du super administrateur.","تم إرسال تفاصيل الدفع. انتظر تحقق المسؤول الأعلى。","付款信息已提交。请等待超级管理员审核。","Datos de pago enviados. Espere la verificación del superadministrador."]
+};
+
+Object.assign(SP_WORKSPACE_I18N,{
+"Identity, contacts and school information.":["Utambulisho, mawasiliano na taarifa za shule.","Identité, contacts et informations scolaires.","الهوية وجهات الاتصال ومعلومات المدرسة.","学校身份、联系方式和信息。","Identidad, contactos e información escolar."],
+"Academic years, terms, semesters and calendars.":["Miaka ya masomo, mihula na kalenda.","Années scolaires, périodes, semestres et calendriers.","السنوات والفصول الدراسية والتقويمات.","学年、学期、学段和校历。","Años académicos, períodos, semestres y calendarios."],
+"Departments, subjects and subject codes.":["Idara, masomo na misimbo ya masomo.","Départements, matières et codes des matières.","الأقسام والمواد ورموز المواد.","部门、科目和科目代码。","Departamentos, asignaturas y códigos."],
+"Classes, streams, class teachers and capacity.":["Madarasa, mikondo, walimu wa madarasa na uwezo wa darasa.","Classes, sections, professeurs principaux et capacité.","الفصول والشعب ومعلمو الفصول والسعة.","班级、分班、班主任和容量。","Clases, secciones, tutores y capacidad."],
+"Policies, notices and document references.":["Sera, matangazo na marejeo ya nyaraka.","Politiques, avis et références documentaires.","السياسات والإشعارات ومراجع المستندات.","政策、通知和文件参考。","Políticas, avisos y referencias de documentos."],
+"Admission records and enrolment decisions.":["Rekodi za udahili na maamuzi ya uandikishaji.","Dossiers d’admission et décisions d’inscription.","سجلات القبول وقرارات التسجيل.","招生记录和录取决定。","Registros de admisión y decisiones de matrícula."],
+"Parent details and guardian relationships.":["Taarifa za wazazi na uhusiano wa walezi.","Coordonnées des parents et liens avec les tuteurs.","بيانات الوالدين وعلاقات الأوصياء.","家长资料和监护关系。","Datos de padres y relaciones de tutores."],
+"Student transfers, promotions, graduation and withdrawal.":["Uhamisho, kupandishwa darasa, kuhitimu na kujiondoa kwa wanafunzi.","Transferts, promotions, diplômes et retraits des élèves.","نقل الطلاب وترقيتهم وتخرجهم وانسحابهم.","学生转学、升班、毕业和退学。","Traslados, promociones, graduación y retiro de estudiantes."],
+"Student directory, role assignments and contacts.":["Orodha ya wanafunzi, majukumu na mawasiliano.","Annuaire des élèves, rôles et contacts.","دليل الطلاب والأدوار وجهات الاتصال.","学生名录、角色分配和联系方式。","Directorio de estudiantes, funciones y contactos."],
+"Staff directory, role assignments and contacts.":["Orodha ya wafanyakazi, majukumu na mawasiliano.","Annuaire du personnel, rôles et contacts.","دليل الموظفين والأدوار وجهات الاتصال.","员工名录、角色分配和联系方式。","Directorio del personal, funciones y contactos."],
+"Teaching load, performance reviews and development.":["Mzigo wa kufundisha, tathmini ya utendaji na maendeleo.","Charge d’enseignement, évaluations et développement.","عبء التدريس وتقييم الأداء والتطوير.","教学工作量、绩效评估和发展。","Carga docente, evaluaciones y desarrollo."],
+"Leave applications and staff requests.":["Maombi ya likizo na maombi ya wafanyakazi.","Demandes de congé et requêtes du personnel.","طلبات الإجازات وطلبات الموظفين.","请假申请和员工请求。","Solicitudes de permisos y del personal."],
+"Payroll summaries and benefit references.":["Muhtasari wa mishahara na taarifa za marupurupu.","Récapitulatifs de paie et références des avantages.","ملخصات الرواتب ومراجع المزايا.","工资汇总和福利参考。","Resúmenes de nómina y referencias de beneficios."],
+"Curriculum mapping, syllabi and learning standards.":["Ulinganishaji wa mtaala, mihutasari na viwango vya ujifunzaji.","Cartographie des programmes, syllabi et normes d’apprentissage.","مواءمة المناهج والخطط والمعايير التعليمية.","课程映射、教学大纲和学习标准。","Mapeo curricular, programas y estándares de aprendizaje."],
+"Lesson preparation, schemes of work and topic coverage.":["Maandalio ya masomo, mihutasari ya kazi na mada zilizofundishwa.","Préparation des cours, plans de travail et progression.","تحضير الدروس وخطط العمل وتغطية الموضوعات.","备课、教学计划和主题覆盖情况。","Preparación de clases, planes de trabajo y cobertura de temas."],
+"Exam calendars, invigilation and approvals.":["Kalenda za mitihani, usimamizi wa mitihani na vibali.","Calendriers d’examens, surveillance et approbations.","جداول الامتحانات والمراقبة والموافقات.","考试日历、监考和审批。","Calendarios de exámenes, vigilancia y aprobaciones."],
+"Learning gaps and student support plans.":["Mapengo ya ujifunzaji na mipango ya kuwasaidia wanafunzi.","Lacunes d’apprentissage et plans de soutien aux élèves.","فجوات التعلم وخطط دعم الطلاب.","学习差距和学生支持计划。","Brechas de aprendizaje y planes de apoyo estudiantil."],
+"Absence follow-up, lateness and guardian contact logs.":["Ufuatiliaji wa utoro, kuchelewa na mawasiliano na walezi.","Suivi des absences, retards et contacts avec les tuteurs.","متابعة الغياب والتأخر وسجلات التواصل مع أولياء الأمور.","缺勤跟进、迟到和监护人联系记录。","Seguimiento de ausencias, retrasos y contactos con tutores."],
+"Room allocation, facility bookings and conflicts.":["Ugawaji wa vyumba, nafasi za matumizi na migongano ya ratiba.","Attribution des salles, réservations et conflits.","تخصيص الغرف وحجوزات المرافق والتعارضات.","教室分配、设施预订和冲突。","Asignación de aulas, reservas y conflictos."],
+"Cover lessons and teacher substitutions.":["Vipindi vya walimu wa zamu na walimu mbadala.","Cours de remplacement et substitutions d’enseignants.","حصص التغطية وبدائل المعلمين.","代课和教师替换。","Clases de cobertura y sustituciones docentes."],
+"Student fee records, outstanding balances and printable debt summaries.":["Rekodi za ada, salio linalodaiwa na muhtasari wa madeni wa kuchapisha.","Dossiers de frais, soldes impayés et relevés de dettes imprimables.","سجلات الرسوم والأرصدة المستحقة وملخصات الديون القابلة للطباعة.","学生费用记录、未付余额和可打印欠费摘要。","Registros de cuotas, saldos pendientes y resúmenes de deuda imprimibles."],
+"Fee categories, schedules, invoices and balances.":["Aina za ada, ratiba, ankara na salio.","Catégories de frais, échéanciers, factures et soldes.","فئات الرسوم والجداول والفواتير والأرصدة.","费用类别、时间表、发票和余额。","Categorías de cuotas, calendarios, facturas y saldos."],
+"Receipts and other income references.":["Risiti na marejeo ya mapato mengine.","Reçus et références des autres revenus.","الإيصالات ومراجع الإيرادات الأخرى.","收据和其他收入记录。","Recibos y referencias de otros ingresos."],
+"Expenses, purchase requests and approvals.":["Matumizi, maombi ya manunuzi na vibali.","Dépenses, demandes d’achat et approbations.","المصروفات وطلبات الشراء والموافقات.","支出、采购申请和审批。","Gastos, solicitudes de compra y aprobaciones."],
+"Budget allocations and variance notes.":["Mgao wa bajeti na maelezo ya tofauti.","Allocations budgétaires et notes d’écart.","تخصيصات الميزانية وملاحظات الفروقات.","预算分配和差异说明。","Asignaciones presupuestarias y notas de variación."],
+"Email, SMS and parent communication activity.":["Shughuli za barua pepe, SMS na mawasiliano na wazazi.","Activités de communication par e-mail, SMS et avec les parents.","أنشطة البريد الإلكتروني والرسائل والتواصل مع أولياء الأمور.","电子邮件、短信和家长沟通活动。","Actividad de correo, SMS y comunicación con padres."],
+"Books, authors, ISBNs and copies.":["Vitabu, waandishi, ISBN na nakala.","Livres, auteurs, ISBN et exemplaires.","الكتب والمؤلفون وأرقام ISBN والنسخ.","书籍、作者、ISBN和册数。","Libros, autores, ISBN y ejemplares."],
+"Issue, return and overdue records.":["Rekodi za kukopesha, kurejesha na vitabu vilivyochelewa.","Registres des prêts, retours et retards.","سجلات الإعارة والإرجاع والتأخير.","借出、归还和逾期记录。","Registros de préstamos, devoluciones y retrasos."],
+"Vehicle register, driver details and inspections.":["Orodha ya magari, taarifa za madereva na ukaguzi.","Registre des véhicules, conducteurs et inspections.","سجل المركبات وبيانات السائقين والفحوصات.","车辆登记、司机资料和检查。","Registro de vehículos, conductores e inspecciones."],
+"Transport routes, stops and student allocation.":["Njia za usafiri, vituo na ugawaji wa wanafunzi.","Itinéraires, arrêts et affectation des élèves.","مسارات النقل والمحطات وتوزيع الطلاب.","交通路线、站点和学生分配。","Rutas, paradas y asignación de estudiantes."],
+"Stock items, quantities, stores and reorder levels.":["Vifaa vya stoo, kiasi, maghala na kiwango cha kuagiza tena.","Articles, quantités, magasins et seuils de réapprovisionnement.","أصناف المخزون والكميات والمخازن وحدود إعادة الطلب.","库存物品、数量、仓库和补货水平。","Artículos, cantidades, almacenes y niveles de reposición."],
+"Asset register and maintenance history.":["Orodha ya mali na historia ya matengenezo.","Registre des actifs et historique de maintenance.","سجل الأصول وسجل الصيانة.","资产登记和维护历史。","Registro de activos e historial de mantenimiento."],
+"School events, clubs, sports and activities.":["Matukio ya shule, klabu, michezo na shughuli.","Événements scolaires, clubs, sports et activités.","فعاليات المدرسة والأندية والرياضة والأنشطة.","学校活动、社团、体育和项目。","Eventos escolares, clubes, deportes y actividades."],
+"Confidential case references and follow-up.":["Marejeo ya kesi za siri na ufuatiliaji.","Références de dossiers confidentiels et suivi.","مراجع الحالات السرية والمتابعة.","保密个案参考和跟进。","Referencias de casos confidenciales y seguimiento."],
+"JSON backup and language settings.":["Nakala rudufu ya JSON na mipangilio ya lugha.","Sauvegarde JSON et paramètres linguistiques.","نسخة JSON الاحتياطية وإعدادات اللغة.","JSON备份和语言设置。","Copia JSON y configuración de idioma."],
+"Enter a value":["Ingiza thamani","Saisir une valeur","أدخل قيمة","输入数值","Introduzca un valor"],
+"Save":["Hifadhi","Enregistrer","حفظ","保存","Guardar"],
+"Cancel":["Ghairi","Annuler","إلغاء","取消","Cancelar"],
+"Edit":["Hariri","Modifier","تعديل","编辑","Editar"],
+"Delete":["Futa","Supprimer","حذف","删除","Eliminar"],
+"Add":["Ongeza","Ajouter","إضافة","添加","Añadir"],
+"Search":["Tafuta","Rechercher","بحث","搜索","Buscar"],
+"Export":["Hamisha","Exporter","تصدير","导出","Exportar"],
+"Print":["Chapisha","Imprimer","طباعة","打印","Imprimir"],
+"Date":["Tarehe","Date","التاريخ","日期","Fecha"],
+"Name":["Jina","Nom","الاسم","名称","Nombre"],
+"Phone":["Simu","Téléphone","الهاتف","电话","Teléfono"],
+"Email":["Barua pepe","E-mail","البريد الإلكتروني","电子邮件","Correo electrónico"],
+"Notes":["Maelezo","Notes","ملاحظات","备注","Notas"],
+"Description":["Maelezo","Description","الوصف","描述","Descripción"],
+"Amount":["Kiasi","Montant","المبلغ","金额","Importe"],
+"Currency":["Sarafu","Devise","العملة","货币","Moneda"],
+"Academic year":["Mwaka wa masomo","Année scolaire","السنة الدراسية","学年","Año académico"],
+"Start date":["Tarehe ya kuanza","Date de début","تاريخ البدء","开始日期","Fecha de inicio"],
+"End date":["Tarehe ya mwisho","Date de fin","تاريخ الانتهاء","结束日期","Fecha de fin"],
+"Student name":["Jina la mwanafunzi","Nom de l’élève","اسم الطالب","学生姓名","Nombre del estudiante"],
+"Admission number":["Namba ya udahili","Numéro d’admission","رقم القبول","入学编号","Número de admisión"],
+"Class name":["Jina la darasa","Nom de la classe","اسم الفصل","班级名称","Nombre de clase"],
+"Subject name":["Jina la somo","Nom de la matière","اسم المادة","科目名称","Nombre de asignatura"],
+"Teacher name":["Jina la mwalimu","Nom de l’enseignant","اسم المعلم","教师姓名","Nombre del docente"],
+"Parent or guardian name":["Jina la mzazi au mlezi","Nom du parent ou tuteur","اسم الوالد أو الوصي","家长或监护人姓名","Nombre del padre o tutor"],
+"Status":["Hali","Statut","الحالة","状态","Estado"],
+"Pending":["Inasubiri","En attente","قيد الانتظار","待处理","Pendiente"],
+"Approved":["Imeidhinishwa","Approuvé","تمت الموافقة","已批准","Aprobado"],
+"Rejected":["Imekataliwa","Rejeté","مرفوض","已拒绝","Rechazado"],
+"Unknown admin section.":["Sehemu ya msimamizi haijulikani.","Section administrateur inconnue.","قسم المسؤول غير معروف.","未知管理员部分。","Sección de administrador desconocida."]
+});
+
+const SP_LANG_KEYS=['sw','fr','ar','zh','es'];
+SP_LANG_KEYS.forEach((lang,index)=>{if(!LANG_TEXT[lang])LANG_TEXT[lang]={};Object.keys(SP_WORKSPACE_I18N).forEach(key=>{LANG_TEXT[lang][key]=SP_WORKSPACE_I18N[key][index];});});
+Object.keys(SP_WORKSPACE_I18N).forEach(key=>{LANG_TEXT.en[key]=key;});
+
+/* Build English-source aliases too: the page contains both Swahili and English labels. */
+(function(){
+  ['sw','fr','ar','zh','es'].forEach(function(lang){
+    const target=LANG_TEXT[lang]||{};
+    Object.keys(LANG_TEXT.en||{}).forEach(function(source){
+      const english=LANG_TEXT.en[source];
+      if(typeof english!=='string'||!english.trim())return;
+      let translated=target[source];
+      if((translated===undefined||translated===null||translated==='') && lang==='sw') translated=LANG_TEXT.sw[source];
+      if(typeof translated==='string'&&translated.trim()&&english!==source){
+        target[english]=translated;
+      }
+    });
+  });
+})();
+ 
+/* Language engine with original-value tracking for live/dynamic DOM updates. */
+const __spTextOriginal=new WeakMap(),__spTextRendered=new WeakMap(),__spAttrOriginal=new WeakMap(),__spAttrRendered=new WeakMap();
+function applyLanguage(lang){
+  const dict=LANG_TEXT[lang]||LANG_TEXT.en;
+  const lookup=new Map(Object.entries(dict).map(([source,target])=>[String(source).trim().toLocaleLowerCase(),String(target)]));
+  const translate=(value)=>{const key=String(value??'').trim().toLocaleLowerCase();return lookup.has(key)?lookup.get(key):String(value??'');};
+  const walker=document.createTreeWalker(document.body,NodeFilter.SHOW_TEXT);
+  let node;
+  while((node=walker.nextNode())){
+    const parent=node.parentElement;if(!parent||['SCRIPT','STYLE','NOSCRIPT'].includes(parent.tagName)||parent.closest('#reportArea'))continue;
+    const current=node.nodeValue;
+    let original=__spTextOriginal.get(node);
+    const last=__spTextRendered.get(node);
+    if(original===undefined||current!==last){original=current;__spTextOriginal.set(node,original);}
+    const trim=original.trim();if(!trim)continue;
+    const translated=translate(trim);
+    const start=original.indexOf(trim);
+    const output=translated===trim?original:original.slice(0,start)+translated+original.slice(start+trim.length);
+    if(current!==output)node.nodeValue=output;
+    __spTextRendered.set(node,output);
+  }
+  ['placeholder','title','aria-label','alt'].forEach(attr=>{
+    document.querySelectorAll('['+attr+']').forEach(elm=>{if(elm.closest('#reportArea'))return;
+      let originals=__spAttrOriginal.get(elm);if(!originals){originals={};__spAttrOriginal.set(elm,originals);}
+      let rendered=__spAttrRendered.get(elm);if(!rendered){rendered={};__spAttrRendered.set(elm,rendered);}
+      const current=elm.getAttribute(attr)||'';
+      if(originals[attr]===undefined||current!==rendered[attr])originals[attr]=current;
+      const output=translate(originals[attr]);
+      if(current!==output)elm.setAttribute(attr,output);
+      rendered[attr]=output;
+    });
+  });
+  document.documentElement.lang=lang;document.documentElement.dir=lang==='ar'?'rtl':'ltr';
+  const title=translate(document.title);if(title!==document.title)document.title=title;
+}
+window.applyLanguage=applyLanguage;
+function setLang(lang){
+  const active='en';
+  try{localStorage.setItem('shulepro_language_v2',active)}catch(e){}
+  const selector=document.getElementById('globalLang');if(selector)selector.value=active;
+  applyLanguage(active);
+  const box=document.getElementById('backupMsg');
+  if(box){box.textContent='Interface language is English.';box.className='success';}
+  if(typeof buildReport==='function'&&document.getElementById('reportArea'))buildReport();
+}
+window.setLang=setLang;
+document.addEventListener('DOMContentLoaded',()=>{
+  setLang('en');
+  const observer=new MutationObserver(()=>applyLanguage('en'));
+  observer.observe(document.body,{childList:true,subtree:true,characterData:true,attributes:true,attributeFilter:['placeholder','title','aria-label','alt']});
+});
+async function loadSuperAdmin(){
+ const [schoolsRes,payRes,subsRes,studentsRes]=await Promise.all([
+  db.from('schools').select('id,school_name,school_code,country_code,created_at,is_active').order('created_at',{ascending:false}),
+  db.from('payments').select('id,school_id,amount,currency,transaction_id,payment_method,status,created_at,metadata').eq('status','pending').order('created_at',{ascending:false}),
+  db.from('subscriptions').select('school_id,plan_id,status,starts_at,ends_at,trial_ends_at,amount,currency'),
+  db.from('students').select('id',{count:'exact',head:true})
+ ]);
+ const err=schoolsRes.error||payRes.error||subsRes.error||studentsRes.error;if(err){message('adminMsg','Imeshindwa kupakia taarifa: '+err.message,'err');return}
+ const schools=schoolsRes.data||[],payments=payRes.data||[],subs=subsRes.data||[];
+ el('adminSummary').innerHTML=[['Shule',schools.length],['Malipo pending',payments.length],['Subscriptions',subs.length],['Wanafunzi',studentsRes.count??'—']].map(([k,v])=>`<div class="card"><div class="muted">${esc(k)}</div><h2>${esc(v)}</h2></div>`).join('');
+ el('adminSchoolsTable').innerHTML='<tr><th>Vitendo</th><th>Shule</th><th>Code</th><th>Nchi</th><th>Status</th><th>Tarehe</th></tr>'+schools.map(s=>`<tr data-school-id="${esc(s.id)}" data-school-code="${esc(s.school_code||'')}"><td style="min-width:150px"><button class="secondary" onclick="setSchoolActive('${esc(s.id)}',${!s.is_active})">${s.is_active?'Simamisha':'Washa tena'}</button><br><button style="background:#991b1b;margin-top:6px" onclick="deleteSchool('${esc(s.id)}')">FUTA PERMANENT</button></td><td>${esc(s.school_name)}</td><td>${esc(s.school_code)}</td><td>${esc(s.country_code)}</td><td>${s.is_active?'Active':'Inactive'}</td><td>${esc((s.created_at||'').slice(0,10))}</td></tr>`).join('');
+ el('adminPaymentsTable').innerHTML='<tr><th>School ID</th><th>Kiasi</th><th>TxID</th><th>Njia</th><th>Kitendo</th></tr>'+payments.map(p=>`<tr><td>${esc(p.school_id)}</td><td>${esc(p.amount)} ${esc(p.currency)}</td><td>${esc(p.transaction_id||'')}</td><td>${esc(p.payment_method||'')}</td><td><button onclick="reviewPayment('${esc(p.id)}','approve')">Thibitisha</button> <button class="secondary" onclick="reviewPayment('${esc(p.id)}','reject')">Kataa</button></td></tr>`).join('');
+ el('adminSubscriptionsTable').innerHTML='<tr><th>School ID</th><th>Mpango</th><th>Status</th><th>Mwisho</th><th>Kiasi</th></tr>'+subs.map(s=>`<tr><td>${esc(s.school_id)}</td><td>${esc(s.plan_id)}</td><td>${esc(s.status)}</td><td>${esc((s.ends_at||s.trial_ends_at||'').slice(0,10))}</td><td>${esc(s.amount??'—')} ${esc(s.currency||'')}</td></tr>`).join('');
+}
+async function setSchoolActive(id,active){
+ const row=el('adminSchoolsTable').querySelector('tr[data-school-id="'+id+'"]');
+ const schoolName=row?.cells?.[1]?.textContent||'shule hii';
+ if(!confirm((active?'Washa tena ':'Simamisha ')+schoolName+'?'))return;
+ const {data,error}=await db.rpc('admin_set_school_active',{p_school_id:id,p_is_active:active});
+ if(error){message('adminMsg','Imeshindikana kubadilisha hali ya shule: '+error.message,'err');return}
+ message('adminMsg',active?'Shule imewashwa tena.':'Shule imesimamishwa. Akaunti za shule haziwezi kuingia wakati shule imesimamishwa.','ok');
+ await loadSuperAdmin();
+}
+async function deleteSchool(id){
+ const row=el('adminSchoolsTable').querySelector('tr[data-school-id="'+id+'"]');
+ if(!row){message('adminMsg','Shule haijapatikana kwenye orodha. Refresh ukurasa.','err');return}
+ const schoolName=row.cells[1]?.textContent||'';
+ const schoolCode=row.getAttribute('data-school-code')||row.cells[2]?.textContent||'';
+ if(!schoolCode){message('adminMsg','Shule hii haina School Code; haiwezi kufutwa kwa njia hii.','err');return}
+ if(!confirm('ONYO: Unataka kufuta kabisa '+schoolName+'? Wanafunzi, walimu, alama, mahudhurio, madarasa, ada, malipo na subscriptions zake zitafutwa. Kitendo hiki hakiwezi kutenguliwa.'))return;
+ const typed=prompt('Andika School Code hii kuthibitisha ufutaji wa kudumu: '+schoolCode);
+ if(typed===null)return;
+ if(typed.trim().toUpperCase()!==schoolCode.trim().toUpperCase()){
+  message('adminMsg','School Code haijalingana. Hakuna taarifa iliyofutwa.','err');return;
+ }
+ const {data,error}=await db.rpc('admin_delete_school',{p_school_id:id,p_confirm_school_code:typed.trim()});
+ if(error){message('adminMsg','Ufutaji umeshindikana: '+error.message,'err');return}
+ message('adminMsg','Shule '+(data?.school_name||schoolName)+' imefutwa kabisa. Kumbukumbu ya kitendo imehifadhiwa kwenye audit log.','ok');
+ await loadSuperAdmin();
+}
+async function reviewPayment(id,decision){
+ if(decision==='approve'&&!confirm('Umethibitisha fedha zimeingia kwenye akaunti ya malipo?'))return;
+ const reason=decision==='reject'?(prompt('Sababu ya kukataa:')||''):null;if(decision==='reject'&&!reason.trim())return;
+ const {error}=await db.rpc('review_shulepro_payment',{p_payment_id:id,p_decision:decision,p_rejection_reason:reason});
+ if(error){message('adminMsg','Kitendo kimeshindikana: '+error.message,'err');return}
+ message('adminMsg',decision==='approve'?'Malipo yamethibitishwa; subscription imewashwa.':'Malipo yamekataliwa.','ok');await loadSuperAdmin();
+}
+async function loadAll(){await loadRoleData()}
+let passwordRecoveryFlow=false;
+async function sendPasswordReset(){
+ const email=el('resetEmail').value.trim().toLowerCase(),button=el('sendResetBtn');
+ if(!email){message('resetMsg','Enter your account email address.','err');return;}
+ button.disabled=true;message('resetMsg','Sending password reset link...','info');
+ try{
+  const {error}=await db.auth.resetPasswordForEmail(email,{redirectTo:window.location.origin+'/'});
+  if(error)throw error;
+  message('resetMsg','If this email has a ShulePro account, a password reset link has been sent. Check your inbox and spam folder.','ok');
+ }catch(e){message('resetMsg','Could not send reset link: '+e.message,'err');}
+ finally{button.disabled=false;}
+}
+async function completeStaffInvitation(){
+ const password=el('invitePassword').value,confirmPassword=el('invitePasswordConfirm').value,button=el('invitePasswordBtn');
+ if(password.length<8){message('inviteSetupMsg','Password must contain at least 8 characters.','err');return;}
+ if(password!==confirmPassword){message('inviteSetupMsg','The passwords do not match.','err');return;}
+ button.disabled=true;message('inviteSetupMsg','Updating your password...','info');
+ try{
+  const {data:current}=await db.auth.getUser();
+  const update=passwordRecoveryFlow
+   ? await db.auth.updateUser({password})
+   : await db.auth.updateUser({password,data:{...(current.user?.user_metadata||{}),invitation_completed:true}});
+  if(update.error)throw update.error;
+  passwordRecoveryFlow=false;inviteFlowDetected=false;el('inviteSetup').classList.add('hidden');
+  await startApp(update.data.user);
+ }catch(e){message('inviteSetupMsg','Could not update password: '+e.message,'err');}
+ finally{button.disabled=false;}
+}
+function showInvitePasswordSetup(){
+ el('auth').classList.add('hidden');el('app').classList.add('hidden');
+ el('inviteSetup').classList.remove('hidden');el('logoutBtn').classList.add('hidden');
+ el('inviteSetup').querySelector('h2').textContent=passwordRecoveryFlow?'Reset your password':'Complete your staff account';
+ el('inviteSetup').querySelector('p').textContent=passwordRecoveryFlow?'Choose a new password for your ShulePro account.':'Your school invited you to ShuleProGlobal. Create a password to activate your account.';
+ el('invitePasswordBtn').textContent=passwordRecoveryFlow?'Save New Password':'Activate account';
+}
+async function boot(){
+ if(!window.supabase?.createClient){message('regMsg','Supabase library did not load. Check your connection and refresh.','err');return}
+ const {data:{session}}=await db.auth.getSession();
+ if(session){
+  const inviteMeta=session.user?.user_metadata||{};
+  if(inviteFlowDetected||(inviteMeta.invited_school_id&&!inviteMeta.invitation_completed)){showInvitePasswordSetup();return;}
+  try{await completePendingRegistration();await startApp(session.user)}catch(e){message('loginMsg','Could not complete registration or open school: '+e.message,'err')}
+ }
+}
+if(db)db.auth.onAuthStateChange((event,session)=>{
+ if(session&&event==='PASSWORD_RECOVERY'){passwordRecoveryFlow=true;showInvitePasswordSetup();return;}
+ if(session&&inviteFlowDetected){passwordRecoveryFlow=false;showInvitePasswordSetup();return;}
+ if(!session){el('app').classList.add('hidden');el('inviteSetup').classList.add('hidden');el('logoutBtn').classList.add('hidden');el('auth').classList.remove('hidden');}
+});
+// Wire authentication controls directly; do not rely on inline HTML handlers.
+el('regTabBtn').addEventListener('click',()=>showAuth('reg'));
+el('loginTabBtn').addEventListener('click',()=>showAuth('login'));
+el('registerBtn').addEventListener('click',()=>{if(typeof register==='function')register();else message('regMsg','Registration script failed to load. Reload the page and contact support.','err')});
+el('loginBtn').addEventListener('click',()=>{if(typeof login==='function')login();else message('loginMsg','Sign-in script failed to load. Reload the page and contact support.','err')});
+el('forgotPasswordLink').addEventListener('click',e=>{e.preventDefault();el('resetEmail').value=el('loginEmail').value.trim();el('forgotPasswordPane').classList.remove('hidden');el('resetMsg').innerHTML='';});
+el('cancelResetBtn').addEventListener('click',()=>el('forgotPasswordPane').classList.add('hidden'));
+el('sendResetBtn').addEventListener('click',sendPasswordReset);
+window.addEventListener('DOMContentLoaded',boot);
+</script>
+<script src="./modules.js" defer></script>
+</body>
+</html>
