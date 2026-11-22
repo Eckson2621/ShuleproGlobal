@@ -347,10 +347,15 @@ async function startApp(user){
   document.querySelectorAll('.pane').forEach(x=>x.classList.add('hidden'));
   if(currentRole==='owner'){
    el('planChoicePanel').classList.remove('hidden');
-   const msg=subscription?.status==='pending'?'Usajili wa shule umepokelewa na unasubiri idhini ya Super Admin. Wasiliana na msimamizi kwa simu, SMS au WhatsApp.':subscription?'Usajili wako umeisha au haujawezeshwa. Chagua kifurushi au wasilisha malipo ili kuendelea.':'Shule yako bado haina subscription. Chagua kifurushi kuanza siku 14 za majaribio.';
-   message('trialPlanMessage',msg,'info');
-   await loadTrialPlans();
-   if(subscription?.status==='pending')appendShuleproContactActions('trialPlanMessage','Habari Super Admin, shule yangu ya ShulePro imesajiliwa na inasubiri idhini. Naomba msaada.');
+   if(subscription?.status==='pending'){
+    message('trialPlanMessage','Usajili wa shule umepokelewa na unasubiri idhini ya Super Admin. Akaunti itafunguliwa baada ya msimamizi kuidhinisha muda wa majaribio au subscription.','info');
+    el('trialPlans').innerHTML='';
+    appendShuleproContactActions('trialPlanMessage','Habari Super Admin, shule yangu ya ShulePro imesajiliwa na inasubiri idhini. Naomba msaada.');
+   }else{
+    const msg=subscription?'Usajili wako umeisha au haujawezeshwa. Chagua kifurushi au wasilisha malipo ili kuendelea.':'Shule yako bado haina subscription. Chagua kifurushi kuanza siku 14 za majaribio.';
+    message('trialPlanMessage',msg,'info');
+    await loadTrialPlans();
+   }
   }else{
    el('planChoicePanel').classList.add('hidden');
    const note=el('roleDescription');
