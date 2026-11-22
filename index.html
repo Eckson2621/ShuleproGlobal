@@ -88,6 +88,14 @@ html[dir="rtl"] body{text-align:right}html[dir="rtl"] th,html[dir="rtl"] td{text
  </section>
  <section id="superAdminPanel" class="card hidden">
   <h3>SHULEPRO – Super Admin</h3><p class="muted">Muhtasari wa mfumo mzima. Thibitisha malipo baada ya kuhakiki fedha kwenye chanzo husika.</p>
+  <section class="msg info" style="margin:12px 0" aria-label="Registration notifications">
+   <div class="row" style="justify-content:space-between"><strong>NEW SCHOOL REGISTRATIONS · USAJILI MPYA</strong><strong id="shulePendingCount">0</strong></div>
+   <p class="small">Washa notifications ili simu ikuonye shule mpya zinaposubiri idhini. Acha dashboard/browser wazi ili kupokea arifa za moja kwa moja.</p>
+   <button type="button" class="secondary" id="enableShuleNotifications" onclick="enableShuleproAdminNotifications()">Washa arifa kwenye simu</button>
+   <div id="shuleNotificationStatus" class="small" role="status">Arifa hazijawashwa.</div>
+   <div id="shulePendingRegistrations" class="tablewrap" style="margin-top:10px"></div>
+   <button type="button" class="secondary" style="margin-top:8px" onclick="loadSuperAdmin()">Refresh registrations</button>
+  </section>
   <div id="adminSummary" class="grid"></div><h4>Shule zote</h4><div class="tablewrap"><table id="adminSchoolsTable"></table></div>
   <h4>Malipo yanayosubiri uthibitisho</h4><div class="tablewrap"><table id="adminPaymentsTable"></table></div>
   <h4>Subscriptions</h4><div class="tablewrap"><table id="adminSubscriptionsTable"></table></div><div id="adminMsg"></div>
@@ -172,6 +180,46 @@ let inviteFlowDetected=/type=(invite|recovery)/i.test(window.location.hash||'');
 
 function el(id){return document.getElementById(id)}
 function message(id,text,type='info'){el(id).innerHTML='';const d=document.createElement('div');d.className='msg '+type;d.textContent=text;el(id).appendChild(d)}
+function appendShuleproContactActions(targetId,bodyText='Habari Super Admin, nimejisajili ShulePro. Naomba msaada wa idhini ya akaunti yangu.'){
+ const host=el(targetId);if(!host)return;
+ const wrap=document.createElement('div');wrap.className='actions';wrap.style.cssText='display:flex;gap:8px;flex-wrap:wrap;margin-top:10px';
+ const call=document.createElement('a');call.href='tel:0613794448';call.className='secondary';call.textContent='Piga simu';
+ const sms=document.createElement('a');sms.href='sms:0613794448?body='+encodeURIComponent(bodyText);sms.className='secondary';sms.textContent='Tuma SMS';
+ const wa=document.createElement('a');wa.href='https://wa.me/255613794448?text='+encodeURIComponent(bodyText);wa.target='_blank';wa.rel='noopener noreferrer';wa.className='secondary';wa.textContent='WhatsApp';
+ wrap.append(call,sms,wa);host.appendChild(wrap);
+}
+let shuleproAdminNotificationTimer=null;
+const SHULEPRO_PENDING_KEY='shulepro_admin_pending_schools_v1';
+function updateShuleproAdminNotifications(schools,subscriptions){
+ const pending=(subscriptions||[]).filter(x=>x.status==='pending');
+ const byId=new Map((schools||[]).map(x=>[String(x.id),x]));
+ const pendingSchools=pending.map(x=>byId.get(String(x.school_id))).filter(Boolean);
+ const count=el('shulePendingCount');if(count)count.textContent=String(pendingSchools.length);
+ const host=el('shulePendingRegistrations');
+ if(host)host.innerHTML=pendingSchools.length?'<table><thead><tr><th>School</th><th>Code</th><th>Country</th><th>Registered</th></tr></thead><tbody>'+pendingSchools.map(x=>'<tr><td>'+esc(x.school_name)+'</td><td>'+esc(x.school_code)+'</td><td>'+esc(x.country_code)+'</td><td>'+esc((x.created_at||'').slice(0,10))+'</td></tr>').join('')+'</tbody></table>':'<p class="small">Hakuna usajili mpya unaosubiri idhini.</p>';
+ const status=el('shuleNotificationStatus');
+ if(status&&'Notification' in window)status.textContent=Notification.permission==='granted'?'Arifa zimewashwa. Acha dashboard/browser wazi ili ipokee taarifa mpya.':Notification.permission==='denied'?'Arifa zimezuiwa. Ruhusu notifications kwenye mipangilio ya browser.':'Bonyeza kitufe ili kuruhusu arifa kwenye simu.';
+ let previous=null;try{const raw=localStorage.getItem(SHULEPRO_PENDING_KEY);if(raw!==null)previous=JSON.parse(raw)}catch{previous=[]}
+ const ids=pendingSchools.map(x=>String(x.id));
+ if(previous===null){localStorage.setItem(SHULEPRO_PENDING_KEY,JSON.stringify(ids));return}
+ const old=new Set(Array.isArray(previous)?previous:[]);
+ const fresh=pendingSchools.filter(x=>!old.has(String(x.id)));
+ if(fresh.length&&'Notification' in window&&Notification.permission==='granted'){
+  fresh.forEach(x=>{const n=new Notification('ShulePro: Usajili mpya unasubiri idhini',{body:(x.school_name||'Shule mpya')+' · Code: '+(x.school_code||'—')+' · '+(x.country_code||''),tag:'shulepro-pending-'+x.id});n.onclick=()=>{window.focus();n.close()}});
+ }
+ localStorage.setItem(SHULEPRO_PENDING_KEY,JSON.stringify([...new Set([...(Array.isArray(previous)?previous:[]),...ids])]));
+}
+async function enableShuleproAdminNotifications(){
+ const status=el('shuleNotificationStatus'),button=el('enableShuleNotifications');
+ if(!('Notification' in window)){if(status)status.textContent='Browser hii haitumii notifications. Tumia Chrome ya simu.';return}
+ const permission=await Notification.requestPermission();
+ if(status)status.textContent=permission==='granted'?'Arifa zimewashwa. Acha dashboard/browser wazi ili ipokee taarifa mpya.':'Hujaruhusu arifa. Badilisha ruhusa kwenye mipangilio ya browser.';
+ if(button&&permission==='granted')button.textContent='Arifa zimewashwa';
+}
+function startShuleproAdminPolling(){
+ if(shuleproAdminNotificationTimer)clearInterval(shuleproAdminNotificationTimer);
+ shuleproAdminNotificationTimer=setInterval(()=>{if(currentUser&&el('superAdminPanel')&&!el('superAdminPanel').classList.contains('hidden'))loadSuperAdmin().catch(e=>console.warn('ShulePro notification refresh:',e))},30000);
+}
 function showAuth(which){
   const target=which==='reg'?'reg':'login';
   const reg=el('regPane'),login=el('loginPane');
@@ -226,6 +274,7 @@ async function register(){
   el('auth').classList.remove('hidden');el('app').classList.add('hidden');el('logoutBtn').classList.add('hidden');
   showAuth('login');el('loginEmail').value=email;el('loginPass').value='';
   message('loginMsg',data.session?'School registration is complete. Sign in with your email and password.':'Your account has been created. Check your email and confirm your address, then sign in here to complete school registration.','ok');
+  appendShuleproContactActions('loginMsg');
  }catch(e){
   try{await db.auth.signOut()}catch(_){}
   const detail=/failed to fetch|networkerror|load failed/i.test(e.message)?'Cannot reach the registration server. Check your internet connection and try again.':e.message;
@@ -298,9 +347,10 @@ async function startApp(user){
   document.querySelectorAll('.pane').forEach(x=>x.classList.add('hidden'));
   if(currentRole==='owner'){
    el('planChoicePanel').classList.remove('hidden');
-   const msg=subscription?'Usajili wako umeisha au haujawezeshwa. Chagua kifurushi au wasilisha malipo ili kuendelea.':'Shule yako bado haina subscription. Chagua kifurushi kuanza siku 14 za majaribio.';
+   const msg=subscription?.status==='pending'?'Usajili wa shule umepokelewa na unasubiri idhini ya Super Admin. Wasiliana na msimamizi kwa simu, SMS au WhatsApp.':subscription?'Usajili wako umeisha au haujawezeshwa. Chagua kifurushi au wasilisha malipo ili kuendelea.':'Shule yako bado haina subscription. Chagua kifurushi kuanza siku 14 za majaribio.';
    message('trialPlanMessage',msg,'info');
    await loadTrialPlans();
+   if(subscription?.status==='pending')appendShuleproContactActions('trialPlanMessage','Habari Super Admin, shule yangu ya ShulePro imesajiliwa na inasubiri idhini. Naomba msaada.');
   }else{
    el('planChoicePanel').classList.add('hidden');
    const note=el('roleDescription');
@@ -890,6 +940,8 @@ async function loadSuperAdmin(){
  ]);
  const err=schoolsRes.error||payRes.error||subsRes.error||studentsRes.error;if(err){message('adminMsg','Imeshindwa kupakia taarifa: '+err.message,'err');return}
  const schools=schoolsRes.data||[],payments=payRes.data||[],subs=subsRes.data||[];
+ updateShuleproAdminNotifications(schools,subs);
+ startShuleproAdminPolling();
  el('adminSummary').innerHTML=[['Shule',schools.length],['Malipo pending',payments.length],['Subscriptions',subs.length],['Wanafunzi',studentsRes.count??'—']].map(([k,v])=>`<div class="card"><div class="muted">${esc(k)}</div><h2>${esc(v)}</h2></div>`).join('');
  el('adminSchoolsTable').innerHTML='<tr><th>Vitendo</th><th>Shule</th><th>Code</th><th>Nchi</th><th>Status</th><th>Tarehe</th></tr>'+schools.map(s=>`<tr data-school-id="${esc(s.id)}" data-school-code="${esc(s.school_code||'')}"><td style="min-width:150px"><button class="secondary" onclick="setSchoolActive('${esc(s.id)}',${!s.is_active})">${s.is_active?'Simamisha':'Washa tena'}</button><br><button style="background:#991b1b;margin-top:6px" onclick="deleteSchool('${esc(s.id)}')">FUTA PERMANENT</button></td><td>${esc(s.school_name)}</td><td>${esc(s.school_code)}</td><td>${esc(s.country_code)}</td><td>${s.is_active?'Active':'Inactive'}</td><td>${esc((s.created_at||'').slice(0,10))}</td></tr>`).join('');
  el('adminPaymentsTable').innerHTML='<tr><th>School ID</th><th>Kiasi</th><th>TxID</th><th>Njia</th><th>Kitendo</th></tr>'+payments.map(p=>`<tr><td>${esc(p.school_id)}</td><td>${esc(p.amount)} ${esc(p.currency)}</td><td>${esc(p.transaction_id||'')}</td><td>${esc(p.payment_method||'')}</td><td><button onclick="reviewPayment('${esc(p.id)}','approve')">Thibitisha</button> <button class="secondary" onclick="reviewPayment('${esc(p.id)}','reject')">Kataa</button></td></tr>`).join('');
