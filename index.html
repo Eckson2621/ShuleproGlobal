@@ -396,43 +396,32 @@ async function startSchoolTrial(priceId){
 }
 async function logout(){await db.auth.signOut();currentUser=null;currentSchoolId=null;currentSchool=null;location.reload()}
 const ROLE_DASHBOARDS={
- owner:{title:'School Owner Dashboard',description:'Full school administration, staff oversight, academics, finance and school settings.',tabs:['wanafunzi','alama','mahudhurio','ratiba','ada','report','backup']},
- headmaster:{title:'Headmaster Dashboard',description:'School operations, student administration, academics, attendance and timetable. School subscription and ownership controls remain with the Owner.',tabs:['wanafunzi','alama','mahudhurio','ratiba','report']},
- academic_master:{title:'Academic Master Dashboard',description:'Academic administration: students, examinations, marks, attendance, timetable and academic reports.',tabs:['wanafunzi','alama','mahudhurio','ratiba','report']},
- teacher:{title:'Teacher Dashboard',description:'Teaching workspace: student directory, academic results, attendance and timetable. Editing rights are restricted by database permissions.',tabs:['wanafunzi','alama','mahudhurio','ratiba','report']},
- accountant:{title:'Accountant Dashboard',description:'Finance role detected. Student-fees and accounting workspace will be enabled here; platform subscription controls are reserved for the School Owner.',tabs:[]}
+ owner:{title:'School Owner Dashboard',description:'School ownership, student records, academic operations, staff oversight, student fees, subscriptions and reports.',tabs:['wanafunzi','alama','mahudhurio','ratiba','finance','ada','report','backup'],canEditStudents:true,canManageResults:true,canManageAttendance:true,canManageTimetable:true,canManageFees:true},
+ headmaster:{title:'Headmaster Dashboard',description:'School operations and academic leadership. Student master records and subscriptions remain with the Owner.',tabs:['wanafunzi','alama','mahudhurio','ratiba','report'],canManageResults:true,canManageAttendance:true,canManageTimetable:true},
+ academic_master:{title:'Academic Master Dashboard',description:'Academic workspace for results, attendance, timetable and teaching staff. Student master records remain with the Owner.',tabs:['wanafunzi','alama','mahudhurio','ratiba','report'],canManageResults:true,canManageAttendance:true,canManageTimetable:true},
+ teacher:{title:'Teacher Dashboard',description:'Assigned classes and subjects only. View student records and published results; record attendance only for classes assigned to you.',tabs:['wanafunzi','alama','mahudhurio','ratiba'],canManageAttendance:true},
+ accountant:{title:'Accountant Dashboard',description:'Student fee records and payment status only. School subscriptions, staff and academic records are not part of this role.',tabs:['finance'],canManageFees:true},
+ discipline_master:{title:'Discipline Master Dashboard',description:'Read-only access to active student directory. Discipline case recording and follow-up tools are not yet available in this release.',tabs:['wanafunzi']},
+ parent:{title:'Parent Portal',description:'View only children linked to your account: student details, published results, attendance, timetable and fee records.',tabs:['wanafunzi','alama','mahudhurio','ratiba','finance'],readOnly:true},
+ student:{title:'Student Portal',description:'View only your own profile, published results, attendance, class timetable and fee records.',tabs:['wanafunzi','alama','mahudhurio','ratiba','finance'],readOnly:true}
 };
 function applyRoleDashboard(role){
- const cfg=ROLE_DASHBOARDS[role]||ROLE_DASHBOARDS.teacher;
- const note=el('roleDescription');
+ const cfg=ROLE_DASHBOARDS[role],note=el('roleDescription');
+ if(!cfg){if(note)note.textContent='Role not recognised. Access is blocked until the School Owner assigns a supported role.';document.querySelector('.tabs')?.classList.add('hidden');document.querySelectorAll('.pane').forEach(p=>p.classList.add('hidden'));return;}
+ const app=el('app');if(app)app.dataset.role=role;
  if(note)note.textContent=cfg.title+' — '+cfg.description;
- document.querySelectorAll('.tab[data-tab]').forEach(tab=>{
-  const allowed=cfg.tabs.includes(tab.dataset.tab);
-  tab.classList.toggle('hidden',!allowed);
-  tab.setAttribute('aria-hidden',String(!allowed));
- });
- document.querySelectorAll('.pane').forEach(pane=>{
-  const allowed=cfg.tabs.includes(pane.id);
-  pane.classList.toggle('hidden',!allowed);
-  pane.classList.toggle('active',false);
- });
- const first=cfg.tabs[0];
- if(first){
-  const tab=document.querySelector('.tab[data-tab="'+first+'"]');
-  const pane=el(first);if(tab)tab.classList.add('active');if(pane)pane.classList.add('active');
- }
- // Teacher is a read-only role in the current database policies.
- if(role==='teacher'){
-  ['stuSaveBtn','stuCancelEdit'].forEach(id=>el(id)?.classList.add('hidden'));
-  document.querySelectorAll('#alama button,#mahudhurio button,#ratiba button').forEach(b=>b.classList.add('hidden'));
- }
- if(role==='accountant'){
-  document.querySelector('.tabs')?.classList.add('hidden');
-  const report=el('roleDescription');
-  if(report)report.textContent='Accountant Dashboard — finance role recognized. Student-fees ledger and collection tools must be connected before this account can process financial records. ShulePro subscription administration is reserved for the Owner.';
- }
+ document.querySelectorAll('.tab[data-tab]').forEach(tab=>{const allowed=cfg.tabs.includes(tab.dataset.tab);tab.classList.toggle('hidden',!allowed);tab.setAttribute('aria-hidden',String(!allowed));});
+ document.querySelectorAll('.pane').forEach(pane=>{const allowed=cfg.tabs.includes(pane.id);pane.classList.toggle('hidden',!allowed);pane.classList.remove('active');});
+ const first=cfg.tabs[0],tab=document.querySelector('.tab[data-tab="'+first+'"]'),pane=el(first);if(tab)tab.classList.add('active');if(pane)pane.classList.add('active');
+ ['stuSaveBtn','stuCancelEdit'].forEach(id=>{if(el(id))el(id).classList.toggle('hidden',!cfg.canEditStudents);});
+ const studentForm=el('stuSaveBtn')?.parentElement;if(studentForm)studentForm.classList.toggle('hidden',!cfg.canEditStudents);
+ const markForm=el('markStudent')?.parentElement?.parentElement;if(markForm)markForm.classList.toggle('hidden',!cfg.canManageResults);
+ const attSave=el('attMsg')?.previousElementSibling;if(attSave&&attSave.tagName==='BUTTON')attSave.classList.toggle('hidden',!cfg.canManageAttendance);
+ const ttForm=el('ttDay')?.parentElement;if(ttForm)ttForm.classList.toggle('hidden',!cfg.canManageTimetable);
+ const ttSave=el('ttMsg')?.previousElementSibling;if(ttSave&&ttSave.tagName==='BUTTON')ttSave.classList.toggle('hidden',!cfg.canManageTimetable);
+ const feeEntry=el('financeEntry');if(feeEntry)feeEntry.classList.toggle('hidden',!cfg.canManageFees);
  showShuleproRoleHelp(true);
-}
+};
 async function loadRoleData(){
  if(currentRole==='accountant')return;
  const cfg=ROLE_DASHBOARDS[currentRole]||ROLE_DASHBOARDS.teacher;
