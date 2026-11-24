@@ -427,6 +427,7 @@ function applyRoleDashboard(role){
  document.querySelectorAll('.pane').forEach(pane=>{const allowed=cfg.tabs.includes(pane.id);pane.classList.toggle('hidden',!allowed);pane.classList.remove('active');});
  const first=cfg.tabs[0],tab=document.querySelector('.tab[data-tab="'+first+'"]'),pane=el(first);if(tab)tab.classList.add('active');if(pane)pane.classList.add('active');
  ['stuSaveBtn','stuCancelEdit'].forEach(id=>{if(el(id))el(id).classList.toggle('hidden',!cfg.canEditStudents);});
+ const studentInputs=el('stuName')?.parentElement?.parentElement;if(studentInputs)studentInputs.classList.toggle('hidden',!cfg.canEditStudents);
  const markForm=el('markStudent')?.parentElement;if(markForm)markForm.classList.toggle('hidden',!cfg.canManageResults);
  const markSave=el('markMsg')?.previousElementSibling;if(markSave&&markSave.tagName==='BUTTON')markSave.classList.toggle('hidden',!cfg.canManageResults);
  const attSave=el('attMsg')?.previousElementSibling;if(attSave&&attSave.tagName==='BUTTON')attSave.classList.toggle('hidden',!cfg.canManageAttendance);
