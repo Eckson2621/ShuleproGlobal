@@ -1070,8 +1070,10 @@ window.addEventListener('DOMContentLoaded',boot);
   accountant:{title:'Mhasibu / Accountant',items:['Akaunti yako imetambuliwa kama ya fedha.','Kwa sasa zana za ledger na ukusanyaji wa ada bado hazijaunganishwa kikamilifu.','Usiweke au kuthibitisha malipo nje ya sehemu rasmi za mfumo.','Wasiliana na Owner kuhusu rekodi za fedha na ruhusa.']},
   guest:{title:'Mwanzo / Getting started',items:['Chagua Register School kusajili shule yako.','Jaza jina la shule, taarifa za msimamizi, nchi na nenosiri.','Baada ya kuingia, utaona sehemu zinazoruhusiwa kwa jukumu lako.','Tumia kitufe hiki kupata maelekezo tena wakati wowote.']}
  };
- function show(){
-  const role=window.currentRole||'guest',g=guides[role]||guides.guest;
+ function show(auto=false){
+  const role=typeof currentRole!=='undefined'&&currentRole?currentRole:'guest';
+  if(auto){const key='shulepro_help_seen_v1_'+(typeof currentUser!=='undefined'&&currentUser?currentUser.id:role);try{if(localStorage.getItem(key))return;localStorage.setItem(key,'1')}catch(e){}}
+  const g=guides[role]||guides.guest;
   document.getElementById('spHelpTitle').textContent='Msaada / Help Centre';
   document.getElementById('spHelpRole').textContent=g.title;
   document.getElementById('spHelpBody').innerHTML='<ol>'+g.items.map(x=>'<li>'+x+'</li>').join('')+'</ol>';
