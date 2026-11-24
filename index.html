@@ -378,6 +378,7 @@ async function startApp(user){
  el('planChoicePanel').classList.add('hidden');
  document.querySelector('.tabs').classList.remove('hidden');
  document.querySelectorAll('.pane').forEach(x=>x.classList.remove('hidden'));
+ applyRoleDashboard(currentRole);
  await loadRoleData();
 }
 async function loadTrialPlans(){
@@ -426,8 +427,8 @@ function applyRoleDashboard(role){
  document.querySelectorAll('.pane').forEach(pane=>{const allowed=cfg.tabs.includes(pane.id);pane.classList.toggle('hidden',!allowed);pane.classList.remove('active');});
  const first=cfg.tabs[0],tab=document.querySelector('.tab[data-tab="'+first+'"]'),pane=el(first);if(tab)tab.classList.add('active');if(pane)pane.classList.add('active');
  ['stuSaveBtn','stuCancelEdit'].forEach(id=>{if(el(id))el(id).classList.toggle('hidden',!cfg.canEditStudents);});
- const studentForm=el('stuSaveBtn')?.parentElement;if(studentForm)studentForm.classList.toggle('hidden',!cfg.canEditStudents);
- const markForm=el('markStudent')?.parentElement?.parentElement;if(markForm)markForm.classList.toggle('hidden',!cfg.canManageResults);
+ const markForm=el('markStudent')?.parentElement;if(markForm)markForm.classList.toggle('hidden',!cfg.canManageResults);
+ const markSave=el('markMsg')?.previousElementSibling;if(markSave&&markSave.tagName==='BUTTON')markSave.classList.toggle('hidden',!cfg.canManageResults);
  const attSave=el('attMsg')?.previousElementSibling;if(attSave&&attSave.tagName==='BUTTON')attSave.classList.toggle('hidden',!cfg.canManageAttendance);
  const ttForm=el('ttDay')?.parentElement;if(ttForm)ttForm.classList.toggle('hidden',!cfg.canManageTimetable);
  const ttSave=el('ttMsg')?.previousElementSibling;if(ttSave&&ttSave.tagName==='BUTTON')ttSave.classList.toggle('hidden',!cfg.canManageTimetable);
