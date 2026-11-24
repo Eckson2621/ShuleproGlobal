@@ -431,6 +431,7 @@ function applyRoleDashboard(role){
   const report=el('roleDescription');
   if(report)report.textContent='Accountant Dashboard — finance role recognized. Student-fees ledger and collection tools must be connected before this account can process financial records. ShulePro subscription administration is reserved for the Owner.';
  }
+ showShuleproRoleHelp(true);
 }
 async function loadRoleData(){
  if(currentRole==='accountant')return;
@@ -1046,5 +1047,42 @@ el('sendResetBtn').addEventListener('click',sendPasswordReset);
 window.addEventListener('DOMContentLoaded',boot);
 </script>
 <script src="./modules.js" defer></script>
+
+<style>
+#spHelpBtn{position:fixed;right:16px;bottom:18px;z-index:9998;border:0;border-radius:999px;padding:13px 18px;background:#1e40af;color:#fff;font-weight:800;box-shadow:0 8px 26px #0f172a35}
+#spHelpLayer{position:fixed;inset:0;z-index:9999;background:#0f172a99;display:none;align-items:center;justify-content:center;padding:14px}
+#spHelpLayer.open{display:flex}
+#spHelpCard{width:min(100%,620px);max-height:88vh;overflow:auto;background:#fff;border-radius:16px;padding:20px;color:#172033;box-shadow:0 20px 60px #0004}
+#spHelpCard h2{margin:0 0 8px}#spHelpCard p,#spHelpCard li{line-height:1.55}
+#spHelpClose{float:right;background:#e8eefc;color:#1e40af}
+</style>
+<button id="spHelpBtn" type="button" aria-haspopup="dialog" aria-controls="spHelpLayer">Msaada / Help</button>
+<div id="spHelpLayer" role="dialog" aria-modal="true" aria-labelledby="spHelpTitle">
+ <div id="spHelpCard"><button id="spHelpClose" type="button">Funga</button><h2 id="spHelpTitle">Msaada wa ShulePro</h2><p id="spHelpRole"></p><div id="spHelpBody"></div><p><b>Unahitaji msaada zaidi?</b> Wasiliana na msimamizi kupitia simu 0613794448 au WhatsApp.</p><p><a href="tel:0613794448">Piga simu</a> · <a href="https://wa.me/255613794448" target="_blank" rel="noopener noreferrer">WhatsApp</a></p></div>
+</div>
+<script>
+(function(){
+ const guides={
+  owner:{title:'Mmiliki wa Shule / School Owner',items:['Dhibiti taarifa za shule na wafanyakazi wenye akaunti.','Sajili na sasisha wanafunzi; kagua madarasa na taarifa zao.','Simamia matokeo, mahudhurio, ratiba na ripoti.','Kagua ada na taarifa za fedha zinazopatikana.','Simamia usajili na mpango wa ShulePro wa shule yako.']},
+  headmaster:{title:'Mkuu wa Shule / Headmaster',items:['Fuatilia shughuli za shule na taarifa za wanafunzi.','Kagua matokeo, mahudhurio na ratiba.','Tumia ripoti kufuatilia maendeleo ya kitaaluma.','Masuala ya umiliki na subscription yashughulikiwe na Owner.']},
+  academic_master:{title:'Mratibu wa Taaluma / Academic Master',items:['Simamia taarifa za kitaaluma za wanafunzi.','Kagua na fuatilia matokeo ya mitihani.','Fuatilia mahudhurio na ratiba za masomo.','Tengeneza ripoti za maendeleo ya taaluma.']},
+  teacher:{title:'Mwalimu / Teacher',items:['Tafuta na angalia taarifa za wanafunzi na madarasa.','Angalia matokeo, mahudhurio na ratiba kulingana na ruhusa zako.','Mabadiliko yasiyoruhusiwa yafanywe na msimamizi wa shule.','Usishiriki nenosiri lako na mtu mwingine.']},
+  accountant:{title:'Mhasibu / Accountant',items:['Akaunti yako imetambuliwa kama ya fedha.','Kwa sasa zana za ledger na ukusanyaji wa ada bado hazijaunganishwa kikamilifu.','Usiweke au kuthibitisha malipo nje ya sehemu rasmi za mfumo.','Wasiliana na Owner kuhusu rekodi za fedha na ruhusa.']},
+  guest:{title:'Mwanzo / Getting started',items:['Chagua Register School kusajili shule yako.','Jaza jina la shule, taarifa za msimamizi, nchi na nenosiri.','Baada ya kuingia, utaona sehemu zinazoruhusiwa kwa jukumu lako.','Tumia kitufe hiki kupata maelekezo tena wakati wowote.']}
+ };
+ function show(){
+  const role=window.currentRole||'guest',g=guides[role]||guides.guest;
+  document.getElementById('spHelpTitle').textContent='Msaada / Help Centre';
+  document.getElementById('spHelpRole').textContent=g.title;
+  document.getElementById('spHelpBody').innerHTML='<ol>'+g.items.map(x=>'<li>'+x+'</li>').join('')+'</ol>';
+  document.getElementById('spHelpLayer').classList.add('open');
+ }
+ document.getElementById('spHelpBtn').addEventListener('click',show);
+ document.getElementById('spHelpClose').addEventListener('click',()=>document.getElementById('spHelpLayer').classList.remove('open'));
+ document.getElementById('spHelpLayer').addEventListener('click',e=>{if(e.target.id==='spHelpLayer')e.currentTarget.classList.remove('open')});
+ window.showShuleproRoleHelp=show;
+})();
+</script>
+
 </body>
 </html>
