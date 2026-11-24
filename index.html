@@ -435,14 +435,14 @@ function applyRoleDashboard(role){
  showShuleproRoleHelp(true);
 };
 async function loadRoleData(){
- if(currentRole==='accountant')return;
- const cfg=ROLE_DASHBOARDS[currentRole]||ROLE_DASHBOARDS.teacher;
+ const cfg=ROLE_DASHBOARDS[currentRole];if(!cfg)return;
  const tasks=[];
  if(cfg.tabs.includes('wanafunzi'))tasks.push(loadStudents());
  if(cfg.tabs.includes('alama'))tasks.push(loadMarks());
  if(cfg.tabs.includes('mahudhurio'))tasks.push(loadAttendance());
  if(cfg.tabs.includes('ratiba'))tasks.push(loadTimetable());
- if(cfg.tabs.includes('ada'))tasks.push(loadFees());
+ if(cfg.tabs.includes('finance'))tasks.push(loadStudentFees());
+ if(cfg.tabs.includes('ada')&&currentRole==='owner')tasks.push(loadFees());
  if(cfg.tabs.includes('report'))tasks.push(buildReport());
  await Promise.all(tasks);
 }
@@ -450,7 +450,7 @@ function showTab(id,node){
  document.querySelectorAll('.pane').forEach(x=>x.classList.remove('active'));
  document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));
  el(id).classList.add('active');if(node)node.classList.add('active');
- if(id==='wanafunzi')loadStudents();if(id==='alama')loadMarks();if(id==='mahudhurio')loadAttendance();if(id==='ratiba')loadTimetable();if(id==='ada')loadFees();if(id==='report')buildReport();
+ if(id==='wanafunzi')loadStudents();if(id==='alama')loadMarks();if(id==='mahudhurio')loadAttendance();if(id==='ratiba')loadTimetable();if(id==='finance')loadStudentFees();if(id==='ada'&&currentRole==='owner')loadFees();if(id==='report')buildReport();
 }
 let editingStudentId=null;
 function resetStudentForm(){
@@ -560,6 +560,33 @@ async function loadTimetable(){
  const {data,error}=await db.from('timetable').select('*').eq('school_id',currentSchoolId);
  if(error){el('ttTable').innerHTML='';message('ttMsg','Jedwali la ratiba halipatikani au haliruhusu kusoma: '+error.message,'err');return}
  el('ttTable').innerHTML='<tr><th>Siku</th><th>Muda</th><th>Somo</th><th>Darasa</th></tr>'+(data||[]).map(t=>`<tr><td>${esc(t.day_of_week||'')}</td><td>${esc(t.period_time||'')}</td><td>${esc(t.subject||'')}</td><td>${esc(t.class_name||'')}</td></tr>`).join('');
+}
+async function loadStudentFees(){
+ const results=await Promise.all([
+  db.from('students').select('id,full_name,admission_number').eq('school_id',currentSchoolId).order('full_name'),
+  db.from('fees').select('id,student_id,fee_type,amount,currency_code,is_paid,created_at,students(full_name)').eq('school_id',currentSchoolId).order('created_at',{ascending:false}).limit(500)
+ ]);
+ const error=results[0].error||results[1].error;
+ if(error){message('financeMsg','Imeshindwa kupakia ada: '+error.message,'err');return;}
+ const canManage=['owner','accountant'].includes(currentRole);
+ if(el('feeStudent'))el('feeStudent').innerHTML=(results[0].data||[]).map(st=>'<option value="'+esc(st.id)+'">'+esc(st.full_name)+' · '+esc(st.admission_number||'')+'</option>').join('');
+ const rows=results[1].data||[];
+ el('financeTable').innerHTML='<tr><th>Mwanafunzi</th><th>Aina ya ada</th><th>Kiasi</th><th>Hali</th>'+(canManage?'<th>Kitendo</th>':'')+'</tr>'+(rows.length?rows.map(f=>'<tr><td>'+esc(f.students?.full_name||'')+'</td><td>'+esc(f.fee_type||'')+'</td><td>'+esc(f.amount)+' '+esc((f.currency_code||'').trim())+'</td><td>'+(f.is_paid?'Imelipwa':'Inadaiwa')+'</td>'+(canManage?'<td><button type="button" class="secondary" data-fee-id="'+esc(f.id)+'" data-paid="'+String(!!f.is_paid)+'">'+(f.is_paid?'Weka inadaiwa':'Thibitisha imelipwa')+'</button></td>':'')+'</tr>').join(''):'<tr><td colspan="'+(canManage?5:4)+'">Hakuna rekodi za ada.</td></tr>');
+ el('financeTable').querySelectorAll('[data-fee-id]').forEach(btn=>btn.addEventListener('click',()=>setStudentFeeStatus(btn.dataset.feeId,btn.dataset.paid!=='true')));
+}
+async function addStudentFee(){
+ if(!['owner','accountant'].includes(currentRole)){message('financeMsg','Huna ruhusa ya kuongeza ada.','err');return;}
+ const student_id=el('feeStudent').value,fee_type=el('feeType').value.trim(),amount=Number(el('feeAmount').value),currency_code=el('feeCurrency').value;
+ if(!student_id||!fee_type||!Number.isFinite(amount)||amount<=0){message('financeMsg','Chagua mwanafunzi, aina ya ada na kiasi sahihi.','err');return;}
+ const result=await db.from('fees').insert({school_id:currentSchoolId,student_id,fee_type,amount,currency_code,is_paid:false});
+ if(result.error){message('financeMsg','Ada haijahifadhiwa: '+result.error.message,'err');return;}
+ el('feeType').value='';el('feeAmount').value='';message('financeMsg','Rekodi ya ada imehifadhiwa.','ok');await loadStudentFees();
+}
+async function setStudentFeeStatus(id,isPaid){
+ if(!['owner','accountant'].includes(currentRole))return;
+ const result=await db.from('fees').update({is_paid:isPaid}).eq('id',id).eq('school_id',currentSchoolId);
+ if(result.error){message('financeMsg','Hali ya ada haijabadilishwa: '+result.error.message,'err');return;}
+ message('financeMsg','Hali ya ada imesasishwa.','ok');await loadStudentFees();
 }
 async function loadFees(){
  const [payRes,subRes,priceRes]=await Promise.all([
