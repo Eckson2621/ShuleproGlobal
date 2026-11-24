@@ -105,6 +105,7 @@ html[dir="rtl"] body{text-align:right}html[dir="rtl"] th,html[dir="rtl"] td{text
   <div class="tab" data-tab="alama" onclick="showTab('alama',this)">Alama</div>
   <div class="tab" data-tab="mahudhurio" onclick="showTab('mahudhurio',this)">Mahudhurio</div>
   <div class="tab" data-tab="ratiba" onclick="showTab('ratiba',this)">Ratiba</div>
+  <div class="tab" data-tab="finance" onclick="showTab('finance',this)">Student Fees</div>
   <div class="tab" data-tab="ada" onclick="showTab('ada',this)">Ada & TxID</div>
   <div class="tab" data-tab="report" onclick="showTab('report',this)">Ripoti</div>
   <div class="tab" data-tab="backup" onclick="showTab('backup',this)">Backup</div>
@@ -151,6 +152,17 @@ html[dir="rtl"] body{text-align:right}html[dir="rtl"] th,html[dir="rtl"] td{text
   <h4>Historia ya malipo</h4><div class="tablewrap"><table id="feesTable"></table></div>
  </div>
 
+ <div id="finance" class="card pane">
+  <h3>Student Fees & Finance</h3>
+  <p class="muted">Record and track student fee balances. School subscription payments are managed separately by the Owner.</p>
+  <div id="financeEntry"><div class="grid">
+   <div><label>Student</label><select id="feeStudent"></select></div>
+   <div><label>Fee description</label><input id="feeType" maxlength="100" placeholder="e.g. Tuition – Term 1"></div>
+   <div><label>Amount</label><input id="feeAmount" type="number" min="0.01" step="0.01" placeholder="Amount"></div>
+   <div><label>Currency</label><select id="feeCurrency"><option value="TZS">TZS</option><option value="USD">USD</option><option value="KES">KES</option><option value="UGX">UGX</option></select></div>
+  </div><button type="button" onclick="addStudentFee()">Save fee</button></div>
+  <div id="financeMsg" aria-live="polite"></div><div class="tablewrap"><table id="financeTable"></table></div>
+ </div>
  <div id="report" class="card pane">
   <h3>Ripoti ya shule</h3><p class="muted">Chapisha ukurasa huu na uchague Save as PDF kwenye kifaa chako.</p><button class="no-print" onclick="window.print()">Chapisha / Hifadhi PDF</button>
   <div id="reportArea"></div>
