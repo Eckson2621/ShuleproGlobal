@@ -529,11 +529,17 @@ async function loadMarks(){
 }
 function localToday(){return new Date(Date.now()-new Date().getTimezoneOffset()*60000).toISOString().slice(0,10)}
 async function saveAttendance(){
+ let attendanceTeacherId=null;
+ if(currentRole==='teacher'){
+  const teacherRes=await db.from('teachers').select('id').eq('school_id',currentSchoolId).eq('auth_user_id',currentUser.id).maybeSingle();
+  if(teacherRes.error||!teacherRes.data){message('attMsg','Akaunti hii haijaunganishwa na rekodi ya mwalimu. Wasiliana na Academic Master.','err');return;}
+  attendanceTeacherId=teacherRes.data.id;
+ }
  const {data:students,error}=await db.from('students').select('id').eq('school_id',currentSchoolId);
  if(error){message('attMsg','Imeshindwa kusoma wanafunzi: '+error.message,'err');return}
  if(!students?.length){message('attMsg','Hakuna wanafunzi wa kuhifadhi.','err');return}
  const today=localToday();
- const rows=students.map(s=>({school_id:currentSchoolId,student_id:s.id,attend_date:today,status:el('attStatus_'+s.id)?.value||'Present'}));
+ const rows=students.map(s=>({school_id:currentSchoolId,student_id:s.id,attend_date:today,status:el('attStatus_'+s.id)?.value||'Present',teacher_id:attendanceTeacherId}));
  const {error:saveError}=await db.from('attendance').upsert(rows,{onConflict:'student_id,attend_date'});
  if(saveError){message('attMsg','Mahudhurio hayajahifadhiwa: '+saveError.message,'err');return}
  message('attMsg','Mahudhurio ya leo yamehifadhiwa.','ok');await loadAttendance();
