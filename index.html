@@ -479,7 +479,8 @@ function renderStudentsTable(){
  const q=(el('stuSearch')?.value||'').trim().toLowerCase();
  const rows=studentsCache.filter(s=>[s.full_name,s.admission_number,s.class_name].some(v=>String(v||'').toLowerCase().includes(q)));
  if(el('studentCount'))el('studentCount').textContent='Wanafunzi '+rows.length+' kati ya '+studentsCache.length;
- el('studentsTable').innerHTML='<tr><th>Jina</th><th>Namba ya usajili</th><th>Darasa</th><th>Jinsia</th><th>Vitendo</th></tr>'+rows.map(s=>`<tr><td>${esc(s.full_name||'')}</td><td>${esc(s.admission_number||'—')}</td><td>${esc(s.class_name||'')}</td><td>${esc(s.gender||'—')}</td><td><button type="button" class="secondary" data-student-edit="${esc(s.id)}">Hariri</button> <button type="button" class="secondary" data-student-delete="${esc(s.id)}">Futa</button></td></tr>`).join('')||'<tr><td colspan="5">Hakuna mwanafunzi aliyepatikana.</td></tr>';
+ const canEdit=currentRole==='owner';
+ el('studentsTable').innerHTML='<tr><th>Jina</th><th>Namba ya usajili</th><th>Darasa</th><th>Jinsia</th>'+(canEdit?'<th>Vitendo</th>':'')+'</tr>'+rows.map(s=>'<tr><td>'+esc(s.full_name||'')+'</td><td>'+esc(s.admission_number||'—')+'</td><td>'+esc(s.class_name||'')+'</td><td>'+esc(s.gender||'—')+'</td>'+(canEdit?'<td><button type="button" class="secondary" data-student-edit="'+esc(s.id)+'">Hariri</button> <button type="button" class="secondary" data-student-delete="'+esc(s.id)+'">Futa</button></td>':'')+'</tr>').join('')||'<tr><td colspan="'+(canEdit?5:4)+'">Hakuna mwanafunzi aliyepatikana.</td></tr>';
  el('studentsTable').querySelectorAll('[data-student-edit]').forEach(b=>b.onclick=()=>editStudent(b.dataset.studentEdit));
  el('studentsTable').querySelectorAll('[data-student-delete]').forEach(b=>b.onclick=()=>deleteStudent(b.dataset.studentDelete));
 }
