@@ -1,0 +1,25 @@
+{
+  "id": "/",
+  "name": "SHULEPRO Global School Management",
+  "short_name": "SHULEPRO",
+  "description": "Global school management platform.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "display_override": [
+    "standalone",
+    "minimal-ui"
+  ],
+  "orientation": "any",
+  "background_color": "#172554",
+  "theme_color": "#172554",
+  "lang": "en",
+  "icons": [
+    {
+      "src": "/icons/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
