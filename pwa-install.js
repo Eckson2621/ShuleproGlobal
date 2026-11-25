@@ -5,13 +5,13 @@
     if ('serviceWorker' in navigator && location.protocol === 'https:') {
       navigator.serviceWorker.register('/sw.js').catch(error => console.warn(APP_NAME + ' service worker:', error));
     }
+    if (window.matchMedia('(display-mode: standalone)').matches || navigator.standalone === true) return;
     document.querySelectorAll('.brand, .admin-brand').forEach(node => {
       if (node.querySelector('.pwa-brand-icon')) return;
       const img = document.createElement('img');
       img.className = 'pwa-brand-icon'; img.src = '/icons/icon.svg'; img.alt = '';
       img.setAttribute('aria-hidden', 'true'); node.prepend(img);
     });
-    if (window.matchMedia('(display-mode: standalone)').matches || navigator.standalone === true) return;
     if (document.getElementById('pwa-install-panel')) return;
     const style = document.createElement('style');
     style.textContent = `
