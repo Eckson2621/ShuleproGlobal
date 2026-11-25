@@ -3,7 +3,21 @@
   const APP_NAME = meta?.content || document.title.split(/[|—]/)[0].trim() || 'App';
   const boot = () => {
     if ('serviceWorker' in navigator && location.protocol === 'https:') {
-      navigator.serviceWorker.register('/sw.js').catch(error => console.warn(APP_NAME + ' service worker:', error));
+      navigator.serviceWorker.register('/sw.js', { updateViaCache: 'none' }).then(registration => {
+        const checkForUpdates = () => registration.update().catch(() => {});
+        checkForUpdates();
+        window.addEventListener('online', checkForUpdates);
+        document.addEventListener('visibilitychange', () => {
+          if (!document.hidden) {
+            if (window.__eamPwaUpdatePending) { window.location.reload(); return; }
+            checkForUpdates();
+          }
+        });
+        navigator.serviceWorker.addEventListener('controllerchange', () => {
+          // Finish the current action first; refresh automatically on the next app foreground.
+          window.__eamPwaUpdatePending = true;
+        });
+      }).catch(error => console.warn(APP_NAME + ' service worker:', error));
     }
     if (window.matchMedia('(display-mode: standalone)').matches || navigator.standalone === true) return;
     document.querySelectorAll('.brand, .admin-brand').forEach(node => {
