@@ -1,4 +1,4 @@
-const CACHE_NAME = 'eam-pwa-shell-v1';
+const CACHE_NAME = 'eam-pwa-shell-v2';
 const CORE = ['/', '/manifest.webmanifest', '/icons/icon.svg', '/icons/logo.svg'];
 self.addEventListener('install', event => {
   event.waitUntil((async () => {
