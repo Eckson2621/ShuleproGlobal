@@ -1,20 +1,53 @@
-const CACHE_NAME = 'eam-pwa-shell-v3';
-const CORE = ['/', '/manifest.webmanifest', '/icons/icon.svg', '/icons/logo.svg'];
-self.addEventListener('install', event => {
-  event.waitUntil((async () => {
-    const cache = await caches.open(CACHE_NAME);
-    await Promise.all(CORE.map(async path => { try { const r = await fetch(path, {cache:'reload'}); if (r.ok) await cache.put(path,r); } catch (_) {} }));
-    await self.skipWaiting();
-  })());
-});
-self.addEventListener('activate', event => {
-  event.waitUntil((async () => { const keys = await caches.keys(); await Promise.all(keys.filter(k => k.includes('pwa-shell-') && k !== CACHE_NAME).map(k => caches.delete(k))); await self.clients.claim(); })());
-});
-self.addEventListener('fetch', event => {
-  const req = event.request; if (req.method !== 'GET' || new URL(req.url).origin !== self.location.origin) return;
-  if (req.mode === 'navigate') {
-    event.respondWith((async () => { try { const r = await fetch(req,{cache:'no-store'}); if (r.ok) { const c=await caches.open(CACHE_NAME); await c.put('/',r.clone()); } return r; } catch (_) { return (await caches.match('/')) || Response.error(); } })()); return;
+const CACHE_NAME="eam-pwa-shell-v4";
+const CACHE_PREFIX="eam-pwa-shell-";
+const CORE_FILES=["/","/index.html","/manifest.webmanifest","/icons/icon.svg","/icons/logo.svg","/pwa-install.js","/feedback-center.js","/modules.js"];
+self.addEventListener("install",event=>{
+ event.waitUntil((async()=>{
+  const cache=await caches.open(CACHE_NAME);
+  const save=async path=>{
+   try{const response=await fetch(path,{cache:"reload"});if(response.ok)await cache.put(path,response.clone());return response;}catch(_){return null;}
+  };
+  let page=await save("/");
+  if(!page) page=await save("/index.html");
+  if(page){
+   try{
+    const html=await page.clone().text();
+    const found=[...html.matchAll(/(?:src|href)=["']([^"'#]+)["']/gi)].map(m=>m[1]);
+    const urls=[...new Set([...CORE_FILES,...found])];
+    await Promise.all(urls.map(async value=>{
+     try{const url=new URL(value,self.location.origin);if(url.origin!==self.location.origin)return;const response=await fetch(url.href,{cache:"reload"});if(response.ok)await cache.put(url.href,response.clone());}catch(_){}
+    }));
+   }catch(_){}
   }
-  const path = new URL(req.url).pathname;
-  if (path === '/manifest.webmanifest' || path.startsWith('/icons/')) event.respondWith((async () => (await caches.match(req)) || fetch(req))());
+  await Promise.all(CORE_FILES.map(async path=>{try{const hit=await cache.match(path);if(!hit){const response=await fetch(path,{cache:"reload"});if(response.ok)await cache.put(path,response.clone());}}catch(_){}}));
+ })());
+});
+self.addEventListener("message",event=>{
+ if(event.data&&event.data.type==="SKIP_WAITING") self.skipWaiting();
+});
+self.addEventListener("activate",event=>{
+ event.waitUntil((async()=>{
+  const keys=await caches.keys();
+  await Promise.all(keys.filter(key=>key.startsWith(CACHE_PREFIX)&&key!==CACHE_NAME).map(key=>caches.delete(key)));
+  await self.clients.claim();
+ })());
+});
+self.addEventListener("fetch",event=>{
+ const request=event.request;
+ if(request.method!=="GET")return;
+ const url=new URL(request.url);
+ if(url.origin!==self.location.origin)return;
+ event.respondWith((async()=>{
+  const cache=await caches.open(CACHE_NAME);
+  const cached=await cache.match(request);
+  if(cached)return cached;
+  try{
+   const response=await fetch(request);
+   if(response.ok)await cache.put(request,response.clone());
+   return response;
+  }catch(error){
+   if(request.mode==="navigate"){const fallback=await cache.match("/")||await cache.match("/index.html");if(fallback)return fallback;}
+   throw error;
+  }
+ })());
 });
