@@ -1,10 +1,24 @@
 /* Per-device, user-approved PWA version pinning. Bump CACHE_NAME for every release. */
 const CACHE_NAME="eam-pwa-shell-v6",CACHE_PREFIX="eam-pwa-shell-",CORE_FILES=["/","/index.html","/manifest.webmanifest","/icons/icon.svg","/icons/logo.svg","/pwa-install.js","/feedback-center.js","/modules.js"];
 const DB_NAME="eam-pwa-version-control",DB_STORE="settings",DB_KEY="selectedCache";let pinnedCachePromise=null;
+function cacheVersion(name){
+ const match=name.match(/-v(\d+)$/i);
+ return match?Number(match[1]):0;
+}
+function newestCache(names){
+ const sorted=[...names].sort((a,b)=>cacheVersion(a)-cacheVersion(b)||a.localeCompare(b,undefined,{numeric:true}));
+ return sorted.length?sorted[sorted.length-1]:null;
+}
+function previousCache(names,selected){
+ const version=cacheVersion(selected);
+ const candidates=version?names.filter(name=>cacheVersion(name)<version):names.filter(name=>name!==selected);
+ return newestCache(candidates);
+}
+
 function openVersionDb(){return new Promise((resolve,reject)=>{const r=indexedDB.open(DB_NAME,1);r.onupgradeneeded=()=>{if(!r.result.objectStoreNames.contains(DB_STORE))r.result.createObjectStore(DB_STORE);};r.onsuccess=()=>resolve(r.result);r.onerror=()=>reject(r.error||new Error("DB open failed"));});}
 async function readPinnedCache(){const db=await openVersionDb();return new Promise((resolve,reject)=>{const tx=db.transaction(DB_STORE,"readonly"),r=tx.objectStore(DB_STORE).get(DB_KEY);r.onsuccess=()=>resolve(typeof r.result==="string"?r.result:null);r.onerror=()=>reject(r.error);tx.oncomplete=()=>db.close();tx.onerror=()=>{db.close();reject(tx.error);};});}
 async function writePinnedCache(value){const db=await openVersionDb();return new Promise((resolve,reject)=>{const tx=db.transaction(DB_STORE,"readwrite");tx.objectStore(DB_STORE).put(value,DB_KEY);tx.oncomplete=()=>{db.close();resolve(true);};tx.onerror=()=>{db.close();reject(tx.error);};tx.onabort=()=>{db.close();reject(tx.error);};});}
-async function ensurePinnedCache(){let selected=null;try{selected=await readPinnedCache();}catch(_){}const keys=await caches.keys();if(selected&&keys.includes(selected))return selected;const previous=keys.filter(k=>k.startsWith(CACHE_PREFIX)&&k!==CACHE_NAME);selected=previous.length?previous[previous.length-1]:CACHE_NAME;await writePinnedCache(selected);return selected;}
+async function ensurePinnedCache(){let selected=null;try{selected=await readPinnedCache();}catch(_){}const keys=await caches.keys();if(selected&&keys.includes(selected))return selected;const previous=keys.filter(k=>k.startsWith(CACHE_PREFIX)&&k!==CACHE_NAME);selected=newestCache(previous)||CACHE_NAME;await writePinnedCache(selected);return selected;}
 function getPinnedCache(){if(!pinnedCachePromise)pinnedCachePromise=ensurePinnedCache();return pinnedCachePromise;}
 function excluded(path){return /^\/(?:api|auth|rest|storage|functions|rpc)(?:\/|$)/i.test(path)||/^\/(?:health|healthz|webhook)(?:\/|$)/i.test(path);}
 function isStatic(path){return /\.(?:avif|css|eot|gif|ico|jpe?g|js|mjs|json|map|png|svg|ttf|webmanifest|webp|woff2?)(?:$)/i.test(path);}
@@ -22,7 +36,7 @@ self.addEventListener("message",event=>{
    const selected=await getPinnedCache();
    const keys=await caches.keys();
    const previous=keys.filter(key=>key.startsWith(CACHE_PREFIX)&&key!==selected&&key!==CACHE_NAME);
-   const target=previous.length?previous[previous.length-1]:null;
+   const target=previousCache(previous,selected);
    if(!target){if(port)port.postMessage({ok:false,error:"No earlier cached version is available"});return;}
    await writePinnedCache(target);
    pinnedCachePromise=Promise.resolve(target);
