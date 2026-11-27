@@ -1,5 +1,4 @@
 name: PWA update flow checks
-
 on:
   push:
     branches:
@@ -7,18 +6,14 @@ on:
   pull_request:
     branches:
       - main
-
 permissions:
   contents: read
-
 jobs:
   validate:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-      - name: Set up Node.js
-        uses: actions/setup-node@v4
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
         with:
           node-version: 22
       - name: Check update flow
@@ -29,15 +24,13 @@ jobs:
         run: |
           node --check "$SW_FILE"
           node --check "$PWA_FILE"
-          if grep -Eq '^[[:space:]]*self[.]skipWaiting[(][)];' "$SW_FILE"; then
-            echo "Service worker must not activate itself without user approval."
-            exit 1
-          fi
-          grep -q 'SKIP_WAITING' "$SW_FILE"
-          grep -q 'eam-app-update-prompt' "$HTML_FILE"
+          node -e 'const fs=require("fs");const h=fs.readFileSync(process.env.HTML_FILE,"utf8");const i=h.indexOf("GET_VERSION_STATE");if(i<0)process.exit(1);const a=h.lastIndexOf("<script",i);const b=h.indexOf("</script>",i);if(a<0||b<0)process.exit(1);fs.writeFileSync("/tmp/pwa-update-inline.js",h.slice(h.indexOf(">",a)+1,b));'
+          node --check /tmp/pwa-update-inline.js
+          grep -q 'APPROVE_UPDATE' "$SW_FILE"
+          grep -q 'GET_VERSION_STATE' "$SW_FILE"
+          grep -q 'eam-pwa-version-control' "$SW_FILE"
+          if grep -q 'caches.delete' "$SW_FILE"; then echo "Old version caches must be retained."; exit 1; fi
+          grep -q 'APPROVE_UPDATE' "$HTML_FILE"
+          grep -q 'GET_VERSION_STATE' "$HTML_FILE"
           grep -q 'release_list' "$HTML_FILE"
-          grep -q 'registration.waiting.postMessage' "$HTML_FILE"
-          if grep -q '__eamPwaUpdatePending' "$PWA_FILE"; then
-            echo "Automatic foreground reload is not allowed."
-            exit 1
-          fi
+          if grep -q '__eamPwaUpdatePending' "$PWA_FILE"; then echo "Automatic reload is not allowed."; exit 1; fi
