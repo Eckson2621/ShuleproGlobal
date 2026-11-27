@@ -132,7 +132,7 @@ nav.querySelectorAll('[data-module]').forEach(function(b){b.onclick=function(){o
 function setActive(b){document.querySelectorAll('.sp-nav-btn').forEach(function(x){x.classList.remove('active');});if(b)b.classList.add('active');}
 function filterNav(q){q=q.trim().toLowerCase();document.querySelectorAll('#spSideNav .sp-nav-btn').forEach(function(b){b.classList.toggle('hidden',!!q&&b.textContent.toLowerCase().indexOf(q)<0);});}
 function setTitle(t,s){$('spPageTitle').textContent=t;$('spPageSubtitle').textContent=s||'';}
-function count(table){return db.from(table).select('*',{count:'exact',head:true}).eq('school_id',currentSchoolId).then(function(r){if(r.error)throw r.error;return r.count==null?'—':r.count;}).catch(function(){return '—';});}
+function count(table){if(typeof isValidSchoolId!=='function'||!isValidSchoolId(currentSchoolId))return Promise.resolve('—');return db.from(table).select('*',{count:'exact',head:true}).eq('school_id',currentSchoolId).then(function(r){if(r.error)throw r.error;return r.count==null?'—':r.count;}).catch(function(){return '—';});}
 
 async function renderJourney(){
 var host=$('spJourney');if(!host||!currentSchoolId)return;

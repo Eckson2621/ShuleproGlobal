@@ -195,6 +195,7 @@ let currentUser=null, currentSchoolId=null, currentSchool=null, currentRole=null
 let inviteFlowDetected=/type=(invite|recovery)/i.test(window.location.hash||'');
 
 function el(id){return document.getElementById(id)}
+function isValidSchoolId(value){return typeof value==='string'&&/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(value.trim())}
 function message(id,text,type='info'){el(id).innerHTML='';const d=document.createElement('div');d.className='msg '+type;d.textContent=text;el(id).appendChild(d)}
 function appendShuleproContactActions(targetId,bodyText='Habari Super Admin, nimejisajili ShulePro. Naomba msaada wa idhini ya akaunti yangu.'){
  const host=el(targetId);if(!host)return;
@@ -342,6 +343,7 @@ async function startApp(user){
  if(error)throw error;
  if(!members||!members.length){el('auth').classList.remove('hidden');el('app').classList.add('hidden');message('loginMsg','Akaunti haina uanachama wa shule. Hakikisha usajili wa shule umekamilika.','err');return}
  const membership=members.slice().sort((a,b)=>(a.role==='owner'?-1:0)-(b.role==='owner'?-1:0))[0];
+ if(!isValidSchoolId(membership.school_id)){el('auth').classList.remove('hidden');el('app').classList.add('hidden');message('loginMsg','Uanachama wa shule hauna School ID halali. Ingia tena au wasiliana na Super Admin.','err');return;}
  currentSchoolId=membership.school_id;currentRole=membership.role||'teacher';
  applyRoleDashboard(currentRole);
  const {data:school,error:schoolError}=await db.from('schools').select('*').eq('id',currentSchoolId).single();
@@ -508,6 +510,7 @@ async function deleteStudent(id){
  message('stuMsg','Rekodi ya mwanafunzi imefutwa.','ok');await loadStudents();
 }
 async function loadStudents(){
+ if(!isValidSchoolId(currentSchoolId))return;
  const {data,error}=await db.from('students').select('id,school_id,full_name,admission_number,class_name,gender,created_at').eq('school_id',currentSchoolId).order('created_at',{ascending:false});
  if(error){message('stuMsg','Imeshindwa kusoma wanafunzi: '+error.message,'err');return}
  studentsCache=data||[];renderStudentsTable();
@@ -524,6 +527,7 @@ async function addMark(){
  el('markScore').value='';message('markMsg','Alama zimehifadhiwa. Grade: '+grade,'ok');await loadMarks();
 }
 async function loadMarks(){
+ if(!isValidSchoolId(currentSchoolId))return;
  const [resultsRes,studentsRes]=await Promise.all([
   db.from('results').select('id,student_id,subject,exam_name,marks,grade,created_at').eq('school_id',currentSchoolId).order('created_at',{ascending:false}).limit(1000),
   db.from('students').select('id,full_name').eq('school_id',currentSchoolId)
@@ -632,6 +636,7 @@ function parentReportText(lang){
  return dict[lang]||dict.en;
 }
 async function buildReport(){
+ if(!isValidSchoolId(currentSchoolId))return;
  const lang=getParentReportLanguage(),t=parentReportText(lang);
  const locale={sw:'sw-TZ',fr:'fr-FR',ar:'ar',zh:'zh-CN',es:'es-ES',en:'en-US'}[lang]||'en-US';
  const date=new Intl.DateTimeFormat(locale,{year:'numeric',month:'long',day:'numeric'}).format(new Date());
