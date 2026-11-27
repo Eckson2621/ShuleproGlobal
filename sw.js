@@ -12,5 +12,23 @@ function storable(r){return r.ok&&!/no-store|private/i.test(r.headers.get("cache
 async function cacheShell(){const cache=await caches.open(CACHE_NAME);const save=async path=>{try{const r=await fetch(path,{cache:"reload"});if(storable(r))await cache.put(path,r.clone());return r;}catch(_){return null;}};let page=await save("/");if(!page)page=await save("/index.html");if(page){try{const html=await page.clone().text(),found=[...html.matchAll(/(?:src|href)=["']([^"'#]+)["']/gi)].map(m=>m[1]);const urls=[...new Set([...CORE_FILES,...found])];await Promise.all(urls.map(async value=>{try{const u=new URL(value,self.location.origin);if(u.origin!==self.location.origin||excluded(u.pathname))return;if(u.pathname!=="/"&&u.pathname!=="/index.html"&&!isStatic(u.pathname))return;const r=await fetch(u.href,{cache:"reload"});if(storable(r))await cache.put(u.href,r.clone());}catch(_){}}));}catch(_){}}await Promise.all(CORE_FILES.map(async path=>{try{if(excluded(path)||(path!=="/"&&path!=="/index.html"&&!isStatic(path))||await cache.match(path))return;const r=await fetch(path,{cache:"reload"});if(storable(r))await cache.put(path,r.clone());}catch(_){}}));}
 self.addEventListener("install",e=>e.waitUntil((async()=>{await cacheShell();await getPinnedCache();})()));
 self.addEventListener("message",e=>{const m=e.data||{},p=e.ports&&e.ports[0];if(m.type==="GET_VERSION_STATE")e.waitUntil((async()=>{try{const selected=await getPinnedCache(),state={ok:true,selectedCache:selected,availableCache:CACHE_NAME,hasUpdate:selected!==CACHE_NAME};if(p)p.postMessage(state);else if(e.source)e.source.postMessage(state);}catch(err){if(p)p.postMessage({ok:false,error:String(err)});}})());if(m.type==="APPROVE_UPDATE")e.waitUntil((async()=>{try{await writePinnedCache(CACHE_NAME);pinnedCachePromise=Promise.resolve(CACHE_NAME);if(p)p.postMessage({ok:true,selectedCache:CACHE_NAME});self.skipWaiting();}catch(err){if(p)p.postMessage({ok:false,error:String(err)});}})());});
+
+/* Explicit local rollback hook: call with message type ROLLBACK_TO_PREVIOUS. */
+self.addEventListener("message",event=>{
+ if(!event.data||event.data.type!=="ROLLBACK_TO_PREVIOUS")return;
+ const port=event.ports&&event.ports[0];
+ event.waitUntil((async()=>{
+  try{
+   const selected=await getPinnedCache();
+   const keys=await caches.keys();
+   const previous=keys.filter(key=>key.startsWith(CACHE_PREFIX)&&key!==selected&&key!==CACHE_NAME);
+   const target=previous.length?previous[previous.length-1]:null;
+   if(!target){if(port)port.postMessage({ok:false,error:"No earlier cached version is available"});return;}
+   await writePinnedCache(target);
+   pinnedCachePromise=Promise.resolve(target);
+   if(port)port.postMessage({ok:true,selectedCache:target});
+  }catch(error){if(port)port.postMessage({ok:false,error:String(error)});}
+ })());
+});
 self.addEventListener("activate",e=>e.waitUntil((async()=>{await getPinnedCache();await self.clients.claim();})()));
 self.addEventListener("fetch",e=>{const q=e.request;if(q.method!=="GET"||q.headers.has("Authorization"))return;const u=new URL(q.url);if(u.origin!==self.location.origin||excluded(u.pathname))return;const shell=q.mode==="navigate"||u.pathname==="/"||u.pathname==="/index.html";if(!shell&&!isStatic(u.pathname))return;e.respondWith((async()=>{const selected=await getPinnedCache(),cache=await caches.open(selected),hit=await cache.match(q,{ignoreSearch:false})||await cache.match(u.pathname,{ignoreSearch:true});if(hit)return hit;try{const r=await fetch(q,{cache:shell?"no-store":"default"});if(selected===CACHE_NAME&&storable(r))await cache.put(q,r.clone());return r;}catch(err){if(shell){const fallback=await cache.match("/")||await cache.match("/index.html");if(fallback)return fallback;}throw err;}})());});
