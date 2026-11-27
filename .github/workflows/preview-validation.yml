@@ -1,0 +1,38 @@
+name: ShulePro preview validation
+
+on:
+  push:
+    branches:
+      - fix/guard-invalid-school-id-20261127
+  pull_request:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Run school-context tests
+        run: node --test school-id-guard.test.mjs
+      - name: Check JavaScript syntax
+        run: |
+          node --check modules.js
+          node --check pwa-install.js
+          node - <<'NODE'
+          const fs = require('node:fs');
+          const html = fs.readFileSync('index.html', 'utf8');
+          const scripts = [...html.matchAll(/<script\\b([^>]*)>([\\s\\S]*?)<\\/script>/gi)]
+            .filter(match => !/\\bsrc\\s*=/.test(match[1]) && !/application\\/json/i.test(match[1]) && match[2].trim());
+          if (!scripts.length) throw new Error('No inline JavaScript found');
+          scripts.forEach((match, index) => fs.writeFileSync('/tmp/shulepro-inline-' + index + '.js', match[2]));
+          NODE
+          for file in /tmp/shulepro-inline-*.js; do node --check "$file"; done
