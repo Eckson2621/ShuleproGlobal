@@ -1,4 +1,4 @@
-const CACHE_NAME="eam-pwa-shell-v4";
+const CACHE_NAME="eam-pwa-shell-v5";
 const CACHE_PREFIX="eam-pwa-shell-";
 const CORE_FILES=["/","/index.html","/manifest.webmanifest","/icons/icon.svg","/icons/logo.svg","/pwa-install.js","/feedback-center.js","/modules.js"];
 self.addEventListener("install",event=>{
@@ -15,7 +15,9 @@ self.addEventListener("install",event=>{
     const found=[...html.matchAll(/(?:src|href)=["']([^"'#]+)["']/gi)].map(m=>m[1]);
     const urls=[...new Set([...CORE_FILES,...found])];
     await Promise.all(urls.map(async value=>{
-     try{const url=new URL(value,self.location.origin);if(url.origin!==self.location.origin)return;const response=await fetch(url.href,{cache:"reload"});if(response.ok)await cache.put(url.href,response.clone());}catch(_){}
+     try{const url=new URL(value,self.location.origin);if(url.origin!==self.location.origin)return;
+ if(request.headers.has("Authorization"))return;
+ if(/^\/(?:api|auth|rest|storage|functions|rpc)(?:\/|$)/i.test(url.pathname)||/^\/(?:health|healthz|webhook)(?:\/|$)/i.test(url.pathname))return;const response=await fetch(url.href,{cache:"reload"});if(response.ok)await cache.put(url.href,response.clone());}catch(_){}
     }));
    }catch(_){}
   }
@@ -44,7 +46,7 @@ self.addEventListener("fetch",event=>{
   if(cached)return cached;
   try{
    const response=await fetch(request);
-   if(response.ok)await cache.put(request,response.clone());
+   if(response.ok&&!/no-store|private/i.test(response.headers.get("cache-control")||""))await cache.put(request,response.clone());
    return response;
   }catch(error){
    if(request.mode==="navigate"){const fallback=await cache.match("/")||await cache.match("/index.html");if(fallback)return fallback;}
