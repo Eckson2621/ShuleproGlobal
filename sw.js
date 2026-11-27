@@ -1,56 +1,16 @@
-const CACHE_NAME="eam-pwa-shell-v5";
-const CACHE_PREFIX="eam-pwa-shell-";
-const CORE_FILES=["/","/index.html","/manifest.webmanifest","/icons/icon.svg","/icons/logo.svg","/pwa-install.js","/feedback-center.js","/modules.js"];
-self.addEventListener("install",event=>{
- event.waitUntil((async()=>{
-  const cache=await caches.open(CACHE_NAME);
-  const save=async path=>{
-   try{const response=await fetch(path,{cache:"reload"});if(response.ok)await cache.put(path,response.clone());return response;}catch(_){return null;}
-  };
-  let page=await save("/");
-  if(!page) page=await save("/index.html");
-  if(page){
-   try{
-    const html=await page.clone().text();
-    const found=[...html.matchAll(/(?:src|href)=["']([^"'#]+)["']/gi)].map(m=>m[1]);
-    const urls=[...new Set([...CORE_FILES,...found])];
-    await Promise.all(urls.map(async value=>{
-     try{const url=new URL(value,self.location.origin);if(url.origin!==self.location.origin)return;
- 
- if(/^\/(?:api|auth|rest|storage|functions|rpc)(?:\/|$)/i.test(url.pathname)||/^\/(?:health|healthz|webhook)(?:\/|$)/i.test(url.pathname))return;const response=await fetch(url.href,{cache:"reload"});if(response.ok)await cache.put(url.href,response.clone());}catch(_){}
-    }));
-   }catch(_){}
-  }
-  await Promise.all(CORE_FILES.map(async path=>{try{const hit=await cache.match(path);if(!hit){const response=await fetch(path,{cache:"reload"});if(response.ok)await cache.put(path,response.clone());}}catch(_){}}));
- })());
-});
-self.addEventListener("message",event=>{
- if(event.data&&event.data.type==="SKIP_WAITING") self.skipWaiting();
-});
-self.addEventListener("activate",event=>{
- event.waitUntil((async()=>{
-  const keys=await caches.keys();
-  await Promise.all(keys.filter(key=>key.startsWith(CACHE_PREFIX)&&key!==CACHE_NAME).map(key=>caches.delete(key)));
-  await self.clients.claim();
- })());
-});
-self.addEventListener("fetch",event=>{
- const request=event.request;
- if(request.method!=="GET")return;
- const url=new URL(request.url);
- if(url.origin!==self.location.origin)return;
- if(url.pathname==="/api"||url.pathname.startsWith("/api/")||url.pathname==="/health"||url.pathname==="/healthz"||url.pathname.startsWith("/webhook"))return;
- event.respondWith((async()=>{
-  const cache=await caches.open(CACHE_NAME);
-  const cached=await cache.match(request);
-  if(cached)return cached;
-  try{
-   const response=await fetch(request);
-   if(response.ok&&!/no-store|private/i.test(response.headers.get("cache-control")||""))await cache.put(request,response.clone());
-   return response;
-  }catch(error){
-   if(request.mode==="navigate"){const fallback=await cache.match("/")||await cache.match("/index.html");if(fallback)return fallback;}
-   throw error;
-  }
- })());
-});
+/* Per-device, user-approved PWA version pinning. Bump CACHE_NAME for every release. */
+const CACHE_NAME="eam-pwa-shell-v6",CACHE_PREFIX="eam-pwa-shell-",CORE_FILES=["/","/index.html","/manifest.webmanifest","/icons/icon.svg","/icons/logo.svg","/pwa-install.js","/feedback-center.js","/modules.js"];
+const DB_NAME="eam-pwa-version-control",DB_STORE="settings",DB_KEY="selectedCache";let pinnedCachePromise=null;
+function openVersionDb(){return new Promise((resolve,reject)=>{const r=indexedDB.open(DB_NAME,1);r.onupgradeneeded=()=>{if(!r.result.objectStoreNames.contains(DB_STORE))r.result.createObjectStore(DB_STORE);};r.onsuccess=()=>resolve(r.result);r.onerror=()=>reject(r.error||new Error("DB open failed"));});}
+async function readPinnedCache(){const db=await openVersionDb();return new Promise((resolve,reject)=>{const tx=db.transaction(DB_STORE,"readonly"),r=tx.objectStore(DB_STORE).get(DB_KEY);r.onsuccess=()=>resolve(typeof r.result==="string"?r.result:null);r.onerror=()=>reject(r.error);tx.oncomplete=()=>db.close();tx.onerror=()=>{db.close();reject(tx.error);};});}
+async function writePinnedCache(value){const db=await openVersionDb();return new Promise((resolve,reject)=>{const tx=db.transaction(DB_STORE,"readwrite");tx.objectStore(DB_STORE).put(value,DB_KEY);tx.oncomplete=()=>{db.close();resolve(true);};tx.onerror=()=>{db.close();reject(tx.error);};tx.onabort=()=>{db.close();reject(tx.error);};});}
+async function ensurePinnedCache(){let selected=null;try{selected=await readPinnedCache();}catch(_){}const keys=await caches.keys();if(selected&&keys.includes(selected))return selected;const previous=keys.filter(k=>k.startsWith(CACHE_PREFIX)&&k!==CACHE_NAME);selected=previous.length?previous[previous.length-1]:CACHE_NAME;await writePinnedCache(selected);return selected;}
+function getPinnedCache(){if(!pinnedCachePromise)pinnedCachePromise=ensurePinnedCache();return pinnedCachePromise;}
+function excluded(path){return /^\/(?:api|auth|rest|storage|functions|rpc)(?:\/|$)/i.test(path)||/^\/(?:health|healthz|webhook)(?:\/|$)/i.test(path);}
+function isStatic(path){return /\.(?:avif|css|eot|gif|ico|jpe?g|js|mjs|json|map|png|svg|ttf|webmanifest|webp|woff2?)(?:$)/i.test(path);}
+function storable(r){return r.ok&&!/no-store|private/i.test(r.headers.get("cache-control")||"");}
+async function cacheShell(){const cache=await caches.open(CACHE_NAME);const save=async path=>{try{const r=await fetch(path,{cache:"reload"});if(storable(r))await cache.put(path,r.clone());return r;}catch(_){return null;}};let page=await save("/");if(!page)page=await save("/index.html");if(page){try{const html=await page.clone().text(),found=[...html.matchAll(/(?:src|href)=["']([^"'#]+)["']/gi)].map(m=>m[1]);const urls=[...new Set([...CORE_FILES,...found])];await Promise.all(urls.map(async value=>{try{const u=new URL(value,self.location.origin);if(u.origin!==self.location.origin||excluded(u.pathname))return;if(u.pathname!=="/"&&u.pathname!=="/index.html"&&!isStatic(u.pathname))return;const r=await fetch(u.href,{cache:"reload"});if(storable(r))await cache.put(u.href,r.clone());}catch(_){}}));}catch(_){}}await Promise.all(CORE_FILES.map(async path=>{try{if(excluded(path)||(path!=="/"&&path!=="/index.html"&&!isStatic(path))||await cache.match(path))return;const r=await fetch(path,{cache:"reload"});if(storable(r))await cache.put(path,r.clone());}catch(_){}}));}
+self.addEventListener("install",e=>e.waitUntil((async()=>{await cacheShell();await getPinnedCache();})()));
+self.addEventListener("message",e=>{const m=e.data||{},p=e.ports&&e.ports[0];if(m.type==="GET_VERSION_STATE")e.waitUntil((async()=>{try{const selected=await getPinnedCache(),state={ok:true,selectedCache:selected,availableCache:CACHE_NAME,hasUpdate:selected!==CACHE_NAME};if(p)p.postMessage(state);else if(e.source)e.source.postMessage(state);}catch(err){if(p)p.postMessage({ok:false,error:String(err)});}})());if(m.type==="APPROVE_UPDATE")e.waitUntil((async()=>{try{await writePinnedCache(CACHE_NAME);pinnedCachePromise=Promise.resolve(CACHE_NAME);if(p)p.postMessage({ok:true,selectedCache:CACHE_NAME});self.skipWaiting();}catch(err){if(p)p.postMessage({ok:false,error:String(err)});}})());});
+self.addEventListener("activate",e=>e.waitUntil((async()=>{await getPinnedCache();await self.clients.claim();})()));
+self.addEventListener("fetch",e=>{const q=e.request;if(q.method!=="GET"||q.headers.has("Authorization"))return;const u=new URL(q.url);if(u.origin!==self.location.origin||excluded(u.pathname))return;const shell=q.mode==="navigate"||u.pathname==="/"||u.pathname==="/index.html";if(!shell&&!isStatic(u.pathname))return;e.respondWith((async()=>{const selected=await getPinnedCache(),cache=await caches.open(selected),hit=await cache.match(q,{ignoreSearch:false})||await cache.match(u.pathname,{ignoreSearch:true});if(hit)return hit;try{const r=await fetch(q,{cache:shell?"no-store":"default"});if(selected===CACHE_NAME&&storable(r))await cache.put(q,r.clone());return r;}catch(err){if(shell){const fallback=await cache.match("/")||await cache.match("/index.html");if(fallback)return fallback;}throw err;}})());});
